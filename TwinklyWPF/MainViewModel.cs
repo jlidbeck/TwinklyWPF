@@ -29,15 +29,15 @@ namespace TwinklyWPF
 
         public event PropertyChangedEventHandler PropertyChanged;
 
-        private System.Timers.Timer updateTimer;
+        private System.Timers.Timer _updateTimer;
 
-        private bool twinklydet = false;
+        private bool _twinklyDetected = false;
         public bool TwinklyDetected
         {
-            get { return twinklydet; }
+            get { return _twinklyDetected; }
             private set
             {
-                twinklydet = value;
+                _twinklyDetected = value;
                 OnPropertyChanged();
             }
         }
@@ -258,8 +258,45 @@ namespace TwinklyWPF
             await twinklyapi.SingleColor(new byte[3] { c.R, c.G, c.B });
         }
 
-        public void SetFrameAsync(byte[] frameData)
+
+
+
+        System.Timers.Timer _frameTimer;
+        Stopwatch _stopwatch;
+
+        public void RealtimeTest_Click(object sender)
         {
+            if (_frameTimer != null)
+            {
+                _frameTimer.Stop();
+                _frameTimer = null;
+                return;
+            }
+
+            _frameTimer = new System.Timers.Timer { AutoReset = true, Interval = 10 };
+            _frameTimer.Elapsed += OnFrameTimerElapsed;
+            _frameTimer.Start();
+            _stopwatch = new Stopwatch();
+            _stopwatch.Start();
+            _random.NextBytes(frameData);
+        }
+
+        Random _random = new Random();
+
+        private byte[] frameData = new byte[60];
+
+        private void OnFrameTimerElapsed(object sender, System.Timers.ElapsedEventArgs e)
+        {
+            //random.NextBytes(frameData);
+
+            for (int i = 0; i < frameData.Length; ++i)
+            {
+                int v = frameData[i];
+                frameData[i] = (byte)(((v&1)==1)
+                    ? (frameData[i] > 1 ? frameData[i] - 2 : 0) 
+                    : (frameData[i] < 254 ? frameData[i] + 2 : 255));
+            }
+
             twinklyapi.SendFrame(frameData);
         }
 
@@ -382,9 +419,9 @@ namespace TwinklyWPF
                 // update the authenticated api models
                 await UpdateAuthModels();
 
-                updateTimer = new System.Timers.Timer(1000) { AutoReset = true };
-                updateTimer.Elapsed += refreshGui;
-                updateTimer.Start();
+                _updateTimer = new System.Timers.Timer(1000) { AutoReset = true };
+                _updateTimer.Elapsed += refreshGui;
+                _updateTimer.Start();
             }
             catch (Exception ex)
             {
