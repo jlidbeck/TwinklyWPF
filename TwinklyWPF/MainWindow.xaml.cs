@@ -8,6 +8,12 @@ namespace TwinklyWPF
     /// </summary>
     public partial class MainWindow : Window
     {
+        public new MainViewModel DataContext
+        {
+            get { return (MainViewModel)base.DataContext; }
+            set { base.DataContext = value; }
+        }
+
         public MainWindow()
         {
             InitializeComponent();
@@ -17,8 +23,8 @@ namespace TwinklyWPF
         {
             if (DataContext != null)
             {
-                ((MainViewModel)DataContext).Load();
-                ((MainViewModel)DataContext).GradientStops = SingleGradient.GradientStops.Clone();
+                DataContext.Load();
+                DataContext.GradientStops = SingleGradient.GradientStops.Clone();
             }
         }
 

@@ -35,7 +35,7 @@ namespace TwinklyWPF
         public bool TwinklyDetected
         {
             get { return twinklydet; }
-            set
+            private set
             {
                 twinklydet = value;
                 OnPropertyChanged();
@@ -57,7 +57,7 @@ namespace TwinklyWPF
         public GestaltResult Gestalt
         {
             get { return gestalt; }
-            set
+            private set
             {
                 gestalt = value;
                 OnPropertyChanged();
@@ -69,7 +69,7 @@ namespace TwinklyWPF
         public FWResult FW
         {
             get { return fw; }
-            set
+            private set
             {
                 fw = value;
                 OnPropertyChanged();
@@ -123,13 +123,13 @@ namespace TwinklyWPF
 
 
 
-        private ModeResult currentmode = new ModeResult() { mode = "unknown" };
+        private ModeResult m_CurrentMode = new ModeResult() { mode = "unknown" };
         public ModeResult CurrentMode
         {
-            get { return currentmode; }
-            set
+            get { return m_CurrentMode; }
+            private set
             {
-                currentmode = value;
+                m_CurrentMode = value;
                 OnPropertyChanged();
                 OnPropertyChanged("CurrentMode_Movie");
                 OnPropertyChanged("CurrentMode_Off");
@@ -138,10 +138,10 @@ namespace TwinklyWPF
             }
         }
 
-        public bool CurrentMode_Movie { get { return currentmode.mode == "movie"; } }
-        public bool CurrentMode_Off { get { return currentmode.mode == "off"; } }
-        public bool CurrentMode_Demo { get { return currentmode.mode == "demo"; } }
-        public bool CurrentMode_Realtime { get { return currentmode.mode == "rt"; } }
+        public bool CurrentMode_Movie { get { return m_CurrentMode.mode == "movie"; } }
+        public bool CurrentMode_Off { get { return m_CurrentMode.mode == "off"; } }
+        public bool CurrentMode_Demo { get { return m_CurrentMode.mode == "demo"; } }
+        public bool CurrentMode_Realtime { get { return m_CurrentMode.mode == "rt"; } }
 
 
         private MergedEffectsResult effects;
@@ -240,7 +240,7 @@ namespace TwinklyWPF
                     // user can keep sliding - wait for 1sec of no movement to change color
                     if (m_colorSliderPauseTimer != null)
                         m_colorSliderPauseTimer.Dispose();
-                    m_colorSliderPauseTimer = new System.Timers.Timer(1000) { AutoReset = false };
+                    m_colorSliderPauseTimer = new System.Timers.Timer { Interval = 500, AutoReset = false };
                     m_colorSliderPauseTimer.Elapsed += ElapsedUpdateColor;
                     m_colorSliderPauseTimer.Start();
                 }
@@ -250,10 +250,10 @@ namespace TwinklyWPF
         private void ElapsedUpdateColor(object sender, System.Timers.ElapsedEventArgs e)
         {
             Debug.WriteLine($"Slider Color {TargetColor}");
-            UpdateColor_Async(TargetColor).Wait(100);
+            UpdateColorAsync(TargetColor).Wait(100);
         }
 
-        private async Task UpdateColor_Async(Color c)
+        private async Task UpdateColorAsync(Color c)
         {
             await twinklyapi.SingleColor(new byte[3] { c.R, c.G, c.B });
         }
