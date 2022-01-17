@@ -28,13 +28,8 @@ namespace Twinkly_xled
 
         public int Status { get; set; }
 
-        public string IPAddress => (data == null ? "" : data.IPAddress);
+        public IPAddress IPAddress => (data?.IPAddress);
 
-        //private DateTime uptime = new DateTime();
-        //{
-        //    get { return uptime; }
-        //    set { uptime = value; }
-        //}
         public DateTime Uptime { get; private set; } = new DateTime();
 
         public bool Authenticated => (data == null ? false : data.ExpiresIn.TotalMinutes > 0);

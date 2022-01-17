@@ -22,7 +22,7 @@ namespace TwinklyWPF
 
     public class MainViewModel : INotifyPropertyChanged, IDataErrorInfo
     {
-        private XLedAPI twinklyapi;
+        public XLedAPI twinklyapi { get; private set; }
 
         public RelayCommand<string> ModeCommand { get; private set; }
         public RelayCommand UpdateTimerCommand { get; private set; }
@@ -263,9 +263,6 @@ namespace TwinklyWPF
             twinklyapi.SendFrame(frameData);
         }
 
-        public string IPAddress => twinklyapi.IPAddress;
-
-        public DateTime Uptime => twinklyapi.Uptime;
 
         #region IDataErrorInfo
 

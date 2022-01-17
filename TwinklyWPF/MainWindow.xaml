@@ -130,7 +130,7 @@
                 <TextBlock
                     Margin="2,0,2,2"
                     Foreground="LightYellow"
-                    Text="{Binding IPAddress}" />
+                    Text="{Binding twinklyapi.IPAddress}" />
             </StackPanel>
 
             <StackPanel
@@ -175,7 +175,7 @@
                 <TextBlock
                     Margin="2"
                     Foreground="LightYellow"
-                    Text="{Binding Uptime, StringFormat=HH\\:mm\\:ss}" />
+                    Text="{Binding twinklyapi.Uptime, StringFormat=HH\\:mm\\:ss}" />
             </StackPanel>
 
             <StackPanel

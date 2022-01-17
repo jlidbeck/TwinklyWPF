@@ -16,8 +16,8 @@ namespace Twinkly_xled
         public bool Error { get; private set; } = false;
         public HttpStatusCode HttpStatus { get; private set; } = HttpStatusCode.OK;
 
-        private string tw_IP { get; set; }
-        public string IPAddress
+        private System.Net.IPAddress tw_IP { get; set; }
+        public System.Net.IPAddress IPAddress
         {
             get { return tw_IP; }
             private set
@@ -60,7 +60,7 @@ namespace Twinkly_xled
                 // don't need to parse the message - we know who responded
                 // <ip>OK<device_name>
                 Debug.WriteLine($"{BitConverter.ToString(result)} from {TwinklyEp}");
-                IPAddress = TwinklyEp.Address.ToString();
+                IPAddress = TwinklyEp.Address;
             }
         }
 
@@ -73,7 +73,7 @@ namespace Twinkly_xled
             {
                
                 // send
-                Client.Send(buffer, buffer.Length, new IPEndPoint(System.Net.IPAddress.Parse(IPAddress), PORT_NUMBER));
+                Client.Send(buffer, buffer.Length, new IPEndPoint(IPAddress, PORT_NUMBER));
 
                 // Hope it made it 
 
