@@ -221,7 +221,7 @@ namespace TwinklyWPF
         // Set by view so our colour are calculated from the same source
         public GradientStopCollection GradientStops { get; set; }
 
-        private System.Timers.Timer slidepause;
+        private System.Timers.Timer m_colorSliderPauseTimer;
         private Color TargetColor;
 
         private double currentcolor;
@@ -236,11 +236,11 @@ namespace TwinklyWPF
                     TargetColor = GradientStops.GetRelativeColor(value);
 
                     // user can keep sliding - wait for 1sec of no movement to change color
-                    if (slidepause != null)
-                        slidepause.Dispose();
-                    slidepause = new System.Timers.Timer(1000) { AutoReset = false };
-                    slidepause.Elapsed += ElapsedUpdateColor;
-                    slidepause.Start();
+                    if (m_colorSliderPauseTimer != null)
+                        m_colorSliderPauseTimer.Dispose();
+                    m_colorSliderPauseTimer = new System.Timers.Timer(1000) { AutoReset = false };
+                    m_colorSliderPauseTimer.Elapsed += ElapsedUpdateColor;
+                    m_colorSliderPauseTimer.Start();
                 }
             }
         }
@@ -248,23 +248,17 @@ namespace TwinklyWPF
         private void ElapsedUpdateColor(object sender, System.Timers.ElapsedEventArgs e)
         {
             Debug.WriteLine($"Slider Color {TargetColor}");
-            updateColor(TargetColor).Wait(100);
+            UpdateColor_Async(TargetColor).Wait(100);
         }
 
-        private async Task updateColor(Color c)
+        private async Task UpdateColor_Async(Color c)
         {
             await twinklyapi.SingleColor(new byte[3] { c.R, c.G, c.B });
         }
 
-        public string IPAddress
-        {
-            get { return twinklyapi.IPAddress; }
-        }
+        public string IPAddress => twinklyapi.IPAddress;
 
-        public DateTime Uptime
-        {
-            get { return twinklyapi.Uptime; }
-        }
+        public DateTime Uptime => twinklyapi.Uptime;
 
         #region IDataErrorInfo
 

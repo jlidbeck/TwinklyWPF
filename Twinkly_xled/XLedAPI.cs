@@ -28,18 +28,18 @@ namespace Twinkly_xled
 
         public int Status { get; set; }
 
-        public string IPAddress { get { return data == null ? "" : data.IPAddress; } }
+        public string IPAddress => (data == null ? "" : data.IPAddress);
 
-        private DateTime uptime = new DateTime();
-        public DateTime Uptime
-        {
-            get { return uptime; }
-            set { uptime = value; }
-        }
+        //private DateTime uptime = new DateTime();
+        //{
+        //    get { return uptime; }
+        //    set { uptime = value; }
+        //}
+        public DateTime Uptime { get; private set; } = new DateTime();
 
-        public bool Authenticated { get { return data == null ? false : data.ExpiresIn.TotalMinutes > 0; } }
-        public DateTime ExpiresAt { get { return data == null ? DateTime.Now : data.ExpiresAt; } }
-        public TimeSpan ExpiresIn { get { return data == null ? new TimeSpan(0) : data.ExpiresIn; } }
+        public bool Authenticated => (data == null ? false : data.ExpiresIn.TotalMinutes > 0);
+        public DateTime ExpiresAt => (data == null ? DateTime.Now : data.ExpiresAt);
+        public TimeSpan ExpiresIn => (data == null ? new TimeSpan(0) : data.ExpiresIn);
 
         public XLedAPI()
         {

@@ -13,14 +13,14 @@ namespace Twinkly_xled
     {
         private HttpClient client { get; set; }
 
-        public bool Error { get; set; } = false;
-        public HttpStatusCode HttpStatus { get; set; } = HttpStatusCode.OK;
+        public bool Error { get; private set; } = false;
+        public HttpStatusCode HttpStatus { get; private set; } = HttpStatusCode.OK;
 
         private string tw_IP { get; set; }
         public string IPAddress
         {
             get { return tw_IP; }
-            set
+            private set
             {
                 tw_IP = value;
                 client = new HttpClient() { BaseAddress = new Uri($"http://{tw_IP}/xled/v1/") };
@@ -28,7 +28,7 @@ namespace Twinkly_xled
         }
 
         public DateTime ExpiresAt { get; private set; }
-        public TimeSpan ExpiresIn { get { return ExpiresAt - DateTime.Now; } }
+        public TimeSpan ExpiresIn => (ExpiresAt - DateTime.Now);
 
         public DataAccess()
         {
