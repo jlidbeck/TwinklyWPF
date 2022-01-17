@@ -44,12 +44,15 @@ namespace Twinkly_xled
             using (var Client = new UdpClient())
             {
                 Client.EnableBroadcast = true;
-                Client.Client.ReceiveTimeout = 1000; // 1 sec 
+                Client.Client.ReceiveTimeout = 3000; // 1 sec 
                 var TwinklyEp = new IPEndPoint(System.Net.IPAddress.Any, 0);
 
                 // send
                 byte[] sendbuf = Encoding.ASCII.GetBytes((char)0x01 + "discover");
-                Client.Send(sendbuf, sendbuf.Length, new IPEndPoint(System.Net.IPAddress.Broadcast, PORT_NUMBER));
+                Client.Send(sendbuf, sendbuf.Length, new IPEndPoint(
+                    //System.Net.IPAddress.Broadcast,
+                    System.Net.IPAddress.Parse("192.168.0.18"),
+                    PORT_NUMBER));
 
                 // receive
                 byte[] result = Client.Receive(ref TwinklyEp);
