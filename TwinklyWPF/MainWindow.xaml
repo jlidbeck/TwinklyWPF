@@ -413,6 +413,19 @@
                         </Behaviors:EventTrigger>
                     </Behaviors:Interaction.Triggers>
                 </RadioButton>
+                <RadioButton
+                    Margin="0,5,20,0"
+                    HorizontalAlignment="Left"
+                    FontSize="20"
+                    GroupName="RBMode"
+                    IsChecked="{Binding CurrentMode_Realtime, Mode=OneWay}">
+                    <TextBlock Foreground="Cornsilk" Text="Realtime" />
+                    <Behaviors:Interaction.Triggers>
+                        <Behaviors:EventTrigger EventName="Checked">
+                            <Behaviors:InvokeCommandAction Command="{Binding ModeCommand}" CommandParameter="rt" />
+                        </Behaviors:EventTrigger>
+                    </Behaviors:Interaction.Triggers>
+                </RadioButton>
             </StackPanel>
 
             <!--  Change Brightness  -->
@@ -538,6 +551,10 @@
                 Minimum="0"
                 SmallChange="0.01"
                 Value="{Binding SliderColor}" />
+            <Button x:Name="RealtimeTest" Content="Realtime Test" 
+                    Click="RealtimeTest_Click"
+                    IsEnabled="{Binding CurrentMode_Realtime, Mode=OneWay}" 
+                    HorizontalAlignment="Left" Grid.Row="4" />
         </Grid>
     </Grid>
 </Window>

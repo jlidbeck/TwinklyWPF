@@ -736,6 +736,28 @@ namespace Twinkly_xled
             }
         }
 
+        // Use RT 7777 UDP to set all lights
+        // pass color as byte array RGB
+        // warning: mode must be "rt" (this function does not set it)
+        public void SendFrame(byte[] c)
+        {
+            if (Authenticated /*&& c.Length == 3*/)
+            {
+                // Authentication
+                var token = data.GetAuthToken();
+                var tokenbytes = Convert.FromBase64String(token);
+                tokenbytes.CopyTo(RT_Buffer, 1);
+
+                // Color Data
+                for (int i = 10; i < RT_Buffer.Length; i += c.Length)
+                {
+                    Buffer.BlockCopy(c, 0, RT_Buffer, i, c.Length);
+                }
+
+                data.RTFX(RT_Buffer);
+            }
+        }
+
         #endregion
 
         #endregion

@@ -22,5 +22,17 @@ namespace TwinklyWPF
             }
         }
 
+        private void RealtimeTest_Click(object sender, RoutedEventArgs e)
+        {
+            var random = new System.Random();
+            var frameData = new byte[60];
+            random.NextBytes(frameData);
+            //for (int i = 0; i < frameData.Length; ++i)
+            //{
+            //    frameData[i] = random.NextBytes(frameData);
+            //}
+
+            DataContext.SetFrameAsync(frameData);
+        }
     }
 }

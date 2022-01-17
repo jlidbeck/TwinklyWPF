@@ -134,12 +134,14 @@ namespace TwinklyWPF
                 OnPropertyChanged("CurrentMode_Movie");
                 OnPropertyChanged("CurrentMode_Off");
                 OnPropertyChanged("CurrentMode_Demo");
+                OnPropertyChanged("CurrentMode_Realtime");
             }
         }
 
         public bool CurrentMode_Movie { get { return currentmode.mode == "movie"; } }
         public bool CurrentMode_Off { get { return currentmode.mode == "off"; } }
         public bool CurrentMode_Demo { get { return currentmode.mode == "demo"; } }
+        public bool CurrentMode_Realtime { get { return currentmode.mode == "rt"; } }
 
 
         private MergedEffectsResult effects;
@@ -254,6 +256,11 @@ namespace TwinklyWPF
         private async Task UpdateColor_Async(Color c)
         {
             await twinklyapi.SingleColor(new byte[3] { c.R, c.G, c.B });
+        }
+
+        public void SetFrameAsync(byte[] frameData)
+        {
+            twinklyapi.SendFrame(frameData);
         }
 
         public string IPAddress => twinklyapi.IPAddress;
@@ -421,12 +428,24 @@ namespace TwinklyWPF
         private async Task ChangeMode(string mode)
         {
             VerifyResult result;
-            if (mode == "off")
-                result = await twinklyapi.SetOperationMode(LedModes.off);
-            else if (mode == "demo")
-                result = await twinklyapi.SetOperationMode(LedModes.demo);
-            else
-                result = await twinklyapi.SetOperationMode(LedModes.movie);
+            switch (mode)
+            {
+                case "off":
+                    result = await twinklyapi.SetOperationMode(LedModes.off);
+                    break;
+                case "demo":
+                    result = await twinklyapi.SetOperationMode(LedModes.demo);
+                    break;
+
+                case "movie":
+                    result = await twinklyapi.SetOperationMode(LedModes.movie);
+                    break;
+
+                case "rt":
+                default:
+                    result = await twinklyapi.SetOperationMode(LedModes.rt);
+                    break;
+            }
 
             // refresh gui
             if (result.code == 1000)
