@@ -1,5 +1,6 @@
-﻿/TwinklyWPF/bin
-/TwinklyWPF/obj
-/Twinkly_xled/bin
-/Twinkly_xled/obj
-/.vs
+﻿#what
+.vs/
+obj/
+bin/
+*.suo
+*.csproj.user
