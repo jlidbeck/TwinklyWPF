@@ -13,7 +13,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Twinly_xled\Twinkly_xled.csproj" />
+    <ProjectReference Include="..\Twinkly_xled\Twinkly_xled.csproj" />
   </ItemGroup>
 
 </Project>
