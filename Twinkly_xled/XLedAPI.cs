@@ -345,6 +345,66 @@ namespace Twinkly_xled
 
         #endregion
 
+        #region Layout
+
+        /// <summary>
+        /// Since firmware version 1.99.18.
+        /// </summary>
+        /// <returns></returns>
+        public async Task<GetLayoutResult> GetLayout()
+        {
+            if (Authenticated)
+            {
+                var json = await ActiveDevice.Get("led/layout/full");
+                if (!ActiveDevice.Error)
+                {
+                    Status = (int)ActiveDevice.HttpStatus;
+                    var mode = JsonSerializer.Deserialize<GetLayoutResult>(json);
+
+                    return mode;
+                }
+                else
+                {
+                    return new GetLayoutResult() { code = (int)ActiveDevice.HttpStatus };
+                }
+            }
+            else
+            {
+                return new GetLayoutResult() { code = (int)HttpStatusCode.Unauthorized };
+            }
+        }
+
+        /// <summary>
+        ///  Since firmware version 1.99.18.
+        /// </summary>
+        public async Task<SetLayoutResult> SetLayout(Layout layout)
+        {
+            if (Authenticated)
+            {
+                var content = JsonSerializer.Serialize(layout);
+
+                var json = await ActiveDevice.Post("led/layout/full", content);
+
+                if (!ActiveDevice.Error)
+                {
+                    Status = (int)ActiveDevice.HttpStatus;
+                    var result = JsonSerializer.Deserialize<SetLayoutResult>(json);
+
+                    return result;
+                }
+                else
+                {
+                    return new SetLayoutResult() { code = (int)ActiveDevice.HttpStatus };
+                }
+            }
+            else
+            {
+                return new SetLayoutResult() { code = (int)HttpStatusCode.Unauthorized };
+            }
+        }
+
+        #endregion
+
         #region LED Effects (Get only)
 
         // How many effects ? - what can we do with an effect ?

@@ -551,10 +551,15 @@
                 Minimum="0"
                 SmallChange="0.01"
                 Value="{Binding SliderColor}" />
-            <Button x:Name="RealtimeTest" Content="Realtime Test" 
-                    Click="RealtimeTest_Click"
-                    IsEnabled="{Binding CurrentMode_Realtime, Mode=OneWay}" 
-                    HorizontalAlignment="Left" Grid.Row="4" />
+            <StackPanel Orientation="Horizontal" Grid.Row="4" Grid.ColumnSpan="2">
+                
+                <Button x:Name="RealtimeTest" Content="Realtime Test" 
+                        Click="RealtimeTest_Click"
+                        IsEnabled="{Binding CurrentMode_Realtime, Mode=OneWay}"  />
+                <Button x:Name="GetLayoutTest" Content="Get Layout"
+                        Click="GetLayoutTest_Click" />
+            </StackPanel>
+                    
         </Grid>
     </Grid>
 </Window>

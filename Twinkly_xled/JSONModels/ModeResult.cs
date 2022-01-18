@@ -3,11 +3,13 @@
     public class Mode
     {
         public string mode { get; set; }
+        public override string ToString() => mode;
     }
 
     public class ModeResult : Mode
     {
         public int code { get; set; }
+        public override string ToString() => $"{mode} ({code})";
     }
 
     public enum LedModes
