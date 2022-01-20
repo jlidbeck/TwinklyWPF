@@ -412,14 +412,22 @@ namespace TwinklyWPF
 
             await twinklyapi.Locate();
 
-            if (twinklyapi.Status == (int)HttpStatusCode.RequestTimeout)
-            {
-                Message = "Twinkly Not Found !";
-            }
-
             TwinklyDetected = (twinklyapi.Status == 0 && twinklyapi.Devices?.Count() > 0);
 
-            Message = $"Found {twinklyapi.Devices?.Count()} devices.";
+            switch(twinklyapi.Status)
+            {
+                case 0:
+                    Message = $"Found {twinklyapi.Devices?.Count()} devices.";
+                    break;
+
+                case (int)HttpStatusCode.RequestTimeout:
+                    Message = "Twinkly Not Found !";
+                    break;
+
+                default:
+                    Message = $"Locate failed. Status={twinklyapi.Status}";
+                    break;
+            }
         }
 
         private async Task Load()
@@ -430,12 +438,21 @@ namespace TwinklyWPF
 
                 //gestalt
                 Gestalt = await twinklyapi.Info();
-                if (twinklyapi.Status == (int)HttpStatusCode.OK)
+                if (twinklyapi.Status != (int)HttpStatusCode.OK)
                 {
-                    FW = await twinklyapi.Firmware();
+                    Message = $"GetInfo failed ({twinklyapi.Status.ToString()})";
+                    return;
                 }
 
-                if (twinklyapi.Status == (int)HttpStatusCode.OK)
+                FW = await twinklyapi.Firmware();
+                if (twinklyapi.Status != (int)HttpStatusCode.OK)
+                {
+                    Message = $"GetFirmware failed ({twinklyapi.Status.ToString()})";
+                    return;
+                }
+
+
+                //if (twinklyapi.Status == (int)HttpStatusCode.OK)
                 {
                     if (twinklyapi.Authenticated)
                     {
@@ -450,8 +467,8 @@ namespace TwinklyWPF
                             Message = $"Login Success until {twinklyapi.data.ExpiresAt:g}";
                     }
                 }
-                else
-                    Message = $"ERROR: {twinklyapi.Status}";
+                //else
+                //    Message = $"ERROR: {twinklyapi.Status}";
 
                 // notify that twinklyapi.Devices has changed
                 OnPropertyChanged("twinklyapi");

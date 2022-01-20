@@ -48,8 +48,7 @@ namespace Twinkly_xled
 
         public DateTime Uptime { get; private set; } = new DateTime();
 
-        public bool Authenticated => data?.Authenticated == true;
-        //public bool Authenticated => (m_data == null ? false : ActiveDevice.ExpiresIn.TotalMinutes > 0);
+        public bool Authenticated => (data?.ExpiresIn.TotalMinutes > 0);
         //public DateTime ExpiresAt => (m_data == null ? DateTime.Now : ActiveDevice.ExpiresAt);
         //public TimeSpan ExpiresIn => (m_data == null ? new TimeSpan(0) : ActiveDevice.ExpiresIn);
 

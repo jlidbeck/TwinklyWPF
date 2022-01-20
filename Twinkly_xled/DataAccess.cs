@@ -40,7 +40,7 @@ namespace Twinkly_xled
 
         public DateTime ExpiresAt { get; private set; }
         public TimeSpan ExpiresIn => (ExpiresAt - DateTime.Now);
-        public bool Authenticated => (ExpiresIn.TotalMinutes > 0);
+        //public bool Authenticated => (ExpiresIn.TotalMinutes > 0);
 
 
         public DataAccess()
@@ -54,13 +54,13 @@ namespace Twinkly_xled
 
         public override string ToString()
         {
-            return $"DataAccess: {IPAddress} Auth: {Authenticated}";
+            return $"DataAccess: {IPAddress} Token expires: {ExpiresAt}";
         }
 
         // UDP Scan for the lights - can only deal with the first one 
         public List<IPAddress> Locate()
         {
-            var devices = new List<IPAddress>();
+            var addresses = new SortedSet<string>();
 
             const int PORT_NUMBER = 5555;
 
@@ -71,8 +71,6 @@ namespace Twinkly_xled
 
                 // send
                 byte[] sendbuf = Encoding.ASCII.GetBytes((char)0x01 + "discover");
-
-                var addresses = new SortedSet<string>();
 
                 try
                 {
@@ -93,25 +91,31 @@ namespace Twinkly_xled
                             addresses.Add(result.RemoteEndPoint.Address.ToString());
                         }
                     });
-                    task.Wait(2000);
+                    task.Wait(3000);
                 }
                 catch (SocketException err)
                 {
                     // If using synchronous receive, we expect a timeout. If any other error, rethrow
                     if (err.SocketErrorCode != SocketError.TimedOut)
                     {
-                        // Timed out
+                        // Unexpected error
+                        Error = true;
                         Debug.WriteLine($"Terminating: {err.Message}");
                         throw;
                     }
                 }
-
-                Debug.WriteLine($"** got {addresses.Count()} addresses **");
-                foreach (var ip in addresses)
+                finally
                 {
-                    devices.Add(IPAddress.Parse(ip));
+                    udp.Close();
                 }
             }   // using udp
+
+            Debug.WriteLine($"** got {addresses.Count()} addresses **");
+            var devices = new List<IPAddress>();
+            foreach (var ip in addresses)
+            {
+                devices.Add(IPAddress.Parse(ip));
+            }
 
             return devices;
         }
