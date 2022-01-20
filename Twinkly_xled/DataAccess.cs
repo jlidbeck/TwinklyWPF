@@ -15,7 +15,11 @@ namespace Twinkly_xled
         public HttpClient HttpClient { get; private set; }
 
         public bool Error { get; private set; } = false;
-        public HttpStatusCode HttpStatus { get; private set; } = HttpStatusCode.OK;
+        //public HttpStatusCode HttpStatus { get; private set; } = HttpStatusCode.OK;
+        public HttpResponseMessage HttpResponseMessage;
+        public HttpStatusCode HttpStatus => HttpResponseMessage != null 
+                                            ? HttpResponseMessage.StatusCode 
+                                            : HttpStatusCode.InternalServerError;
 
         private IPAddress tw_IP { get; set; }
         public IPAddress IPAddress
@@ -26,8 +30,10 @@ namespace Twinkly_xled
                 tw_IP = value;
                 if (value != null)
                     HttpClient = new HttpClient() { BaseAddress = new Uri($"http://{tw_IP}/xled/v1/") };
+                else
+                    HttpClient = null;
                 Error = false;
-                HttpStatus = HttpStatusCode.OK;
+                HttpResponseMessage = null;
                 ExpiresAt = new DateTime();
             }
         }
@@ -133,23 +139,24 @@ namespace Twinkly_xled
         public async Task<string> Get(string url)
         {
             Error = false;
+            HttpResponseMessage = null;
             try
             {
-                var result = await HttpClient.GetAsync(url);
-                HttpStatus = result.StatusCode;
-                if (HttpStatus == HttpStatusCode.OK)
+                HttpResponseMessage = await HttpClient.GetAsync(url);
+                //HttpStatus = HttpResponseMessage.StatusCode;
+                if (HttpResponseMessage.StatusCode == HttpStatusCode.OK)
                 {
-                    return await result.Content.ReadAsStringAsync();
+                    return await HttpResponseMessage.Content.ReadAsStringAsync();
                 }
                 else
                 {
                     Error = true;
-                    return result.StatusCode.ToString();
+                    return HttpResponseMessage.StatusCode.ToString();
                 }
             }
             catch (Exception ex)
             {
-                HttpStatus = HttpStatusCode.InternalServerError;
+                //HttpStatus = HttpStatusCode.InternalServerError;
                 Error = true;
                 return $"ERROR {ex.Message}";
             }
@@ -161,23 +168,24 @@ namespace Twinkly_xled
         public async Task<string> Post(string url, string content)
         {
             Error = false;
+            HttpResponseMessage = null;
             try
             {
-                var result = await HttpClient.PostAsync(url, new StringContent(content));
-                HttpStatus = result.StatusCode;
-                if (HttpStatus == HttpStatusCode.OK)
+                HttpResponseMessage = await HttpClient.PostAsync(url, new StringContent(content));
+                //HttpStatus = result.StatusCode;
+                if (HttpResponseMessage.StatusCode == HttpStatusCode.OK)
                 {
-                    return await result.Content.ReadAsStringAsync();
+                    return await HttpResponseMessage.Content.ReadAsStringAsync();
                 }
                 else
                 {
                     Error = true;
-                    return result.StatusCode.ToString();
+                    return HttpResponseMessage.StatusCode.ToString();
                 }
             }
             catch (Exception ex)
             {
-                HttpStatus = HttpStatusCode.InternalServerError;
+                //HttpStatus = HttpStatusCode.InternalServerError;
                 Error = true;
                 return $"ERROR {ex.Message}";
             }
