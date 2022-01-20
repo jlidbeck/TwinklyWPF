@@ -287,14 +287,20 @@ namespace TwinklyWPF
 
         private void OnFrameTimerElapsed(object sender, System.Timers.ElapsedEventArgs e)
         {
-            //random.NextBytes(frameData);
+            //_random.NextBytes(frameData);
 
             for (int i = 0; i < frameData.Length; ++i)
             {
-                int v = frameData[i];
-                frameData[i] = (byte)(((v&1)==1)
-                    ? (frameData[i] > 1 ? frameData[i] - 2 : 0) 
-                    : (frameData[i] < 254 ? frameData[i] + 2 : 255));
+                //int v = frameData[i];
+                //frameData[i] = (byte)(((v&1)==1)
+                //    ? (frameData[i] > 1 ? frameData[i] - 2 : 0) 
+                //    : (frameData[i] < 254 ? frameData[i] + 2 : 255));
+
+                double t = _stopwatch.ElapsedMilliseconds * 0.001;
+                int n = i / 3;
+                frameData[i]   = (byte)(127.5 + 127.5 * Math.Sin(t      + n * 0.5));
+                frameData[++i] = (byte)(127.5 + 127.5 * Math.Sin(t*0.95 + n * 0.5));
+                frameData[++i] = (byte)(127.5 + 127.5 * Math.Sin(t*0.90 + n * 0.5));
             }
 
             twinklyapi.SendFrame(frameData);
