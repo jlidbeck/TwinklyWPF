@@ -34,6 +34,11 @@ namespace TwinklyWPF
             MainViewModel.RealtimeTest_Click(sender);
         }
 
+        private void Devices_SelectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
+        {
+            //MainViewModel.twinklyapi.Devices
+        }
+
         private async void GetLayoutTest_Click(object sender, RoutedEventArgs e)
         {
             var layout = await MainViewModel.twinklyapi.GetLayout();
@@ -41,5 +46,41 @@ namespace TwinklyWPF
             MessageBox.Show(content);
         }
 
+        private void AddIpAddress_Click(object sender, RoutedEventArgs e)
+        {
+        }
+
+        private bool m_DevicesTextInput = false;
+
+        private void Devices_TextInput(object sender, TextChangedEventArgs e)
+        {
+            try
+            {
+                //var ipAddress = IPAddress.Parse(((ComboBox)sender).Text);
+                //MainViewModel.twinklyapi.Devices.Add(new Twinkly_xled.Device(ipAddress));
+                m_DevicesTextInput = true;
+            }
+            catch (Exception err)
+            {
+                return;
+            }
+        }
+
+        private void Devices_LostFocus(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                if (m_DevicesTextInput)
+                {
+                    var ipAddress = IPAddress.Parse(((ComboBox)sender).Text);
+                    MainViewModel.AddDevice(ipAddress);
+                }
+            }
+            catch (Exception err)
+            {
+            }
+
+            m_DevicesTextInput = false;
+        }
     }
 }

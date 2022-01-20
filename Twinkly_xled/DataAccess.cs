@@ -21,11 +21,14 @@ namespace Twinkly_xled
         public IPAddress IPAddress
         {
             get { return tw_IP; }
-            private set
+            set
             {
                 tw_IP = value;
                 if (value != null)
                     HttpClient = new HttpClient() { BaseAddress = new Uri($"http://{tw_IP}/xled/v1/") };
+                Error = false;
+                HttpStatus = HttpStatusCode.OK;
+                ExpiresAt = new DateTime();
             }
         }
 
@@ -36,36 +39,75 @@ namespace Twinkly_xled
 
         public DataAccess()
         {
-            // IPAddress is set by UDP locate on port 5555
-            Locate();
+            // now call Locate() or set IPAddress
+        }
+
+        //public DataAccess(IPAddress ipAddress)
+        //{
+        //}
+
+        public override string ToString()
+        {
+            return $"DataAccess: {IPAddress} Auth: {Authenticated}";
         }
 
         // UDP Scan for the lights - can only deal with the first one 
-        public void Locate()
+        public List<IPAddress> Locate()
         {
+            var devices = new List<IPAddress>();
+
             const int PORT_NUMBER = 5555;
 
-            using (var Client = new UdpClient())
+            using (var udp = new UdpClient())
             {
-                Client.EnableBroadcast = true;
-                Client.Client.ReceiveTimeout = 3000; // 1 sec 
-                var TwinklyEp = new IPEndPoint(System.Net.IPAddress.Any, 0);
+                udp.EnableBroadcast = true;
+                udp.Client.ReceiveTimeout = 1000; // 1 sec, synchronous only
 
                 // send
                 byte[] sendbuf = Encoding.ASCII.GetBytes((char)0x01 + "discover");
-                Client.Send(sendbuf, sendbuf.Length, new IPEndPoint(
-                    //System.Net.IPAddress.Broadcast,
-                    System.Net.IPAddress.Parse("192.168.0.18"),
-                    PORT_NUMBER));
 
-                // receive
-                byte[] result = Client.Receive(ref TwinklyEp);
+                var addresses = new SortedSet<string>();
 
-                // don't need to parse the message - we know who responded
-                // <ip>OK<device_name>
-                Debug.WriteLine($"{BitConverter.ToString(result)} from {TwinklyEp}");
-                IPAddress = TwinklyEp.Address;
-            }
+                try
+                {
+                    udp.Send(sendbuf, sendbuf.Length, new IPEndPoint(
+                             IPAddress.Broadcast,
+                             PORT_NUMBER));
+
+                    var task = Task.Run(async () =>
+                    {
+                        while (true)
+                        {
+                            // receive
+                            UdpReceiveResult result = await udp.ReceiveAsync();
+
+                            // don't need to parse the message - we know who responded
+                            // <ip>OK<device_name>
+                            Debug.WriteLine($"Reply: {result.RemoteEndPoint.Address}: {BitConverter.ToString(result.Buffer)}");
+                            addresses.Add(result.RemoteEndPoint.Address.ToString());
+                        }
+                    });
+                    task.Wait(2000);
+                }
+                catch (SocketException err)
+                {
+                    // If using synchronous receive, we expect a timeout. If any other error, rethrow
+                    if (err.SocketErrorCode != SocketError.TimedOut)
+                    {
+                        // Timed out
+                        Debug.WriteLine($"Terminating: {err.Message}");
+                        throw;
+                    }
+                }
+
+                Debug.WriteLine($"** got {addresses.Count()} addresses **");
+                foreach (var ip in addresses)
+                {
+                    devices.Add(IPAddress.Parse(ip));
+                }
+            }   // using udp
+
+            return devices;
         }
 
         // UDP port 7777 for realtime 

@@ -437,13 +437,25 @@ namespace TwinklyWPF
 
                 if (twinklyapi.Status == (int)HttpStatusCode.OK)
                 {
-                    if (!await twinklyapi.Login())
-                        Message = $"Login Fail {twinklyapi.Status}";
+                    if (twinklyapi.Authenticated)
+                    {
+                        Message = $"Login Success until {twinklyapi.data.ExpiresAt:g}";
+                    }
                     else
-                        Message = $"Login Success until {twinklyapi.ExpiresAt:g}";
+                    {
+                        Message = "Authenticating...";
+                        if (!await twinklyapi.Login())
+                            Message = $"Login Fail {twinklyapi.Status}";
+                        else
+                            Message = $"Login Success until {twinklyapi.data.ExpiresAt:g}";
+                    }
                 }
                 else
                     Message = $"ERROR: {twinklyapi.Status}";
+
+                // notify that twinklyapi.Devices has changed
+                OnPropertyChanged("twinklyapi");
+                OnPropertyChanged("TwinklyDetected");
 
                 // update the authenticated api models
                 await UpdateAuthModels();
@@ -458,6 +470,20 @@ namespace TwinklyWPF
             }
         }
 
+        public async void AddDevice(IPAddress ipAddress)
+        {
+            twinklyapi.data.IPAddress = ipAddress;
+
+            // this is a cheat
+            twinklyapi.Devices.Add(ipAddress);
+            TwinklyDetected = true;
+            await Load();
+
+            //// notify that twinklyapi.Devices has changed
+            //OnPropertyChanged();
+            //OnPropertyChanged("twinklyapi");
+        }
+            
         private void refreshGui(object sender, System.Timers.ElapsedEventArgs e)
         {
             UpdateAuthModels().Wait(100);
@@ -465,18 +491,29 @@ namespace TwinklyWPF
 
         private async Task UpdateAuthModels()
         {
-            Gestalt = await twinklyapi.Info();
-
-            // update the authenticated api models
-            if (twinklyapi.Authenticated)
+            try
             {
-                Timer = await twinklyapi.GetTimer();
-                CurrentMode = await twinklyapi.GetOperationMode();
-                Effects = await twinklyapi.EffectsAllinOne();
-                Brightness = await twinklyapi.GetBrightness();
-                MQTTConfig = await twinklyapi.GetMQTTConfig();
-                CurrentMovie = await twinklyapi.GetMovieConfig();
-                LedConfig = await twinklyapi.GetLedConfig();
+                if (!twinklyapi.Authenticated)
+                    return;
+
+                Gestalt = await twinklyapi.Info();
+
+                // update the authenticated api models
+                if (twinklyapi.Authenticated)
+                {
+                    Timer = await twinklyapi.GetTimer();
+                    CurrentMode = await twinklyapi.GetOperationMode();
+                    Effects = await twinklyapi.EffectsAllinOne();
+                    Brightness = await twinklyapi.GetBrightness();
+                    MQTTConfig = await twinklyapi.GetMQTTConfig();
+                    CurrentMovie = await twinklyapi.GetMovieConfig();
+                    LedConfig = await twinklyapi.GetLedConfig();
+                }
+            }
+            catch (Exception err)
+            {
+                // need a mutex instead
+                OnPropertyChanged();
             }
         }
 

@@ -1,5 +1,7 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 using System.Net;
 using System.Text;
 using System.Text.Json;
@@ -24,17 +26,32 @@ namespace Twinkly_xled
     // --------------------------------------------------------------------------
     public class XLedAPI
     {
-        private DataAccess data;
+        public DataAccess data { get; private set; }
 
-        public int Status { get; set; }
+        //private Device m_activeDevice;
+        //public Device ActiveDevice // => m_data?.ActiveDevice;
+        //{
+        //    get { return m_activeDevice; }
+        //    set
+        //    {
+        //        m_activeDevice = value;
+        //        if (ActiveDevice?.Authenticated == false)
+        //            Login().Wait(500);
+        //    }
+        //}
 
-        public IPAddress IPAddress => (data?.IPAddress);
+        public List<IPAddress> Devices { get; private set; }
+
+        public int Status { get; private set; }
+
+        //public IPAddress IPAddress => (ActiveDevice?.IPAddress);
 
         public DateTime Uptime { get; private set; } = new DateTime();
 
-        public bool Authenticated => (data == null ? false : data.ExpiresIn.TotalMinutes > 0);
-        public DateTime ExpiresAt => (data == null ? DateTime.Now : data.ExpiresAt);
-        public TimeSpan ExpiresIn => (data == null ? new TimeSpan(0) : data.ExpiresIn);
+        public bool Authenticated => data?.Authenticated == true;
+        //public bool Authenticated => (m_data == null ? false : ActiveDevice.ExpiresIn.TotalMinutes > 0);
+        //public DateTime ExpiresAt => (m_data == null ? DateTime.Now : ActiveDevice.ExpiresAt);
+        //public TimeSpan ExpiresIn => (m_data == null ? new TimeSpan(0) : ActiveDevice.ExpiresIn);
 
         public XLedAPI()
         {
@@ -48,8 +65,9 @@ namespace Twinkly_xled
                 data = new DataAccess();
                 await Task.Run(() =>
                 {
-                    Devices = m_data.Discover();
-                    ActiveDevice = Devices.FirstOrDefault();
+                    Devices = data.Locate();
+                    data.IPAddress = Devices.FirstOrDefault();
+                    //ActiveDevice = Devices.FirstOrDefault();
 
                     Status = 0;
                 });

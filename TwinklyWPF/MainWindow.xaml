@@ -52,6 +52,23 @@
             Foreground="WhiteSmoke"
             Text="{Binding Message}"
             TextWrapping="Wrap" />
+        <StackPanel Orientation="Horizontal"
+                    Grid.Row="1" Grid.Column="1"
+                    Margin="5 0"
+                    HorizontalAlignment="Right">
+            <ComboBox ItemsSource="{Binding twinklyapi.Devices}"
+                      SelectedItem="{Binding twinklyapi.ActiveDevice}"
+                      IsEditable="True"
+                      SelectionChanged="Devices_SelectionChanged"
+                      TextBoxBase.TextChanged="Devices_TextInput"
+                      LostFocus="Devices_LostFocus"
+                      MinWidth="120" 
+                      Margin="5 0"/>
+            <Button x:Name="AddIpAddress" 
+                    Content="Add..." 
+                    Click="AddIpAddress_Click"
+                    MinWidth="50"/>
+        </StackPanel>
 
         <!--  info  -->
         <Grid
