@@ -46,7 +46,13 @@ namespace TwinklyWPF
             MessageBox.Show(content);
         }
 
-        private void AddIpAddress_Click(object sender, RoutedEventArgs e)
+
+        private async void Rescan_Click(object sender, RoutedEventArgs e)
+        {
+            await MainViewModel.Initialize();
+        }
+
+        private async void AddIpAddress_Click(object sender, RoutedEventArgs e)
         {
         }
 
