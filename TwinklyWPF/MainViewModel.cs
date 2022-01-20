@@ -123,8 +123,8 @@ namespace TwinklyWPF
 
 
 
-        private ModeResult m_CurrentMode = new ModeResult() { mode = "unknown" };
-        public ModeResult CurrentMode
+        private Mode m_CurrentMode = new Mode() { mode = "unknown" };
+        public Mode CurrentMode
         {
             get { return m_CurrentMode; }
             private set
@@ -374,27 +374,50 @@ namespace TwinklyWPF
 
         public MainViewModel(IReadOnlyList<string> arguments)
         {
+        }
+
+        // one-time initialization
+        async public Task Initialize()
+        {
             twinklyapi = new XLedAPI();
-            if (twinklyapi.Status == (int)HttpStatusCode.RequestTimeout)
-            {
-                Message = "Twinkly Not Found !";
-            }
-            else if (twinklyapi.Status == 0)
-            {
-                TwinklyDetected = true;
-            }
+
+            await Locate();   // TODO: move?
 
             ModeCommand = new RelayCommand<string>(async (x) => await ChangeMode(x));
 
             UpdateTimerCommand = new RelayCommand(async () => await ChangeTimer());
+
+
+            m_updateTimer = new System.Timers.Timer(1000) { AutoReset = true };
+            m_updateTimer.Elapsed += refreshGui;
+            m_updateTimer.Start();
+
+            // notify that twinklyapi.Devices has changed
+            OnPropertyChanged("twinklyapi");
+
+            // only load if the API detected the Twinkly at startup
+            if (TwinklyDetected)
+                await Load();
         }
 
-        public async void Load()
+        public async Task Locate()
         {
-            // only load if the API detected the Twinkly at startup
-            if (!TwinklyDetected)
-                return;
+            Message = "Searching...";
 
+            await twinklyapi.Locate();
+
+            if (twinklyapi.Status == (int)HttpStatusCode.RequestTimeout)
+            {
+                Message = "Twinkly Not Found !";
+            }
+
+            TwinklyDetected = (twinklyapi.Status == 0 && twinklyapi.Devices?.Count() > 0);
+
+            Message = $"Found {twinklyapi.Devices?.Count()} devices.";
+        }
+
+        private async Task Load()
+        {
             try
             {
                 Message = "Loading...";
@@ -467,6 +490,7 @@ namespace TwinklyWPF
                 case "off":
                     result = await twinklyapi.SetOperationMode(LedModes.off);
                     break;
+
                 case "demo":
                     result = await twinklyapi.SetOperationMode(LedModes.demo);
                     break;

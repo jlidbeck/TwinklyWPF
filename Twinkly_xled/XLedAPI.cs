@@ -38,12 +38,21 @@ namespace Twinkly_xled
 
         public XLedAPI()
         {
+        }
+
+        async public Task Locate()
+        {
             // DataAccess will attempt a UDP locate of the twinkly lights - if they are powered down a timeout is thrown
             try
             {
                 data = new DataAccess();
-                Status = 0;
+                await Task.Run(() =>
+                {
+                    Devices = m_data.Discover();
+                    ActiveDevice = Devices.FirstOrDefault();
 
+                    Status = 0;
+                });
             }
             catch (Exception ex)
             {
@@ -355,17 +364,17 @@ namespace Twinkly_xled
         {
             if (Authenticated)
             {
-                var json = await ActiveDevice.Get("led/layout/full");
-                if (!ActiveDevice.Error)
+                var json = await data.Get("led/layout/full");
+                if (!data.Error)
                 {
-                    Status = (int)ActiveDevice.HttpStatus;
+                    Status = (int)data.HttpStatus;
                     var mode = JsonSerializer.Deserialize<GetLayoutResult>(json);
 
                     return mode;
                 }
                 else
                 {
-                    return new GetLayoutResult() { code = (int)ActiveDevice.HttpStatus };
+                    return new GetLayoutResult() { code = (int)data.HttpStatus };
                 }
             }
             else
@@ -383,18 +392,18 @@ namespace Twinkly_xled
             {
                 var content = JsonSerializer.Serialize(layout);
 
-                var json = await ActiveDevice.Post("led/layout/full", content);
+                var json = await data.Post("led/layout/full", content);
 
-                if (!ActiveDevice.Error)
+                if (!data.Error)
                 {
-                    Status = (int)ActiveDevice.HttpStatus;
+                    Status = (int)data.HttpStatus;
                     var result = JsonSerializer.Deserialize<SetLayoutResult>(json);
 
                     return result;
                 }
                 else
                 {
-                    return new SetLayoutResult() { code = (int)ActiveDevice.HttpStatus };
+                    return new SetLayoutResult() { code = (int)data.HttpStatus };
                 }
             }
             else

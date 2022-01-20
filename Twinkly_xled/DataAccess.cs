@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Net;
@@ -11,24 +12,27 @@ namespace Twinkly_xled
 {
     public class DataAccess
     {
-        private HttpClient client { get; set; }
+        public HttpClient HttpClient { get; private set; }
 
         public bool Error { get; private set; } = false;
         public HttpStatusCode HttpStatus { get; private set; } = HttpStatusCode.OK;
 
-        private System.Net.IPAddress tw_IP { get; set; }
-        public System.Net.IPAddress IPAddress
+        private IPAddress tw_IP { get; set; }
+        public IPAddress IPAddress
         {
             get { return tw_IP; }
             private set
             {
                 tw_IP = value;
-                client = new HttpClient() { BaseAddress = new Uri($"http://{tw_IP}/xled/v1/") };
+                if (value != null)
+                    HttpClient = new HttpClient() { BaseAddress = new Uri($"http://{tw_IP}/xled/v1/") };
             }
         }
 
         public DateTime ExpiresAt { get; private set; }
         public TimeSpan ExpiresIn => (ExpiresAt - DateTime.Now);
+        public bool Authenticated => (ExpiresIn.TotalMinutes > 0);
+
 
         public DataAccess()
         {
@@ -69,11 +73,11 @@ namespace Twinkly_xled
         {
             const int PORT_NUMBER = 7777;
 
-            using (var Client = new UdpClient())
+            using (var client = new UdpClient())
             {
-               
+
                 // send
-                Client.Send(buffer, buffer.Length, new IPEndPoint(IPAddress, PORT_NUMBER));
+                client.Send(buffer, buffer.Length, new IPEndPoint(IPAddress, PORT_NUMBER));
 
                 // Hope it made it 
 
@@ -89,7 +93,7 @@ namespace Twinkly_xled
             Error = false;
             try
             {
-                var result = await client.GetAsync(url);
+                var result = await HttpClient.GetAsync(url);
                 HttpStatus = result.StatusCode;
                 if (HttpStatus == HttpStatusCode.OK)
                 {
@@ -117,7 +121,7 @@ namespace Twinkly_xled
             Error = false;
             try
             {
-                var result = await client.PostAsync(url, new StringContent(content));
+                var result = await HttpClient.PostAsync(url, new StringContent(content));
                 HttpStatus = result.StatusCode;
                 if (HttpStatus == HttpStatusCode.OK)
                 {
@@ -140,10 +144,10 @@ namespace Twinkly_xled
         // Note the use of X-Auth-Token indicates a less than state of the art authentication system
         public void Authenticate(string token, int expires)
         {
-            if (client.DefaultRequestHeaders.Contains("X-Auth-Token"))
-                client.DefaultRequestHeaders.Remove("X-Auth-Token");
+            if (HttpClient.DefaultRequestHeaders.Contains("X-Auth-Token"))
+                HttpClient.DefaultRequestHeaders.Remove("X-Auth-Token");
 
-            client.DefaultRequestHeaders.Add("X-Auth-Token", token);
+            HttpClient.DefaultRequestHeaders.Add("X-Auth-Token", token);
             ExpiresAt = DateTime.Now.AddSeconds(expires);
 
             Debug.WriteLine($"Auth Token {token} expires at {ExpiresAt:T}");
@@ -153,7 +157,7 @@ namespace Twinkly_xled
         {
             if (ExpiresIn.TotalMinutes > 0)
             {
-                return client.DefaultRequestHeaders.GetValues("X-Auth-Token").FirstOrDefault();
+                return HttpClient.DefaultRequestHeaders.GetValues("X-Auth-Token").FirstOrDefault();
             }
             return string.Empty;
         }
