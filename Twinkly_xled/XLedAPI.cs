@@ -41,6 +41,11 @@ namespace Twinkly_xled
         //}
 
         public List<IPAddress> Devices { get; private set; }
+        public IPAddress ActiveDevice
+        {
+            get { return data?.IPAddress; }
+            set { data.IPAddress = value; }
+        }
 
         public int Status { get; private set; }
 
@@ -64,9 +69,9 @@ namespace Twinkly_xled
                 data = new DataAccess();
                 await Task.Run(() =>
                 {
-                    Devices = data.Locate();
-                    data.IPAddress = Devices.FirstOrDefault();
-                    //ActiveDevice = Devices.FirstOrDefault();
+                    var addresses = data.Locate();
+
+                    Devices = addresses.Select((str) => IPAddress.Parse(str)).ToList();
 
                     Status = 0;
                 });
@@ -77,6 +82,7 @@ namespace Twinkly_xled
                 Debug.WriteLine($"Error Connecting to Twinkly {ex.Message}");
             }
         }
+
 
         #region Unauthenticated
         public async Task<GestaltResult> Info()
@@ -252,7 +258,7 @@ namespace Twinkly_xled
 
         // Gets time when lights should be turned on and time to turn them off.
         // times are second since midnight -1 for not set
-        public async Task<Timer> GetTimer()
+        public async Task<GetTimerResult> GetTimer()
         {
             if (Authenticated)
             {
@@ -260,26 +266,34 @@ namespace Twinkly_xled
                 if (!data.Error)
                 {
                     Status = (int)data.HttpStatus;
-                    var time = JsonSerializer.Deserialize<Timer>(json);
+                    var result = JsonSerializer.Deserialize<GetTimerResult>(json);
 
-                    return time;
+                    return result;
+                }
+                else
+                {
+                    return new GetTimerResult() { code = (int)data.HttpStatus };
                 }
             }
 
-            return new Timer();
+            return new GetTimerResult() { code = (int)HttpStatusCode.Unauthorized };
         }
 
         // on/off -1 for N/A (else Seconds after midnight - 3600 per hour)
-        public async Task<VerifyResult> SetTimer(DateTime now, int on, int off)
+        public Task<VerifyResult> SetTimer(DateTime now, int on, int off)
+        {
+            return SetTimer(new Timer()
+            {
+                time_now = (int)now.TimeOfDay.TotalSeconds,
+                time_on = on,
+                time_off = off
+            });
+        }
+        public async Task<VerifyResult> SetTimer(Timer timer)
         {
             if (Authenticated)
             {
-                var content = JsonSerializer.Serialize(new Timer()
-                {
-                    time_now = (int)now.TimeOfDay.TotalSeconds,
-                    time_on = on,
-                    time_off = off
-                });
+                var content = JsonSerializer.Serialize(timer);
                 Debug.WriteLine(content);
                 var json = await data.Post("timer", content);
 
@@ -621,11 +635,16 @@ namespace Twinkly_xled
         }
 
         // After you upload the movie 
-        public async Task<VerifyResult> SetMovieConfig(int frames_number, int frame_delay, int leds_number)
+        public Task<VerifyResult> SetMovieConfig(int frames_number, int frame_delay, int leds_number)
+        {
+            MovieConfig config = new MovieConfig() { frames_number = frames_number, frame_delay = frame_delay, leds_number = leds_number };
+            return SetMovieConfig(config);
+        }
+
+        public async Task<VerifyResult> SetMovieConfig(MovieConfig config)
         {
             if (Authenticated)
             {
-                MovieConfig config = new MovieConfig() { frames_number = frames_number, frame_delay = frame_delay, leds_number = leds_number };
                 var json = await data.Post("led/movie/config", JsonSerializer.Serialize(config));
 
                 if (!data.Error)

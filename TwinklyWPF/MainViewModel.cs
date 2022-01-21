@@ -6,12 +6,12 @@ using System.Threading.Tasks;
 using Twinkly_xled.JSONModels;
 using Twinkly_xled;
 using System;
-using System.Windows.Input;
 using GalaSoft.MvvmLight.Command;
 using System.Windows.Media;
 using System.Diagnostics;
 using System.Linq;
-using System.Windows.Threading;
+using System.Threading;
+using Timer = Twinkly_xled.JSONModels.Timer;
 
 namespace TwinklyWPF
 {
@@ -298,9 +298,9 @@ namespace TwinklyWPF
 
                 double t = _stopwatch.ElapsedMilliseconds * 0.001;
                 int n = i / 3;
-                frameData[i]   = (byte)(127.5 + 127.5 * Math.Sin(t      + n * 0.5));
-                frameData[++i] = (byte)(127.5 + 127.5 * Math.Sin(t*0.95 + n * 0.5));
-                frameData[++i] = (byte)(127.5 + 127.5 * Math.Sin(t*0.90 + n * 0.5));
+                frameData[i] = (byte)(127.5 + 127.5 * Math.Sin(t + n * 0.5));
+                frameData[++i] = (byte)(127.5 + 127.5 * Math.Sin(t * 0.95 + n * 0.5));
+                frameData[++i] = (byte)(127.5 + 127.5 * Math.Sin(t * 0.90 + n * 0.5));
             }
 
             twinklyapi.SendFrame(frameData);
@@ -380,14 +380,7 @@ namespace TwinklyWPF
 
         public MainViewModel(IReadOnlyList<string> arguments)
         {
-        }
-
-        // one-time initialization
-        async public Task Initialize()
-        {
             twinklyapi = new XLedAPI();
-
-            await Locate();   // TODO: move?
 
             ModeCommand = new RelayCommand<string>(async (x) => await ChangeMode(x));
 
@@ -398,8 +391,13 @@ namespace TwinklyWPF
             m_updateTimer.Elapsed += refreshGui;
             m_updateTimer.Start();
 
-            // notify that twinklyapi.Devices has changed
-            OnPropertyChanged("twinklyapi");
+        }
+
+        // one-time initialization
+        async public Task Initialize()
+        {
+
+            await Locate();   // TODO: move?
 
             // only load if the API detected the Twinkly at startup
             if (TwinklyDetected)
@@ -412,9 +410,12 @@ namespace TwinklyWPF
 
             await twinklyapi.Locate();
 
+            // notify that twinklyapi.Devices has changed
+            OnPropertyChanged("twinklyapi");
+
             TwinklyDetected = (twinklyapi.Status == 0 && twinklyapi.Devices?.Count() > 0);
 
-            switch(twinklyapi.Status)
+            switch (twinklyapi.Status)
             {
                 case 0:
                     Message = $"Found {twinklyapi.Devices?.Count()} devices.";
@@ -428,6 +429,28 @@ namespace TwinklyWPF
                     Message = $"Locate failed. Status={twinklyapi.Status}";
                     break;
             }
+        }
+
+        public async Task FakeLocate()
+        {
+            await AddDevice(IPAddress.Parse("192.168.0.18"));
+            await AddDevice(IPAddress.Parse("192.168.0.19"));
+            await AddDevice(IPAddress.Parse("192.168.0.20"));
+            await AddDevice(IPAddress.Parse("192.168.0.21"));
+
+            // do what Locate() does
+            if (twinklyapi.ActiveDevice == null)
+            {
+                twinklyapi.ActiveDevice = twinklyapi.Devices.FirstOrDefault();
+            }
+
+            if (twinklyapi.ActiveDevice != null)
+                TwinklyDetected = true;
+
+            OnPropertyChanged("twinklyapi");
+            OnPropertyChanged("TwinklyDetected");
+
+            await Load();
         }
 
         private async Task Load()
@@ -487,18 +510,41 @@ namespace TwinklyWPF
             }
         }
 
-        public async void AddDevice(IPAddress ipAddress)
+        private readonly SemaphoreSlim m_apiSemaphore = new SemaphoreSlim(1, 1);
+
+        public async Task AddDevice(IPAddress ipAddress)
         {
-            twinklyapi.data.IPAddress = ipAddress;
+            if (twinklyapi.Devices.Contains(ipAddress))
+                return;
 
-            // this is a cheat
             twinklyapi.Devices.Add(ipAddress);
-            TwinklyDetected = true;
-            await Load();
 
-            //// notify that twinklyapi.Devices has changed
-            //OnPropertyChanged();
-            //OnPropertyChanged("twinklyapi");
+            /*await m_apiSemaphore.WaitAsync();
+
+            try
+            {
+
+                Message = $"Loading {ipAddress}...";
+
+                twinklyapi.data.IPAddress = ipAddress;
+                OnPropertyChanged("twinklyapi");
+
+                twinklyapi.Devices.Add(ipAddress);
+                // this is a cheat
+                TwinklyDetected = true;
+                await Load();
+
+                //// notify that twinklyapi.Devices has changed
+                //OnPropertyChanged();
+                OnPropertyChanged("twinklyapi");
+
+                Message = $"Loaded {ipAddress}.";
+
+            }
+            finally
+            {
+                m_apiSemaphore.Release();
+            }*/
         }
             
         private void refreshGui(object sender, System.Timers.ElapsedEventArgs e)
@@ -508,6 +554,11 @@ namespace TwinklyWPF
 
         private async Task UpdateAuthModels()
         {
+            if (m_apiSemaphore.CurrentCount == 0)
+                return; // boring task anyway
+
+            await m_apiSemaphore.WaitAsync();
+
             try
             {
                 if (!twinklyapi.Authenticated)
@@ -531,6 +582,10 @@ namespace TwinklyWPF
             {
                 // need a mutex instead
                 OnPropertyChanged();
+            }
+            finally
+            {
+                m_apiSemaphore.Release();
             }
         }
 

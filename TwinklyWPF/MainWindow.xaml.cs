@@ -54,10 +54,7 @@ namespace TwinklyWPF
 
         private async void AddIpAddress_Click(object sender, RoutedEventArgs e)
         {
-            MainViewModel.AddDevice(IPAddress.Parse("192.168.0.18"));
-            MainViewModel.AddDevice(IPAddress.Parse("192.168.0.19"));
-            MainViewModel.AddDevice(IPAddress.Parse("192.168.0.20"));
-            MainViewModel.AddDevice(IPAddress.Parse("192.168.0.21"));
+            await MainViewModel.FakeLocate();
         }
 
         private bool m_DevicesTextInput = false;

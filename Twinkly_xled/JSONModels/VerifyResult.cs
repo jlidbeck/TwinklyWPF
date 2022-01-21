@@ -6,7 +6,11 @@
     {
         public int code { get; set; } // 1000 is ok 1104 is not
 
-        public override string ToString() => $"code: {code}";
+        public override string ToString()
+        {
+            ResultCode? resultCode = (ResultCode?)code;
+            return $"code: {code} {resultCode?.ToString()}";
+        }
         public bool IsOK => code == 1000;
     }
 

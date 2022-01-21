@@ -58,7 +58,7 @@ namespace Twinkly_xled
         }
 
         // UDP Scan for the lights - can only deal with the first one 
-        public List<IPAddress> Locate()
+        public ICollection<string> Locate()
         {
             var addresses = new SortedSet<string>();
 
@@ -67,7 +67,8 @@ namespace Twinkly_xled
             using (var udp = new UdpClient())
             {
                 udp.EnableBroadcast = true;
-                udp.Client.ReceiveTimeout = 1000; // 1 sec, synchronous only
+                udp.Client.ReceiveTimeout = 5000; // 1 sec, synchronous only
+                var endpoint = new IPEndPoint(IPAddress.Any, 0);
 
                 // send
                 byte[] sendbuf = Encoding.ASCII.GetBytes((char)0x01 + "discover");
@@ -78,20 +79,20 @@ namespace Twinkly_xled
                              IPAddress.Broadcast,
                              PORT_NUMBER));
 
-                    var task = Task.Run(async () =>
-                    {
+                    //var task = Task.Run(async () =>
+                    //{
                         while (true)
                         {
                             // receive
-                            UdpReceiveResult result = await udp.ReceiveAsync();
+                            byte[] result = udp.Receive(ref endpoint);
 
                             // don't need to parse the message - we know who responded
                             // <ip>OK<device_name>
-                            Debug.WriteLine($"Reply: {result.RemoteEndPoint.Address}: {BitConverter.ToString(result.Buffer)}");
-                            addresses.Add(result.RemoteEndPoint.Address.ToString());
+                            Debug.WriteLine($"Reply: {endpoint.Address}: {BitConverter.ToString(result)}");
+                            addresses.Add(endpoint.Address.ToString());
                         }
-                    });
-                    task.Wait(3000);
+                    //});
+                    //task.Wait(3000);
                 }
                 catch (SocketException err)
                 {
@@ -111,13 +112,13 @@ namespace Twinkly_xled
             }   // using udp
 
             Debug.WriteLine($"** got {addresses.Count()} addresses **");
-            var devices = new List<IPAddress>();
-            foreach (var ip in addresses)
+
+            if (IPAddress == null && addresses.Count() > 0)
             {
-                devices.Add(IPAddress.Parse(ip));
+                IPAddress = IPAddress.Parse(addresses.FirstOrDefault());
             }
 
-            return devices;
+            return addresses;
         }
 
         // UDP port 7777 for realtime 
@@ -148,7 +149,7 @@ namespace Twinkly_xled
             {
                 HttpResponseMessage = await HttpClient.GetAsync(url);
                 //HttpStatus = HttpResponseMessage.StatusCode;
-                if (HttpResponseMessage.StatusCode == HttpStatusCode.OK)
+                if (HttpResponseMessage.IsSuccessStatusCode)
                 {
                     return await HttpResponseMessage.Content.ReadAsStringAsync();
                 }
