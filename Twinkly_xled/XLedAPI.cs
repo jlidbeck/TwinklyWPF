@@ -40,12 +40,12 @@ namespace Twinkly_xled
         //    }
         //}
 
-        public List<IPAddress> Devices { get; private set; }
-        public IPAddress ActiveDevice
-        {
-            get { return data?.IPAddress; }
-            set { data.IPAddress = value; }
-        }
+        //public List<IPAddress> Devices { get; private set; }
+        //public IPAddress ActiveDevice
+        //{
+        //    get { return data?.IPAddress; }
+        //    set { data.IPAddress = value; }
+        //}
 
         public int Status { get; private set; }
 
@@ -54,33 +54,37 @@ namespace Twinkly_xled
         public DateTime Uptime { get; private set; } = new DateTime();
 
         public bool Authenticated => (data?.ExpiresIn.TotalMinutes > 0);
-        //public DateTime ExpiresAt => (m_data == null ? DateTime.Now : ActiveDevice.ExpiresAt);
-        //public TimeSpan ExpiresIn => (m_data == null ? new TimeSpan(0) : ActiveDevice.ExpiresIn);
 
         public XLedAPI()
         {
         }
 
-        async public Task Locate()
+        async public Task<ICollection<string>> Locate()
         {
             // DataAccess will attempt a UDP locate of the twinkly lights - if they are powered down a timeout is thrown
             try
             {
                 data = new DataAccess();
+
+                ICollection<string> addresses = null;
+
                 await Task.Run(() =>
                 {
-                    var addresses = data.Locate();
-
-                    Devices = addresses.Select((str) => IPAddress.Parse(str)).ToList();
-
-                    Status = 0;
+                    addresses = data.Locate();
                 });
+
+                //Devices = addresses.Select((str) => IPAddress.Parse(str)).ToList();
+
+                Status = 0;
+                return addresses;
             }
             catch (Exception ex)
             {
                 Status = (int)HttpStatusCode.RequestTimeout;
                 Debug.WriteLine($"Error Connecting to Twinkly {ex.Message}");
             }
+
+            return null;
         }
 
 

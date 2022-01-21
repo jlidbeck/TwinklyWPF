@@ -49,7 +49,7 @@ namespace TwinklyWPF
         {
             await MainViewModel.FakeLocate();
         }
-
+        /*
         private bool m_DevicesTextInput = false;
 
         private void Devices_TextInput(object sender, TextChangedEventArgs e)

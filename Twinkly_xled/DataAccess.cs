@@ -67,7 +67,7 @@ namespace Twinkly_xled
             using (var udp = new UdpClient())
             {
                 udp.EnableBroadcast = true;
-                udp.Client.ReceiveTimeout = 5000; // 1 sec, synchronous only
+                udp.Client.ReceiveTimeout = 2000; // 1 sec, synchronous only
                 var endpoint = new IPEndPoint(IPAddress.Any, 0);
 
                 // send

@@ -42,6 +42,27 @@ namespace TwinklyWPF
             }
         }
 
+        List<IPAddress> m_devices;
+        public List<IPAddress> Devices
+        {
+            get => m_devices; 
+            private set
+            {
+                m_devices = value;
+                OnPropertyChanged();
+            }
+        }
+        public IPAddress ActiveDevice
+        {
+            get => twinklyapi.data?.IPAddress;
+            set 
+            { 
+                // TODO: initialize this properly
+                twinklyapi.data.IPAddress = value;
+                OnPropertyChanged();
+            }
+        }
+
         private string message = "";
         public string Message
         {
@@ -408,17 +429,18 @@ namespace TwinklyWPF
         {
             Message = "Searching...";
 
-            await twinklyapi.Locate();
+            var addresses = await twinklyapi.Locate();
+            Devices = addresses.Select((str) => IPAddress.Parse(str)).ToList();
 
             // notify that twinklyapi.Devices has changed
-            OnPropertyChanged("twinklyapi");
+            //OnPropertyChanged("twinklyapi");
 
-            TwinklyDetected = (twinklyapi.Status == 0 && twinklyapi.Devices?.Count() > 0);
+            TwinklyDetected = (twinklyapi.Status == 0 && Devices?.Count() > 0);
 
             switch (twinklyapi.Status)
             {
                 case 0:
-                    Message = $"Found {twinklyapi.Devices?.Count()} devices.";
+                    Message = $"Found {Devices?.Count()} devices.";
                     break;
 
                 case (int)HttpStatusCode.RequestTimeout:
@@ -439,16 +461,17 @@ namespace TwinklyWPF
             await AddDevice(IPAddress.Parse("192.168.0.21"));
 
             // do what Locate() does
-            if (twinklyapi.ActiveDevice == null)
+            if (ActiveDevice == null)
             {
-                twinklyapi.ActiveDevice = twinklyapi.Devices.FirstOrDefault();
+                ActiveDevice = Devices.FirstOrDefault();
             }
 
-            if (twinklyapi.ActiveDevice != null)
+            if (ActiveDevice != null)
                 TwinklyDetected = true;
 
-            OnPropertyChanged("twinklyapi");
-            OnPropertyChanged("TwinklyDetected");
+            //OnPropertyChanged("twinklyapi");
+            //OnPropertyChanged("twinklyapi.Devices");
+            //OnPropertyChanged("TwinklyDetected");
 
             await Load();
         }
@@ -514,10 +537,10 @@ namespace TwinklyWPF
 
         public async Task AddDevice(IPAddress ipAddress)
         {
-            if (twinklyapi.Devices.Contains(ipAddress))
+            if (Devices.Contains(ipAddress))
                 return;
 
-            twinklyapi.Devices.Add(ipAddress);
+            Devices.Add(ipAddress);
 
             /*await m_apiSemaphore.WaitAsync();
 
