@@ -34,16 +34,9 @@ namespace TwinklyWPF
             MainViewModel.RealtimeTest_Click(sender);
         }
 
-        private void Devices_SelectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
+        private void Devices_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            //MainViewModel.twinklyapi.Devices
-        }
-
-        private async void GetLayoutTest_Click(object sender, RoutedEventArgs e)
-        {
-            var layout = await MainViewModel.twinklyapi.GetLayout();
-            var content = JsonSerializer.Serialize(layout);
-            MessageBox.Show(content);
+            //twinklyapi.ActiveDevice changed
         }
 
 
@@ -88,6 +81,31 @@ namespace TwinklyWPF
             }
 
             m_DevicesTextInput = false;
+        }*/
+
+        private async void GetLayoutTest_Click(object sender, RoutedEventArgs e)
+        {
+            var layout = await MainViewModel.twinklyapi.GetLayout();
+            var content = JsonSerializer.Serialize(layout);
+            MessageBox.Show(content);
+        }
+
+        //private Twinkly_xled.JSONModels.CurrentMovieConfig m_movieConfig;
+
+        private async void GetMovieConfigTest_Click(object sender, RoutedEventArgs e)
+        {
+            var config = await MainViewModel.twinklyapi.GetMovieConfig();
+            var content = JsonSerializer.Serialize(config).Replace(",", ",\n").Replace(":{", ":\n{");
+            MessageBox.Show(content, $"GetMovieConfig: {(config.IsOK?"Ok":"FAILED")}");
+            if(config.IsOK)
+                MainViewModel.CurrentMovie = config;
+        }
+
+        private async void SetMovieConfigTest_Click(object sender, RoutedEventArgs e)
+        {
+            var config = MainViewModel.CurrentMovie;
+            var result = await MainViewModel.twinklyapi.SetMovieConfig(config);
+            MessageBox.Show($"SetMovieConfig result: {result.ToString()}");
         }
     }
 }
