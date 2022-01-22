@@ -1,4 +1,6 @@
-﻿namespace Twinkly_xled.JSONModels
+﻿using System.Text.Json.Serialization;
+
+namespace Twinkly_xled.JSONModels
 {
     // used by calls that only return a code in their response, e.g.
     // Verify, set Timer, set brightness, set mode
@@ -11,6 +13,7 @@
             ResultCode? resultCode = (ResultCode?)code;
             return $"code: {code} {resultCode?.ToString()}";
         }
+        [JsonIgnore]
         public bool IsOK => code == 1000;
     }
 

@@ -94,12 +94,11 @@
                 <RowDefinition Height="auto" />
             </Grid.RowDefinitions>
 
-            <StackPanel
-                x:Name="Product"
-                Grid.Row="0"
-                Grid.Column="0"
-                Grid.ColumnSpan="2"
-                Orientation="Horizontal">
+            <StackPanel x:Name="Product"
+                                Grid.Row="0"
+                                Grid.Column="0"
+                                Grid.ColumnSpan="2"
+                                Orientation="Horizontal">
                 <TextBlock
                     Margin="2,0,2,2"
                     Foreground="LightYellow"
@@ -131,12 +130,11 @@
                     Text="{Binding FW.version}" />
             </StackPanel>
 
-            <StackPanel
-                x:Name="Network"
-                Grid.Row="1"
-                Grid.Column="0"
-                Grid.ColumnSpan="2"
-                Orientation="Horizontal">
+            <StackPanel x:Name="Network"
+                        Grid.Row="1"
+                        Grid.Column="0"
+                        Grid.ColumnSpan="2"
+                        Orientation="Horizontal">
                 <TextBlock
                     Margin="2,0,2,2"
                     Foreground="LightYellow"
@@ -151,12 +149,11 @@
                     Text="{Binding twinklyapi.data.IPAddress}" />
             </StackPanel>
 
-            <StackPanel
-                x:Name="Copyright"
-                Grid.Row="2"
-                Grid.Column="0"
-                Grid.ColumnSpan="2"
-                Orientation="Horizontal">
+            <StackPanel x:Name="Device"
+                                Grid.Row="2"
+                                Grid.Column="0"
+                                Grid.ColumnSpan="2"
+                                Orientation="Horizontal">
                 <TextBlock
                     Margin="2,0,0,2"
                     Foreground="LightYellow"
@@ -180,12 +177,11 @@
                     Text="{Binding Gestalt.led_type}" />
             </StackPanel>
 
-            <StackPanel
-                x:Name="Uptime"
-                Grid.Row="4"
-                Grid.Column="0"
-                Grid.ColumnSpan="2"
-                Orientation="Horizontal">
+            <StackPanel x:Name="Uptime"
+                        Grid.Row="4"
+                        Grid.Column="0"
+                        Grid.ColumnSpan="2"
+                        Orientation="Horizontal">
                 <TextBlock
                     Margin="2"
                     Foreground="LightYellow"
@@ -196,12 +192,11 @@
                     Text="{Binding twinklyapi.Uptime, StringFormat=HH\\:mm\\:ss}" />
             </StackPanel>
 
-            <StackPanel
-                x:Name="Timers"
-                Grid.Row="5"
-                Grid.Column="0"
-                Grid.ColumnSpan="2"
-                Orientation="Horizontal">
+            <StackPanel x:Name="Timers"
+                        Grid.Row="5"
+                        Grid.Column="0"
+                        Grid.ColumnSpan="2"
+                        Orientation="Horizontal">
                 <TextBlock
                     Margin="2"
                     Foreground="LightYellow"
@@ -228,12 +223,11 @@
                     Text="{Binding Timer.time_off}" />
             </StackPanel>
 
-            <StackPanel
-                x:Name="Effects"
-                Grid.Row="6"
-                Grid.Column="0"
-                Grid.ColumnSpan="2"
-                Orientation="Horizontal">
+            <StackPanel x:Name="Effects"
+                                Grid.Row="6"
+                                Grid.Column="0"
+                                Grid.ColumnSpan="2"
+                                Orientation="Horizontal">
                 <TextBlock
                     Margin="2"
                     Foreground="LightYellow"
@@ -244,6 +238,14 @@
                     Foreground="DarkOrange"
                     Text="{Binding CurrentMode.mode}" />
 
+                <TextBlock
+                    Margin="10,2,2,2"
+                    Foreground="LightYellow"
+                    Text="Group:">
+                    <Run Foreground="Yellow" Text="{Binding CurrentMovie.sync.mode, Mode=OneWay}" />
+                    <Run Foreground="Yellow" Text="{Binding CurrentMovie.GroupName, Mode=OneWay}" />
+                </TextBlock>
+                
                 <TextBlock
                     Margin="10,2,2,2"
                     Foreground="LightYellow"

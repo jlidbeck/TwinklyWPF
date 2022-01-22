@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Text.Json.Serialization;
 
 namespace Twinkly_xled.JSONModels
 {
@@ -39,15 +40,19 @@ namespace Twinkly_xled.JSONModels
         public int loop_type { get; set; }
         public SyncDef sync { get; set; }
         public int code { get; set; }
+
+        [JsonIgnore]
         public bool IsOK => code == (int)ResultCode.Ok;
+        [JsonIgnore]
+        public string GroupName => sync?.master_id != null ? sync.master_id : sync?.slave_id != null ? sync.slave_id : null;
     }
 
     public class SyncDef
     {
         public string mode { get; set; }        // "slave" or "master"
+        public string slave_id { get; set; }    // if mode is "slave", the device group name
+        public string master_id { get; set; }   // if mode is "master", the device group name
         public int compat_mode { get; set; }
-        public string slave_id { get; set; }    
-        public string master_id { get; set; }   // device group name
     }
 
 }
