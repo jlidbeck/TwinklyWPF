@@ -140,6 +140,7 @@ namespace Twinkly_xled
 
         /// <summary>
         /// GET - read information from the twinkly API
+        /// Throws exception if IPAddress has not been set
         /// </summary>
         public async Task<string> Get(string url)
         {
@@ -169,6 +170,7 @@ namespace Twinkly_xled
 
         /// <summary>
         /// POST - change information on the twinkly device
+        /// Throws exception if IPAddress has not been set
         /// </summary>
         public async Task<string> Post(string url, string content)
         {
