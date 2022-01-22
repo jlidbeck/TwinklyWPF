@@ -28,25 +28,6 @@ namespace Twinkly_xled
     {
         public DataAccess data { get; private set; }
 
-        //private Device m_activeDevice;
-        //public Device ActiveDevice // => m_data?.ActiveDevice;
-        //{
-        //    get { return m_activeDevice; }
-        //    set
-        //    {
-        //        m_activeDevice = value;
-        //        if (ActiveDevice?.Authenticated == false)
-        //            Login().Wait(500);
-        //    }
-        //}
-
-        //public List<IPAddress> Devices { get; private set; }
-        //public IPAddress ActiveDevice
-        //{
-        //    get { return data?.IPAddress; }
-        //    set { data.IPAddress = value; }
-        //}
-
         public int Status { get; private set; }
 
         //public IPAddress IPAddress => (ActiveDevice?.IPAddress);
@@ -72,8 +53,6 @@ namespace Twinkly_xled
                 {
                     addresses = data.Locate();
                 });
-
-                //Devices = addresses.Select((str) => IPAddress.Parse(str)).ToList();
 
                 Status = 0;
                 return addresses;
@@ -544,9 +523,9 @@ namespace Twinkly_xled
                 if (!data.Error)
                 {
                     Status = (int)data.HttpStatus;
-                    var config = JsonSerializer.Deserialize<LedConfigResult>(json);
+                    var result = JsonSerializer.Deserialize<LedConfigResult>(json);
 
-                    return config;
+                    return result;
                 }
                 else
                 {
@@ -623,9 +602,9 @@ namespace Twinkly_xled
                 if (!data.Error)
                 {
                     Status = (int)data.HttpStatus;
-                    var config = JsonSerializer.Deserialize<CurrentMovieConfig>(json);
+                    var result = JsonSerializer.Deserialize<CurrentMovieConfig>(json);
 
-                    return config;
+                    return result;
                 }
                 else
                 {
@@ -857,7 +836,7 @@ namespace Twinkly_xled
             // Color Data
             for (int i = 10; i < RT_Buffer.Length; i += c.Length)
             {
-                Buffer.BlockCopy(c, 0, RT_Buffer, i, c.Length);
+                Buffer.BlockCopy(c, 0, RT_Buffer, i, Math.Min(c.Length, RT_Buffer.Length - i));
             }
 
             data.RTFX(RT_Buffer);

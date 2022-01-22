@@ -23,7 +23,7 @@ namespace TwinklyWPF
 
     public class MainViewModel : INotifyPropertyChanged, IDataErrorInfo
     {
-        public XLedAPI twinklyapi { get; private set; }
+        public XLedAPI twinklyapi { get; private set; } = new XLedAPI();
 
         public RelayCommand<string> ModeCommand { get; private set; }
         public RelayCommand UpdateTimerCommand { get; private set; }
@@ -32,15 +32,9 @@ namespace TwinklyWPF
 
         private System.Timers.Timer _updateTimer;
 
-        private bool _twinklyDetected = false;
         public bool TwinklyDetected
         {
-            get { return _twinklyDetected; }
-            private set
-            {
-                _twinklyDetected = value;
-                OnPropertyChanged();
-            }
+            get { return Devices.Count() > 0; }
         }
 
         public ObservableCollection<IPAddress> Devices { get; } = new ObservableCollection<IPAddress>();
@@ -147,12 +141,18 @@ namespace TwinklyWPF
             get { return m_CurrentMode; }
             private set
             {
-                m_CurrentMode = value;
-                OnPropertyChanged();
-                OnPropertyChanged("CurrentMode_Movie");
-                OnPropertyChanged("CurrentMode_Off");
-                OnPropertyChanged("CurrentMode_Demo");
-                OnPropertyChanged("CurrentMode_Realtime");
+                if (value?.mode != m_CurrentMode?.mode)
+                {
+                    m_CurrentMode = value;
+                    OnPropertyChanged();
+                    OnPropertyChanged("CurrentMode_Movie");
+                    OnPropertyChanged("CurrentMode_Off");
+                    OnPropertyChanged("CurrentMode_Demo");
+                    OnPropertyChanged("CurrentMode_Realtime");
+
+                    _frameTimer?.Stop();
+                    _frameTimer = null;
+                }
             }
         }
 
@@ -302,7 +302,7 @@ namespace TwinklyWPF
 
         Random _random = new Random();
 
-        private byte[] frameData = new byte[60];
+        private byte[] frameData = new byte[660*3];
 
         private void OnFrameTimerElapsed(object sender, System.Timers.ElapsedEventArgs e)
         {
@@ -399,8 +399,6 @@ namespace TwinklyWPF
 
         public MainViewModel(IReadOnlyList<string> arguments)
         {
-            twinklyapi = new XLedAPI();
-
             ModeCommand = new RelayCommand<string>(async (x) => await ChangeMode(x));
 
             UpdateTimerCommand = new RelayCommand(async () => await ChangeTimer());
@@ -438,7 +436,8 @@ namespace TwinklyWPF
 
             Unload();
             Devices.Clear();
-            TwinklyDetected = false;
+            //TwinklyDetected = false;
+            OnPropertyChanged("TwinklyDetected");
 
             Message = "Searching...";
 
@@ -451,7 +450,8 @@ namespace TwinklyWPF
             // notify that twinklyapi.Devices has changed
             //OnPropertyChanged("twinklyapi");
 
-            TwinklyDetected = (twinklyapi.Status == 0 && Devices?.Count() > 0);
+            //TwinklyDetected = (twinklyapi.Status == 0 && Devices?.Count() > 0);
+            OnPropertyChanged("TwinklyDetected");
 
             if (TwinklyDetected)
             {
@@ -491,12 +491,12 @@ namespace TwinklyWPF
                     ActiveDevice = Devices.FirstOrDefault();
                 }
 
-                if (ActiveDevice != null)
-                    TwinklyDetected = true;
+                //if (ActiveDevice != null)
+                //    TwinklyDetected = true;
 
                 //OnPropertyChanged("twinklyapi");
                 //OnPropertyChanged("twinklyapi.Devices");
-                //OnPropertyChanged("TwinklyDetected");
+                OnPropertyChanged("TwinklyDetected");
 
                 await Load();
             }
@@ -654,11 +654,6 @@ namespace TwinklyWPF
 
             try
             {
-                //if (!Loaded)
-                //{
-                //    await Load();
-                //}
-
                 if (!twinklyapi.Authenticated)
                     return;
 
