@@ -36,7 +36,7 @@ namespace TwinklyWPF
 
         private async void AddIpAddress_Click(object sender, RoutedEventArgs e)
         {
-            await MainViewModel.FakeLocate();
+            //await MainViewModel.FakeLocate();
         }
         /*
         private bool m_DevicesTextInput = false;
@@ -107,7 +107,7 @@ namespace TwinklyWPF
                 if (m_hueSliderValueChanged)
                 {
                     var v = HueSlider.Value;
-                    var _ = MainViewModel.UpdateColorAsync();
+                    var _ = MainViewModel.ActiveDevice?.UpdateColorAsync();
                     m_hueSliderValueChanged = false;
 
                     m_hueSliderPauseTimer = new Timer() { Enabled = true, AutoReset = false, Interval = 200 };
@@ -121,32 +121,32 @@ namespace TwinklyWPF
 
         private async void GetLayoutTest_Click(object sender, RoutedEventArgs e)
         {
-            var layout = await MainViewModel.twinklyapi.GetLayout();
+            var layout = await MainViewModel.ActiveDevice?.twinklyapi.GetLayout();
             var content = JsonSerializer.Serialize(layout);
             MessageBox.Show(content);
         }
 
         private async void GetMovieConfigTest_Click(object sender, RoutedEventArgs e)
         {
-            var config = await MainViewModel.twinklyapi.GetMovieConfig();
+            var config = await MainViewModel.ActiveDevice?.twinklyapi.GetMovieConfig();
             var content = JsonSerializer.Serialize(
                 config,
                 new JsonSerializerOptions(JsonSerializerDefaults.General) { WriteIndented = true });
             MessageBox.Show(content, $"GetMovieConfig: {(config.IsOK ? "Ok" : "FAILED")}");
             if (config.IsOK)
-                MainViewModel.CurrentMovie = config;
+                MainViewModel.ActiveDevice.CurrentMovie = config;
         }
 
         private async void SetMovieConfigTest_Click(object sender, RoutedEventArgs e)
         {
-            var config = MainViewModel.CurrentMovie;
-            var result = await MainViewModel.twinklyapi.SetMovieConfig(config);
+            var config = MainViewModel.ActiveDevice?.CurrentMovie;
+            var result = await MainViewModel.ActiveDevice?.twinklyapi.SetMovieConfig(config);
             MessageBox.Show($"SetMovieConfig result: {result.ToString()}");
         }
 
         private void RealtimeTest_Click(object sender, RoutedEventArgs e)
         {
-            MainViewModel.RealtimeTest_Click(sender);
+            MainViewModel.ActiveDevice?.RealtimeTest_Click(sender);
         }
 
         private void ShowDetails_Click(object sender, RoutedEventArgs e)
@@ -154,9 +154,9 @@ namespace TwinklyWPF
             object o;
             switch (((Button)e.Source).Name)
             {
-                case "GestaltDetails":      o = MainViewModel.Gestalt; break;
-                case "CurrentMovieDetails": o = MainViewModel.CurrentMovie; break;
-                case "CurrentModeDetails":  o = MainViewModel.CurrentMode; break;
+                case "GestaltDetails":      o = MainViewModel.ActiveDevice?.Gestalt; break;
+                case "CurrentMovieDetails": o = MainViewModel.ActiveDevice?.CurrentMovie; break;
+                case "CurrentModeDetails":  o = MainViewModel.ActiveDevice?.CurrentMode; break;
                 default: return;
             }
             var json = JsonSerializer.Serialize(

@@ -26,7 +26,7 @@ namespace Twinkly_xled
     // --------------------------------------------------------------------------
     public class XLedAPI
     {
-        public DataAccess data { get; set; }
+        public DataAccess data { get; private set; }
 
         public int Status { get; private set; }
 
@@ -34,35 +34,19 @@ namespace Twinkly_xled
 
         public bool Authenticated => (data?.ExpiresIn.TotalMinutes > 0);
 
+        public IPAddress IPAddress
+        {
+            get => data?.IPAddress;
+            set
+            {
+                Debug.Assert(value != null);
+                data = new DataAccess(value);
+            }
+        }
+
         public XLedAPI()
         {
         }
-
-        /*async public Task<ICollection<string>> Discover()
-        {
-            // DataAccess will attempt a UDP locate of the twinkly lights - if they are powered down a timeout is thrown
-            try
-            {
-                data = new DataAccess();
-
-                ICollection<string> addresses = null;
-
-                await Task.Run(() =>
-                {
-                    addresses = data.Discover();
-                });
-
-                Status = 0;
-                return addresses;
-            }
-            catch (Exception ex)
-            {
-                Status = (int)HttpStatusCode.RequestTimeout;
-                Debug.WriteLine($"Error Connecting to Twinkly {ex.Message}");
-            }
-
-            return null;
-        }*/
 
 
         #region Unauthenticated

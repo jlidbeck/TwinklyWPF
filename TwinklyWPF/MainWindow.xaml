@@ -52,6 +52,14 @@
             Foreground="WhiteSmoke"
             Text="{Binding Message}"
             TextWrapping="Wrap" />
+        <TextBlock
+            Grid.Row="1"
+            Grid.Column="1"
+            Margin="2,0,2,2"
+            FontSize="15"
+            Foreground="WhiteSmoke"
+            Text="{Binding ActiveDevice.Message}"
+            TextWrapping="Wrap" />
         <StackPanel Orientation="Horizontal"
                     Grid.Row="1" Grid.Column="1"
                     Margin="5 0"
@@ -101,19 +109,19 @@
                 <TextBlock
                     Margin="2,0,2,2"
                     Foreground="LightYellow"
-                    Text="{Binding Gestalt.product_name}" />
+                    Text="{Binding ActiveDevice.Gestalt.product_name}" />
                 <TextBlock
                     Margin="2,0,2,2"
                     Foreground="DarkOrange"
-                    Text="{Binding Gestalt.product_code}" />
+                    Text="{Binding ActiveDevice.Gestalt.product_code}" />
                 <TextBlock
                     Margin="2,0,2,2"
                     Foreground="LightYellow"
-                    Text="{Binding Gestalt.device_name}" />
+                    Text="{Binding ActiveDevice.Gestalt.device_name}" />
                 <TextBlock
                     Margin="2,0,2,2"
                     Foreground="DarkOrange"
-                    Text="{Binding Gestalt.led_profile}" />
+                    Text="{Binding ActiveDevice.Gestalt.led_profile}" />
 
                 <TextBlock
                     Margin="2,0,0,2"
@@ -122,11 +130,11 @@
                 <TextBlock
                     Margin="2"
                     Foreground="DarkOrange"
-                    Text="{Binding Gestalt.fw_family}" />
+                    Text="{Binding ActiveDevice.Gestalt.fw_family}" />
                 <TextBlock
                     Margin="2"
                     Foreground="DarkOrange"
-                    Text="{Binding FW.version}" />
+                    Text="{Binding ActiveDevice.FW.version}" />
             </StackPanel>
             <Button x:Name="GestaltDetails" 
                     Content="Gestalt" 
@@ -143,15 +151,15 @@
                 <TextBlock
                     Margin="2,0,2,2"
                     Foreground="LightYellow"
-                    Text="{Binding Gestalt.mac}" />
+                    Text="{Binding ActiveDevice.Gestalt.mac}" />
                 <TextBlock
                     Margin="2,0,2,2"
                     Foreground="LightYellow"
-                    Text="{Binding Gestalt.uuid}" />
+                    Text="{Binding ActiveDevice.Gestalt.uuid}" />
                 <TextBlock
                     Margin="2,0,2,2"
                     Foreground="LightYellow"
-                    Text="{Binding twinklyapi.data.IPAddress}" />
+                    Text="{Binding ActiveDevice.twinklyapi.data.IPAddress}" />
             </StackPanel>
 
             <StackPanel x:Name="Device"
@@ -166,12 +174,12 @@
                 <TextBlock
                     Margin="2,0,2,2"
                     Foreground="DarkOrange"
-                    Text="{Binding Gestalt.copyright}" />
+                    Text="{Binding ActiveDevice.Gestalt.copyright}" />
 
                 <TextBlock
                     Margin="20,0,2,2"
                     Foreground="Yellow"
-                    Text="{Binding Gestalt.number_of_led}" />
+                    Text="{Binding ActiveDevice.Gestalt.number_of_led}" />
                 <TextBlock
                     Margin="0,0,2,2"
                     Foreground="LightYellow"
@@ -179,7 +187,7 @@
                 <TextBlock
                     Margin="2,0,2,2"
                     Foreground="Yellow"
-                    Text="{Binding Gestalt.led_type}" />
+                    Text="{Binding ActiveDevice.Gestalt.led_type}" />
             </StackPanel>
 
             <StackPanel x:Name="Uptime"
@@ -194,7 +202,7 @@
                 <TextBlock
                     Margin="2"
                     Foreground="LightYellow"
-                    Text="{Binding twinklyapi.Uptime, StringFormat=HH\\:mm\\:ss}" />
+                    Text="{Binding ActiveDevice.twinklyapi.Uptime, StringFormat=HH\\:mm\\:ss}" />
             </StackPanel>
 
             <StackPanel x:Name="Timers"
@@ -209,7 +217,7 @@
                 <TextBlock
                     Margin="2"
                     Foreground="LightYellow"
-                    Text="{Binding TimerNow, StringFormat=HH\\:mm\\:ss}" />
+                    Text="{Binding ActiveDevice.TimerNow, StringFormat=HH\\:mm\\:ss}" />
                 <TextBlock
                     Margin="2"
                     Foreground="LightYellow"
@@ -217,7 +225,7 @@
                 <TextBlock
                     Margin="2"
                     Foreground="LightYellow"
-                    Text="{Binding Timer.time_on}" />
+                    Text="{Binding ActiveDevice.Timer.time_on}" />
                 <TextBlock
                     Margin="2"
                     Foreground="LightYellow"
@@ -225,7 +233,7 @@
                 <TextBlock
                     Margin="2"
                     Foreground="LightYellow"
-                    Text="{Binding Timer.time_off}" />
+                    Text="{Binding ActiveDevice.Timer.time_off}" />
             </StackPanel>
 
             <StackPanel x:Name="Effects"
@@ -241,14 +249,14 @@
                     Margin="2"
                     FontWeight="Bold"
                     Foreground="DarkOrange"
-                    Text="{Binding CurrentMode.mode}" />
+                    Text="{Binding ActiveDevice.CurrentMode.mode}" />
 
                 <TextBlock
                     Margin="10,2,2,2"
                     Foreground="LightYellow"
                     Text="Group:">
-                    <Run Foreground="Yellow" Text="{Binding CurrentMovie.sync.mode, Mode=OneWay}" />
-                    <Run Foreground="Yellow" Text="{Binding CurrentMovie.GroupName, Mode=OneWay}" />
+                    <Run Foreground="Yellow" Text="{Binding ActiveDevice.CurrentMovie.sync.mode, Mode=OneWay}" />
+                    <Run Foreground="Yellow" Text="{Binding ActiveDevice.CurrentMovie.GroupName, Mode=OneWay}" />
                 </TextBlock>
                 
                 <TextBlock
@@ -258,7 +266,7 @@
                 <TextBlock
                     Margin="2"
                     Foreground="Yellow"
-                    Text="{Binding CurrentMovie.frames_number}" />
+                    Text="{Binding ActiveDevice.CurrentMovie.frames_number}" />
                 <TextBlock
                     Margin="2"
                     Foreground="LightYellow"
@@ -266,7 +274,7 @@
                 <TextBlock
                     Margin="2"
                     Foreground="Yellow"
-                    Text="{Binding CurrentMovie.frame_delay, StringFormat={}{0}ms}" />
+                    Text="{Binding ActiveDevice.CurrentMovie.frame_delay, StringFormat={}{0}ms}" />
                 <TextBlock
                     Margin="2"
                     Foreground="LightYellow"
@@ -274,7 +282,7 @@
                 <TextBlock
                     Margin="2"
                     Foreground="LightYellow"
-                    Text="{Binding CurrentMovie.leds_number}" />
+                    Text="{Binding ActiveDevice.CurrentMovie.leds_number}" />
                 <TextBlock
                     Margin="2"
                     Foreground="LightYellow"
@@ -282,7 +290,7 @@
                 <TextBlock
                     Margin="2"
                     Foreground="LightYellow"
-                    Text="{Binding CurrentMovie.loop_type}" />
+                    Text="{Binding ActiveDevice.CurrentMovie.loop_type}" />
 
                 <TextBlock
                     Margin="10,2,2,2"
@@ -291,7 +299,7 @@
                 <TextBlock
                     Margin="2"
                     Foreground="Yellow"
-                    Text="{Binding Effects.effect_id}" />
+                    Text="{Binding ActiveDevice.Effects.effect_id}" />
                 <TextBlock
                     Margin="2"
                     Foreground="LightYellow"
@@ -299,7 +307,7 @@
                 <TextBlock
                     Margin="2"
                     Foreground="LightYellow"
-                    Text="{Binding Effects.effects_number}" />
+                    Text="{Binding ActiveDevice.Effects.effects_number}" />
             </StackPanel>
             <Button Name="CurrentModeDetails"
                     Content="CurrentMode" 
@@ -514,7 +522,7 @@
                     Foreground="AliceBlue"
                     IsTabStop="True"
                     Style="{StaticResource ValidatingControl}"
-                    Text="{Binding ScheduleOnText, ValidatesOnDataErrors=True, UpdateSourceTrigger=PropertyChanged}">
+                    Text="{Binding ActiveDevice.ScheduleOnText, ValidatesOnDataErrors=True, UpdateSourceTrigger=PropertyChanged}">
                     <Behaviors:Interaction.Triggers>
                         <Behaviors:EventTrigger EventName="LostFocus">
                             <Behaviors:InvokeCommandAction Command="{Binding UpdateTimerCommand}" />
@@ -536,7 +544,7 @@
                     Foreground="AliceBlue"
                     IsTabStop="True"
                     Style="{StaticResource ValidatingControl}"
-                    Text="{Binding ScheduleOffText, ValidatesOnDataErrors=True, UpdateSourceTrigger=PropertyChanged}">
+                    Text="{Binding ActiveDevice.ScheduleOffText, ValidatesOnDataErrors=True, UpdateSourceTrigger=PropertyChanged}">
                     <Behaviors:Interaction.Triggers>
                         <Behaviors:EventTrigger EventName="LostFocus">
                             <Behaviors:InvokeCommandAction Command="{Binding UpdateTimerCommand}" />
@@ -572,7 +580,7 @@
                 </Rectangle.Fill>
             </Rectangle>
             <Slider x:Name="HueSlider"
-                    Value="{Binding HueSliderValue}"
+                    Value="{Binding ActiveDevice.HueSliderValue}"
                     ValueChanged="HueSlider_ValueChanged"
                     Minimum="0"
                     Maximum="1.0"
@@ -583,9 +591,10 @@
                     Margin="28,10" />
                 
             <StackPanel Orientation="Horizontal" Grid.Row="4" Grid.ColumnSpan="2">
-                <Button x:Name="RealtimeTest" Content="Realtime Test" 
-                        Click="RealtimeTest_Click"
-                        IsEnabled="{Binding CurrentMode_Realtime, Mode=OneWay}"  />
+                <ToggleButton x:Name="RealtimeTest" 
+                              Content="Realtime Test" 
+                              IsChecked="{Binding ActiveDevice.RealtimeTestRunning}"
+                              IsEnabled="{Binding ActiveDevice.CurrentMode_Realtime, Mode=OneWay}"  />
                 <Button x:Name="GetLayoutTest" Content="Get Layout"
                         Click="GetLayoutTest_Click" />
                 <Button x:Name="GetMovieConfigTest" Content="Get MovieConfig"

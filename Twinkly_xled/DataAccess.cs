@@ -42,14 +42,15 @@ namespace Twinkly_xled
         public TimeSpan ExpiresIn => (ExpiresAt - DateTime.Now);
 
 
-        public DataAccess()
-        {
-            // now call Discover() or set IPAddress
-        }
-
-        //public DataAccess(IPAddress ipAddress)
+        //public DataAccess()
         //{
+        //    // now call Discover() or set IPAddress
         //}
+
+        public DataAccess(IPAddress ipAddress)
+        {
+            IPAddress = ipAddress;
+        }
 
         public override string ToString()
         {
