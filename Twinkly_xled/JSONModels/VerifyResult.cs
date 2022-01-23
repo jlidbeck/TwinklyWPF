@@ -13,6 +13,7 @@ namespace Twinkly_xled.JSONModels
             ResultCode? resultCode = (ResultCode?)code;
             return $"code: {code} {resultCode?.ToString()}";
         }
+
         [JsonIgnore]
         public bool IsOK => code == 1000;
     }

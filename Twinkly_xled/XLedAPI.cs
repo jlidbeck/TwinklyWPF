@@ -428,6 +428,59 @@ namespace Twinkly_xled
 
         #endregion
 
+        #region Get LED Color
+
+        // Gets the color shown when in color mode.
+        // Since firmware version 2.7.1
+        public async Task<LedColorResult> GetLedColor()
+        {
+            if (Authenticated)
+            {
+                var json = await data.Get("led/color");
+                if (!data.Error)
+                {
+                    Status = (int)data.HttpStatus;
+                    var result = JsonSerializer.Deserialize<LedColorResult>(json);
+
+                    return result;
+                }
+                else
+                {
+                    return new LedColorResult() { code = (int)data.HttpStatus };
+                }
+            }
+            else
+            {
+                return new LedColorResult() { code = (int)HttpStatusCode.Unauthorized };
+            }
+        }
+
+        public async Task<VerifyResult> SetLedColor(HSV color)
+        {
+            if (Authenticated)
+            {
+                var json = await data.Post("led/color", JsonSerializer.Serialize(color));
+
+                if (!data.Error)
+                {
+                    Status = (int)data.HttpStatus;
+                    var result = JsonSerializer.Deserialize<VerifyResult>(json);
+
+                    return result;
+                }
+                else
+                {
+                    return new VerifyResult() { code = (int)data.HttpStatus };
+                }
+            }
+            else
+            {
+                return new VerifyResult() { code = (int)HttpStatusCode.Unauthorized };
+            }
+        }
+
+        #endregion
+
         #region LED Effects (Get only)
 
         // How many effects ? - what can we do with an effect ?

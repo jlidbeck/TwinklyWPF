@@ -1,7 +1,5 @@
-﻿using System;
-using System.ComponentModel;
-using System.Net;
-using System.Text.Json;
+﻿using System.Text.Json;
+using System.Timers;
 using System.Windows;
 using System.Windows.Controls;
 
@@ -29,16 +27,7 @@ namespace TwinklyWPF
             }
         }
 
-        private void RealtimeTest_Click(object sender, RoutedEventArgs e)
-        {
-            MainViewModel.RealtimeTest_Click(sender);
-        }
-
-        private void Devices_SelectionChanged(object sender, SelectionChangedEventArgs e)
-        {
-            //twinklyapi.ActiveDevice changed
-        }
-
+        #region Device locate
 
         private async void Rescan_Click(object sender, RoutedEventArgs e)
         {
@@ -83,6 +72,53 @@ namespace TwinklyWPF
             m_DevicesTextInput = false;
         }*/
 
+        #endregion
+
+        #region Hue slider
+
+        private Timer m_hueSliderPauseTimer;
+        private bool m_hueSliderValueChanged = false;
+
+        private void HueSlider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
+        {
+            if (m_hueSliderPauseTimer != null)
+            {
+                // too soon, the timer is running so just set the dirty flag
+                m_hueSliderValueChanged = true;
+                return;
+            }
+
+            MainViewModel.ModeCommand.Execute("color");
+
+            m_hueSliderValueChanged = true;
+            OnHueSliderTimerElapsed(null, null);
+        }
+
+        //  If slider has moved since the last call,
+        //  update the device immediately and reset the timer.
+        //  Otherwise, let the timer expire.
+        private void OnHueSliderTimerElapsed(object sender, ElapsedEventArgs e)
+        {
+            this.Dispatcher.Invoke(delegate ()
+            {
+                m_hueSliderPauseTimer?.Stop();
+                m_hueSliderPauseTimer = null;
+
+                if (m_hueSliderValueChanged)
+                {
+                    var v = HueSlider.Value;
+                    var _ = MainViewModel.UpdateColorAsync();
+                    m_hueSliderValueChanged = false;
+
+                    m_hueSliderPauseTimer = new Timer() { Enabled = true, AutoReset = false, Interval = 200 };
+                    m_hueSliderPauseTimer.Elapsed += OnHueSliderTimerElapsed;
+                    m_hueSliderPauseTimer.Start();
+                }
+            });
+        }
+
+        #endregion
+
         private async void GetLayoutTest_Click(object sender, RoutedEventArgs e)
         {
             var layout = await MainViewModel.twinklyapi.GetLayout();
@@ -90,14 +126,12 @@ namespace TwinklyWPF
             MessageBox.Show(content);
         }
 
-        //private Twinkly_xled.JSONModels.CurrentMovieConfig m_movieConfig;
-
         private async void GetMovieConfigTest_Click(object sender, RoutedEventArgs e)
         {
             var config = await MainViewModel.twinklyapi.GetMovieConfig();
             var content = JsonSerializer.Serialize(config).Replace(",", ",\n").Replace(":{", ":\n{");
-            MessageBox.Show(content, $"GetMovieConfig: {(config.IsOK?"Ok":"FAILED")}");
-            if(config.IsOK)
+            MessageBox.Show(content, $"GetMovieConfig: {(config.IsOK ? "Ok" : "FAILED")}");
+            if (config.IsOK)
                 MainViewModel.CurrentMovie = config;
         }
 
@@ -107,5 +141,12 @@ namespace TwinklyWPF
             var result = await MainViewModel.twinklyapi.SetMovieConfig(config);
             MessageBox.Show($"SetMovieConfig result: {result.ToString()}");
         }
+
+        private void RealtimeTest_Click(object sender, RoutedEventArgs e)
+        {
+            MainViewModel.RealtimeTest_Click(sender);
+        }
+
+
     }
 }

@@ -62,7 +62,6 @@
                     Click="Rescan_Click" />
             <ComboBox ItemsSource="{Binding Devices}"
                       SelectedItem="{Binding ActiveDevice}"
-                      SelectionChanged="Devices_SelectionChanged"
                       MinWidth="120" 
                       Margin="5 0"/>
             <Button x:Name="AddIpAddress" 
@@ -365,7 +364,7 @@
             Visibility="{Binding TwinklyDetected, Converter={StaticResource BoolToVis}}">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="auto" />
-                <ColumnDefinition Width="auto" />
+                <ColumnDefinition Width="*" />
             </Grid.ColumnDefinitions>
             <Grid.RowDefinitions>
                 <RowDefinition Height="auto" />
@@ -457,19 +456,15 @@
                 FontWeight="Bold"
                 Foreground="Orange"
                 Text="Brightness:" />
-            <Slider
-                x:Name="BrightSlider"
-                Grid.Row="1"
-                Grid.Column="1"
-                Width="425"
-                Margin="28,12,0,10"
-                HorizontalAlignment="Left"
-                VerticalAlignment="Center"
-                LargeChange="20"
-                Maximum="100"
-                Minimum="0"
-                SmallChange="5"
-                Value="{Binding SliderBrightness}" />
+            <Slider x:Name="BrightSlider"
+                    Value="{Binding SliderBrightness}"
+                    Minimum="0"
+                    Maximum="100"
+                    LargeChange="20"
+                    SmallChange="5"
+                    Grid.Row="1"
+                    Grid.Column="1"
+                    Margin="28,10" />
 
             <!--  Schedule  -->
             <TextBlock
@@ -545,7 +540,7 @@
             <Rectangle
                 Grid.Row="3"
                 Grid.Column="1"
-                Margin="28,0,5,0">
+                Margin="28,0">
                 <Rectangle.Fill>
                     <LinearGradientBrush x:Name="SingleGradient" StartPoint="0,0.5" EndPoint="1.0,0.5">
                         <GradientStop Color="#FFFF0000" />
@@ -558,21 +553,18 @@
                     </LinearGradientBrush>
                 </Rectangle.Fill>
             </Rectangle>
-            <Slider
-                x:Name="ColorSlider"
-                Grid.Row="3"
-                Grid.Column="1"
-                Width="425"
-                Margin="28,10,0,10"
-                HorizontalAlignment="Left"
-                VerticalAlignment="Center"
-                LargeChange="0.167"
-                Maximum="1.0"
-                Minimum="0"
-                SmallChange="0.01"
-                Value="{Binding SliderColor}" />
-            <StackPanel Orientation="Horizontal" Grid.Row="4" Grid.ColumnSpan="2">
+            <Slider x:Name="HueSlider"
+                    Value="{Binding HueSliderValue}"
+                    ValueChanged="HueSlider_ValueChanged"
+                    Minimum="0"
+                    Maximum="1.0"
+                    LargeChange="0.167"
+                    SmallChange="0.01"
+                    Grid.Row="3"
+                    Grid.Column="1"
+                    Margin="28,10" />
                 
+            <StackPanel Orientation="Horizontal" Grid.Row="4" Grid.ColumnSpan="2">
                 <Button x:Name="RealtimeTest" Content="Realtime Test" 
                         Click="RealtimeTest_Click"
                         IsEnabled="{Binding CurrentMode_Realtime, Mode=OneWay}"  />

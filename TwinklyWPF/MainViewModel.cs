@@ -156,8 +156,9 @@ namespace TwinklyWPF
             }
         }
 
-        public bool CurrentMode_Movie { get { return m_CurrentMode?.mode == "movie"; } }
         public bool CurrentMode_Off { get { return m_CurrentMode?.mode == "off"; } }
+        public bool CurrentMode_Color { get { return m_CurrentMode?.mode == "color"; } }
+        public bool CurrentMode_Movie { get { return m_CurrentMode?.mode == "movie"; } }
         public bool CurrentMode_Demo { get { return m_CurrentMode?.mode == "demo"; } }
         public bool CurrentMode_Realtime { get { return m_CurrentMode?.mode == "rt"; } }
 
@@ -242,39 +243,23 @@ namespace TwinklyWPF
         // Set by view so our colour are calculated from the same source
         public GradientStopCollection GradientStops { get; set; }
 
-        private System.Timers.Timer m_colorSliderPauseTimer;
-        private Color TargetColor;
-
-        private double currentcolor;
-        public double SliderColor
+        double m_HueSliderValue;
+        public double HueSliderValue
         {
-            get { return currentcolor; }
+            get => m_HueSliderValue;
             set
             {
-                if (value != currentcolor)
-                {
-                    currentcolor = value;
-                    TargetColor = GradientStops.GetRelativeColor(value);
-
-                    // user can keep sliding - wait for 1sec of no movement to change color
-                    if (m_colorSliderPauseTimer != null)
-                        m_colorSliderPauseTimer.Dispose();
-                    m_colorSliderPauseTimer = new System.Timers.Timer { Interval = 500, AutoReset = false };
-                    m_colorSliderPauseTimer.Elapsed += ElapsedUpdateColor;
-                    m_colorSliderPauseTimer.Start();
-                }
+                m_HueSliderValue = value;
+                OnPropertyChanged();
             }
         }
 
-        private void ElapsedUpdateColor(object sender, System.Timers.ElapsedEventArgs e)
+        //  Update device from slider value
+        public async Task UpdateColorAsync()// (Color c)
         {
-            Debug.WriteLine($"Slider Color {TargetColor}");
-            UpdateColorAsync(TargetColor).Wait(100);
-        }
-
-        private async Task UpdateColorAsync(Color c)
-        {
-            await twinklyapi.SingleColor(new byte[3] { c.R, c.G, c.B });
+            //await twinklyapi.SingleColor(new byte[3] { c.R, c.G, c.B });
+            //await twinklyapi.SetLedColor(new RGB() { red = TargetColor.R, green = TargetColor.G, blue = TargetColor.B });
+            await twinklyapi.SetLedColor(new HSV() { hue = (int)(HueSliderValue * 360.0), saturation = 255, value = 255 });
         }
 
 
@@ -664,6 +649,11 @@ namespace TwinklyWPF
                 {
                     Timer = await twinklyapi.GetTimer();
                     CurrentMode = await twinklyapi.GetOperationMode();
+                    if (CurrentMode_Color)
+                    {
+                        var ledColorResult = await twinklyapi.GetLedColor();
+                        HueSliderValue = ledColorResult.hue / 360.0;
+                    }
                     Effects = await twinklyapi.EffectsAllinOne();
                     Brightness = await twinklyapi.GetBrightness();
                     MQTTConfig = await twinklyapi.GetMQTTConfig();
@@ -692,6 +682,10 @@ namespace TwinklyWPF
             {
                 case "off":
                     result = await twinklyapi.SetOperationMode(LedModes.off);
+                    break;
+
+                case "color":
+                    result = await twinklyapi.SetOperationMode(LedModes.color);
                     break;
 
                 case "demo":
