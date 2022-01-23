@@ -129,7 +129,9 @@ namespace TwinklyWPF
         private async void GetMovieConfigTest_Click(object sender, RoutedEventArgs e)
         {
             var config = await MainViewModel.twinklyapi.GetMovieConfig();
-            var content = JsonSerializer.Serialize(config).Replace(",", ",\n").Replace(":{", ":\n{");
+            var content = JsonSerializer.Serialize(
+                config,
+                new JsonSerializerOptions(JsonSerializerDefaults.General) { WriteIndented = true });
             MessageBox.Show(content, $"GetMovieConfig: {(config.IsOK ? "Ok" : "FAILED")}");
             if (config.IsOK)
                 MainViewModel.CurrentMovie = config;
@@ -147,6 +149,20 @@ namespace TwinklyWPF
             MainViewModel.RealtimeTest_Click(sender);
         }
 
-
+        private void ShowDetails_Click(object sender, RoutedEventArgs e)
+        {
+            object o;
+            switch (((Button)e.Source).Name)
+            {
+                case "GestaltDetails":      o = MainViewModel.Gestalt; break;
+                case "CurrentMovieDetails": o = MainViewModel.CurrentMovie; break;
+                case "CurrentModeDetails":  o = MainViewModel.CurrentMode; break;
+                default: return;
+            }
+            var json = JsonSerializer.Serialize(
+                o, 
+                new JsonSerializerOptions(JsonSerializerDefaults.General) { WriteIndented = true });
+            MessageBox.Show(json, ((Button)e.Source).Name);
+        }
     }
 }

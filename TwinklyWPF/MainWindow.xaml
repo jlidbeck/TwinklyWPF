@@ -128,6 +128,12 @@
                     Foreground="DarkOrange"
                     Text="{Binding FW.version}" />
             </StackPanel>
+            <Button x:Name="GestaltDetails" 
+                    Content="Gestalt" 
+                    Click="ShowDetails_Click"
+                    Grid.Row="0"
+                    Grid.Column="1"
+                    HorizontalAlignment="Right" />
 
             <StackPanel x:Name="Network"
                         Grid.Row="1"
@@ -295,6 +301,18 @@
                     Foreground="LightYellow"
                     Text="{Binding Effects.effects_number}" />
             </StackPanel>
+            <Button Name="CurrentModeDetails"
+                    Content="CurrentMode" 
+                    Click="ShowDetails_Click"
+                    Grid.Row="5"
+                    Grid.Column="1"
+                    HorizontalAlignment="Right" />
+            <Button Name="CurrentMovieDetails"
+                    Content="CurrentMovie" 
+                    Click="ShowDetails_Click"
+                    Grid.Row="6"
+                    Grid.Column="1"
+                    HorizontalAlignment="Right" />
 
             <StackPanel
                 x:Name="Brightness"
