@@ -57,7 +57,7 @@ namespace Twinkly_xled
         }
 
         // UDP Scan for the lights. Returns all responding IP addresses 
-        public ICollection<string> Discover()
+        static public ICollection<string> Discover()
         {
             var addresses = new SortedSet<string>();
 
@@ -98,7 +98,7 @@ namespace Twinkly_xled
                     if (err.SocketErrorCode != SocketError.TimedOut)
                     {
                         // Unexpected error
-                        Error = true;
+                        //Error = true;
                         Debug.WriteLine($"Terminating: {err.Message}");
                         throw;
                     }

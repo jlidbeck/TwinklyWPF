@@ -43,9 +43,8 @@ namespace TwinklyWPF
         {
             get => twinklyapi.data?.IPAddress;
             set 
-            { 
-                // TODO: initialize this properly
-                twinklyapi.data.IPAddress = value;
+            {
+                twinklyapi.data = new DataAccess() { IPAddress = value };
                 reloadNeeded = true;
                 OnPropertyChanged();
                 OnPropertyChanged("twinklyapi");
@@ -419,14 +418,18 @@ namespace TwinklyWPF
         {
             Debug.Assert(m_apiSemaphore.CurrentCount == 0);
 
+            var oldip = ActiveDevice;
+
             Unload();
             Devices.Clear();
             OnPropertyChanged("TwinklyDetected");
 
             Message = "Searching...";
 
-            var oldip = ActiveDevice;
-            var addresses = await twinklyapi.Discover();
+            var addresses = await Task.Run(() =>
+            {
+                return DataAccess.Discover();
+            });
             foreach (var ip in addresses)
                 Devices.Add(IPAddress.Parse(ip));
             OnPropertyChanged("TwinklyDetected");

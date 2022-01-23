@@ -26,7 +26,7 @@ namespace Twinkly_xled
     // --------------------------------------------------------------------------
     public class XLedAPI
     {
-        public DataAccess data { get; private set; }
+        public DataAccess data { get; set; }
 
         public int Status { get; private set; }
 
@@ -38,7 +38,7 @@ namespace Twinkly_xled
         {
         }
 
-        async public Task<ICollection<string>> Discover()
+        /*async public Task<ICollection<string>> Discover()
         {
             // DataAccess will attempt a UDP locate of the twinkly lights - if they are powered down a timeout is thrown
             try
@@ -62,7 +62,7 @@ namespace Twinkly_xled
             }
 
             return null;
-        }
+        }*/
 
 
         #region Unauthenticated
