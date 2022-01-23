@@ -66,8 +66,6 @@ namespace Twinkly_xled
             using (var udp = new UdpClient())
             {
                 udp.EnableBroadcast = true;
-                udp.Client.ReceiveTimeout = 2000; // 1 sec, synchronous only
-                var endpoint = new IPEndPoint(IPAddress.Any, 0);
 
                 // send
                 byte[] sendbuf = Encoding.ASCII.GetBytes((char)0x01 + "discover");
@@ -78,24 +76,25 @@ namespace Twinkly_xled
                              IPAddress.Broadcast,
                              PORT_NUMBER));
 
-                    //var task = Task.Run(async () =>
-                    //{
+                    var task = Task.Run(async () =>
+                    {
                         while (true)
                         {
                             // receive
-                            byte[] result = udp.Receive(ref endpoint);
+                            var result = await udp.ReceiveAsync();
 
                             // don't need to parse the message - we know who responded
                             // <ip>OK<device_name>
-                            Debug.WriteLine($"Reply: {endpoint.Address}: {BitConverter.ToString(result)}");
-                            addresses.Add(endpoint.Address.ToString());
+                            Debug.WriteLine($"Reply: {result.RemoteEndPoint.Address}: {BitConverter.ToString(result.Buffer)}");
+                            addresses.Add(result.RemoteEndPoint.Address.ToString());
                         }
-                    //});
-                    //task.Wait(3000);
+                    });
+                    task.Wait(3000);
                 }
                 catch (SocketException err)
                 {
-                    // If using synchronous receive, we expect a timeout. If any other error, rethrow
+                    // If using synchronous receive, we expect a timeout. (ReceiveAsync does not do this.)
+                    // Any other error is unexpected, so rethrow
                     if (err.SocketErrorCode != SocketError.TimedOut)
                     {
                         // Unexpected error
