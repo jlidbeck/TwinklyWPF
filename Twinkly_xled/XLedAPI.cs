@@ -30,8 +30,6 @@ namespace Twinkly_xled
 
         public int Status { get; private set; }
 
-        //public IPAddress IPAddress => (ActiveDevice?.IPAddress);
-
         public DateTime Uptime { get; private set; } = new DateTime();
 
         public bool Authenticated => (data?.ExpiresIn.TotalMinutes > 0);
@@ -40,7 +38,7 @@ namespace Twinkly_xled
         {
         }
 
-        async public Task<ICollection<string>> Locate()
+        async public Task<ICollection<string>> Discover()
         {
             // DataAccess will attempt a UDP locate of the twinkly lights - if they are powered down a timeout is thrown
             try
@@ -51,7 +49,7 @@ namespace Twinkly_xled
 
                 await Task.Run(() =>
                 {
-                    addresses = data.Locate();
+                    addresses = data.Discover();
                 });
 
                 Status = 0;

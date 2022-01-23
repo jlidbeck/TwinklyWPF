@@ -40,12 +40,11 @@ namespace Twinkly_xled
 
         public DateTime ExpiresAt { get; private set; }
         public TimeSpan ExpiresIn => (ExpiresAt - DateTime.Now);
-        //public bool Authenticated => (ExpiresIn.TotalMinutes > 0);
 
 
         public DataAccess()
         {
-            // now call Locate() or set IPAddress
+            // now call Discover() or set IPAddress
         }
 
         //public DataAccess(IPAddress ipAddress)
@@ -57,8 +56,8 @@ namespace Twinkly_xled
             return $"DataAccess: {IPAddress} Token expires: {ExpiresAt}";
         }
 
-        // UDP Scan for the lights - can only deal with the first one 
-        public ICollection<string> Locate()
+        // UDP Scan for the lights. Returns all responding IP addresses 
+        public ICollection<string> Discover()
         {
             var addresses = new SortedSet<string>();
 
@@ -111,12 +110,12 @@ namespace Twinkly_xled
                 }
             }   // using udp
 
-            Debug.WriteLine($"** got {addresses.Count()} addresses **");
+            Debug.WriteLine($"Discover: found {addresses.Count()} devices");
 
-            if (IPAddress == null && addresses.Count() > 0)
-            {
-                IPAddress = IPAddress.Parse(addresses.FirstOrDefault());
-            }
+            //if (IPAddress == null && addresses.Count() > 0)
+            //{
+            //    IPAddress = IPAddress.Parse(addresses.FirstOrDefault());
+            //}
 
             return addresses;
         }
@@ -216,7 +215,7 @@ namespace Twinkly_xled
             {
                 return HttpClient.DefaultRequestHeaders.GetValues("X-Auth-Token").FirstOrDefault();
             }
-            return string.Empty;
+            return null;
         }
     }
 }

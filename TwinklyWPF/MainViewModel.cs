@@ -1,18 +1,17 @@
 ﻿using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Net;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 using Twinkly_xled.JSONModels;
 using Twinkly_xled;
+using Timer = Twinkly_xled.JSONModels.Timer;
 using System;
-using GalaSoft.MvvmLight.Command;
-using System.Windows.Media;
 using System.Diagnostics;
 using System.Linq;
-using System.Threading;
-using Timer = Twinkly_xled.JSONModels.Timer;
-using System.Collections.ObjectModel;
+using System.Windows.Media;
+using GalaSoft.MvvmLight.Command;
 
 namespace TwinklyWPF
 {
@@ -37,6 +36,7 @@ namespace TwinklyWPF
             get { return Devices.Count() > 0; }
         }
 
+        //  Devices found by Discover
         public ObservableCollection<IPAddress> Devices { get; } = new ObservableCollection<IPAddress>();
 
         public IPAddress ActiveDevice
@@ -421,31 +421,24 @@ namespace TwinklyWPF
 
             Unload();
             Devices.Clear();
-            //TwinklyDetected = false;
             OnPropertyChanged("TwinklyDetected");
 
             Message = "Searching...";
 
             var oldip = ActiveDevice;
-            var addresses = await twinklyapi.Locate();
+            var addresses = await twinklyapi.Discover();
             foreach (var ip in addresses)
                 Devices.Add(IPAddress.Parse(ip));
-            //Devices = addresses.Select((str) => IPAddress.Parse(str)).ToList();
-
-            // notify that twinklyapi.Devices has changed
-            //OnPropertyChanged("twinklyapi");
-
-            //TwinklyDetected = (twinklyapi.Status == 0 && Devices?.Count() > 0);
             OnPropertyChanged("TwinklyDetected");
 
             if (TwinklyDetected)
             {
                 // always set ActiveDevice, even if keeping same value.. need to update the API
-                // TODO: this also makes the API do this twice. need to uncouple
                 if (Devices.Contains(oldip))
                     ActiveDevice = oldip;
                 else
-                    OnPropertyChanged("ActiveDevice");
+                    ActiveDevice = Devices.FirstOrDefault();
+
                 Message = $"Found {Devices?.Count()} devices.";
             }
             else if (twinklyapi.Status == 0)
@@ -464,7 +457,6 @@ namespace TwinklyWPF
 
             try
             {
-
                 AddDevice(IPAddress.Parse("192.168.0.18"));
                 AddDevice(IPAddress.Parse("192.168.0.19"));
                 AddDevice(IPAddress.Parse("192.168.0.20"));
@@ -476,11 +468,6 @@ namespace TwinklyWPF
                     ActiveDevice = Devices.FirstOrDefault();
                 }
 
-                //if (ActiveDevice != null)
-                //    TwinklyDetected = true;
-
-                //OnPropertyChanged("twinklyapi");
-                //OnPropertyChanged("twinklyapi.Devices");
                 OnPropertyChanged("TwinklyDetected");
 
                 await Load();
@@ -491,7 +478,6 @@ namespace TwinklyWPF
             }
         }
 
-        //private bool Loaded => LedConfig != null;
         private bool reloadNeeded = false;
 
         //  Clear all view model fields to reset display
@@ -527,6 +513,8 @@ namespace TwinklyWPF
         {
             Debug.Assert(m_apiSemaphore.CurrentCount == 0);
 
+            Debug.Assert(TwinklyDetected);
+
             Message = "Loading...";
 
             //gestalt
@@ -545,27 +533,18 @@ namespace TwinklyWPF
             }
 
 
-            //if (twinklyapi.Status == (int)HttpStatusCode.OK)
+            if (twinklyapi.Authenticated)
             {
-                if (twinklyapi.Authenticated)
-                {
-                    Message = $"Login Success until {twinklyapi.data.ExpiresAt:g}";
-                }
-                else
-                {
-                    Message = "Authenticating...";
-                    if (!await twinklyapi.Login())
-                        Message = $"Login Fail {twinklyapi.Status}";
-                    else
-                        Message = $"Login Success until {twinklyapi.data.ExpiresAt:g}";
-                }
+                Message = $"Login Success until {twinklyapi.data.ExpiresAt:g}";
             }
-            //else
-            //    Message = $"ERROR: {twinklyapi.Status}";
-
-            // notify that twinklyapi.Devices has changed
-            //OnPropertyChanged("twinklyapi");
-            //OnPropertyChanged("TwinklyDetected");
+            else
+            {
+                Message = "Authenticating...";
+                if (!await twinklyapi.Login())
+                    Message = $"Login Fail {twinklyapi.Status}";
+                else
+                    Message = $"Login Success until {twinklyapi.data.ExpiresAt:g}";
+            }
 
             // update the authenticated api models
             await UpdateAuthModels();
@@ -573,7 +552,8 @@ namespace TwinklyWPF
             reloadNeeded = false;
         }
 
-        private readonly SemaphoreSlim m_apiSemaphore = new SemaphoreSlim(1, 1);
+        //  Ensure that periodic updates and sync operations don't interfere with each other
+        private readonly System.Threading.SemaphoreSlim m_apiSemaphore = new System.Threading.SemaphoreSlim(1, 1);
 
         public void AddDevice(IPAddress ipAddress)
         {
