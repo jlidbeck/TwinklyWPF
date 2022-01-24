@@ -33,5 +33,10 @@ namespace Twinkly_xled.JSONModels
         public int wire_type { get; set; }
         public string copyright { get; set; }
         public int code { get; set; }
+
+        public override string ToString()
+        {
+            return $"{device_name} [{number_of_led}]";
+        }
     }
 }

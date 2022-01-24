@@ -144,11 +144,6 @@ namespace TwinklyWPF
             MessageBox.Show($"SetMovieConfig result: {result.ToString()}");
         }
 
-        private void RealtimeTest_Click(object sender, RoutedEventArgs e)
-        {
-            MainViewModel.RealtimeTest_Click(sender);
-        }
-
         private void ShowDetails_Click(object sender, RoutedEventArgs e)
         {
             object o;
