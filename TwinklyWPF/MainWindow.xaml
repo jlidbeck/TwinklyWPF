@@ -593,8 +593,8 @@
             <StackPanel Orientation="Horizontal" Grid.Row="4" Grid.ColumnSpan="2">
                 <ToggleButton x:Name="RealtimeTest" 
                               Content="Realtime Test" 
-                              IsChecked="{Binding ActiveDevice.RealtimeTestRunning}"
-                              IsEnabled="{Binding ActiveDevice.CurrentMode_Realtime, Mode=OneWay}"  />
+                              IsChecked="{Binding RealtimeTestRunning}"
+                              IsEnabled="{Binding CurrentMode_Realtime, Mode=OneWay}"  />
                 <Button x:Name="GetLayoutTest" Content="Get Layout"
                         Click="GetLayoutTest_Click" />
                 <Button x:Name="GetMovieConfigTest" Content="Get MovieConfig"

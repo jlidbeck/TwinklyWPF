@@ -146,7 +146,7 @@ namespace TwinklyWPF
 
         private void RealtimeTest_Click(object sender, RoutedEventArgs e)
         {
-            MainViewModel.ActiveDevice?.RealtimeTest_Click(sender);
+            MainViewModel.RealtimeTest_Click(sender);
         }
 
         private void ShowDetails_Click(object sender, RoutedEventArgs e)
