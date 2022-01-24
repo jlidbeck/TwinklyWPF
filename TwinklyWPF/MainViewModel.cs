@@ -24,6 +24,7 @@ namespace TwinklyWPF
     {
         public RelayCommand<string> ModeCommand { get; private set; }
         public RelayCommand UpdateTimerCommand { get; private set; }
+        public RelayCommand<bool> RealtimeTestCommand { get; private set; }
 
         #region INotifyPropertyChanged
 
@@ -36,7 +37,7 @@ namespace TwinklyWPF
 
         #endregion
 
-        private System.Timers.Timer _updateTimer;
+        private System.Timers.Timer _refreshGuiTimer;
 
         //  Ensure that periodic updates and sync operations don't interfere with each other
         private readonly System.Threading.SemaphoreSlim m_apiSemaphore = new System.Threading.SemaphoreSlim(1, 1);
@@ -84,10 +85,21 @@ namespace TwinklyWPF
 
             UpdateTimerCommand = new RelayCommand(async () => await ActiveDevice.ChangeTimer());
 
+            RealtimeTestCommand = new RelayCommand<bool>(
+                async (isChecked) => {
+                    if (isChecked == true)
+                        await StartRealtimeTest();
+                    else
+                        StopRealtimeTest();
+                },
+                (isChecked) => {
+                    return true;    // todo: figure out how to trigger: ActiveDevice?.CurrentMode=="rt";
+                } );
 
-            _updateTimer = new System.Timers.Timer(1000) { AutoReset = true };
-            _updateTimer.Elapsed += refreshGui;
-            _updateTimer.Start();
+
+            _refreshGuiTimer = new System.Timers.Timer(1000) { AutoReset = true };
+            _refreshGuiTimer.Elapsed += RefreshGui;
+            _refreshGuiTimer.Start();
         }
 
         async public Task Initialize()
@@ -215,7 +227,7 @@ namespace TwinklyWPF
             }
         }*/
 
-        public async void refreshGui(object sender, System.Timers.ElapsedEventArgs e)
+        public async void RefreshGui(object sender, System.Timers.ElapsedEventArgs e)
         {
             if (m_apiSemaphore.CurrentCount == 0)
                 return; // boring task anyway
@@ -227,12 +239,13 @@ namespace TwinklyWPF
 
             try
             {
-                if (ActiveDevice?.twinklyapi.data?.HttpClient == null)
+                if (ActiveDevice?.twinklyapi.data?.IPAddress == null)
                     return;
 
                 if (ActiveDevice.ReloadNeeded)
                 {
                     await ActiveDevice.Load();
+                    await ActiveDevice.UpdateAuthModels();
                 }
                 else
                 {
@@ -248,39 +261,54 @@ namespace TwinklyWPF
         }
 
 
+        #region Realtime test
 
         System.Timers.Timer m_frameTimer;
         Stopwatch m_stopwatch;
+        int m_frameCounter;
+        private byte[] frameData;
+        Random random = new Random();
 
         public bool RealtimeTestRunning
         {
             get => m_frameTimer != null;
             set
             {
-                RealtimeTest_Click(this);
+                if (value)
+                    StartRealtimeTest().Wait();
+                else
+                    StopRealtimeTest();
                 OnPropertyChanged();
             }
         }
 
-        public void RealtimeTest_Click(object sender)
-        {
-            if (RealtimeTestRunning)
-                StopRealtimeTest();
-            else
-                StartRealtimeTest();
-        }
-
         public void StopRealtimeTest()
         {
+            if (m_stopwatch?.ElapsedMilliseconds > 0)
+                Debug.WriteLine($"FPS: {FPS}   Frames: {m_frameCounter} {m_stopwatch.ElapsedMilliseconds * 0.001}");
+
             m_frameTimer?.Stop();
             m_frameTimer = null;
         }
 
-        public async void StartRealtimeTest()
+        public double FPS
+        {
+            get
+            {
+                if (m_stopwatch == null)
+                    return 0;
+                return m_frameCounter / (0.001 * m_stopwatch.ElapsedMilliseconds);
+            }
+        }
+
+        public async Task StartRealtimeTest()
         {
             Message = $"Setting up {Devices.Count()} devices...";
 
             await m_apiSemaphore.WaitAsync();
+
+            if (RealtimeTestRunning)
+                return;
 
             try
             {
@@ -292,11 +320,20 @@ namespace TwinklyWPF
                     await device.ChangeMode("rt");
                 }
 
+                int frameSize = 0;
+                foreach (var device in Devices)
+                {
+                    frameSize += device.Gestalt.bytes_per_led * device.Gestalt.number_of_led;
+                }
+                frameData = new byte[frameSize];
+
                 m_frameTimer = new System.Timers.Timer { AutoReset = true, Interval = 10 };
                 m_frameTimer.Elapsed += OnFrameTimerElapsed;
                 m_frameTimer.Start();
                 m_stopwatch = new Stopwatch();
                 m_stopwatch.Start();
+                m_frameCounter = 0;
+
                 random.NextBytes(frameData);
             }
             finally
@@ -305,32 +342,28 @@ namespace TwinklyWPF
             }
         }
 
-        Random random = new Random();
-
-        private byte[] frameData = new byte[660 * 3];
-
         private async void OnFrameTimerElapsed(object sender, System.Timers.ElapsedEventArgs e)
         {
-                //random.NextBytes(frameData);
+            //random.NextBytes(frameData);
 
-                double t = m_stopwatch.ElapsedMilliseconds * 0.001;
+            double t = m_stopwatch.ElapsedMilliseconds * 0.001;
 
-                for (int i = 0; i < frameData.Length; ++i)
-                {
-                    //int v = frameData[i];
-                    //frameData[i] = (byte)(((v&1)==1)
-                    //    ? (frameData[i] > 1 ? frameData[i] - 2 : 0) 
-                    //    : (frameData[i] < 254 ? frameData[i] + 2 : 255));
+            for (int i = 0; i < frameData.Length; ++i)
+            {
+                //int v = frameData[i];
+                //frameData[i] = (byte)(((v&1)==1)
+                //    ? (frameData[i] > 1 ? frameData[i] - 2 : 0) 
+                //    : (frameData[i] < 254 ? frameData[i] + 2 : 255));
 
-                    double n = (i / 3);
-                    frameData[  i] = (byte)(Math.Max(0.0, 255.9 * Math.Sin(t        + n * 0.05)));
-                    frameData[++i] = (byte)(Math.Max(0.0, 255.9 * Math.Sin(t * 0.95 + n * 0.05)));
-                    frameData[++i] = (byte)(Math.Max(0.0, 255.9 * Math.Sin(t * 0.90 + n * 0.05)));
-                    
-                    //frameData[  i] = (byte)(((i + t) % 10.0)*(255.0/ 9.0));
-                    //frameData[++i] = (byte)(((i + t) % 12.0)*(255.0/11.0));
-                    //frameData[++i] = (byte)(((i + t) % 16.0)*(255.0/15.0));
-                }
+                double n = (i / 3);
+                frameData[  i] = (byte)(Math.Max(0.0, s*255.9 * Math.Sin(t        + n * 0.05)));
+                frameData[++i] = (byte)(Math.Max(0.0, s*255.9 * Math.Sin(t * 0.97 + n * 0.05)));
+                frameData[++i] = (byte)(Math.Max(0.0, s*255.9 * Math.Sin(t * 0.94 + n * 0.05)));
+
+                //frameData[  i] = (byte)(((i + t) % 10.0)*(255.0/ 9.0));
+                //frameData[++i] = (byte)(((i + t) % 12.0)*(255.0/11.0));
+                //frameData[++i] = (byte)(((i + t) % 16.0)*(255.0/15.0));
+            }
 
             await m_apiSemaphore.WaitAsync();
 
@@ -350,6 +383,11 @@ namespace TwinklyWPF
                     }
                 }
                 Debug.Assert(offset == frameData.Length);
+
+                m_frameCounter++;
+
+                if (m_frameCounter % 100 == 0)
+                    OnPropertyChanged("FPS");
             }
             finally
             {
@@ -357,7 +395,7 @@ namespace TwinklyWPF
             }
         }
 
-
+        #endregion
 
     }
 
@@ -376,11 +414,21 @@ namespace TwinklyWPF
             twinklyapi.IPAddress = ipAddress;
         }
 
+        public string Name
+        {
+            get
+            {
+                if (Gestalt == null)
+                    return twinklyapi.data.IPAddress.ToString();
+                return $"{Gestalt.device_name} [{Gestalt.number_of_led}] ({CurrentMovie?.sync.mode})";
+            }
+        }
+
         #region overrides
 
         public override string ToString()
         {
-            return $"{twinklyapi.data.IPAddress} ({CurrentMovie?.sync.mode})";
+            return Name;
         }
 
         public override bool Equals(object obj)
@@ -424,6 +472,7 @@ namespace TwinklyWPF
                 gestalt = value;
                 OnPropertyChanged();
                 OnPropertyChanged("Uptime");
+                OnPropertyChanged("Name");
             }
         }
 
@@ -557,7 +606,7 @@ namespace TwinklyWPF
             }
         }
 
-        private BrightnessResult brightness = new BrightnessResult() { mode = "disabled", value = 100 };
+        private BrightnessResult brightness = null;// new BrightnessResult() { mode = "disabled", value = 100 };
         public BrightnessResult Brightness
         {
             get { return brightness; }
@@ -683,15 +732,12 @@ namespace TwinklyWPF
 
         #endregion
 
-        public bool ReloadNeeded { get; private set; } = false;
+        public bool ReloadNeeded { get; private set; } = true;
 
         public void Reload()
         {
-            //twinklyapi.data = new DataAccess() { IPAddress = value };
-            ReloadNeeded = true;
-            //OnPropertyChanged();
-            OnPropertyChanged("twinklyapi");
             Unload();
+            OnPropertyChanged("twinklyapi");
         }
 
         //  Clear all view model fields to reset display
@@ -706,11 +752,12 @@ namespace TwinklyWPF
                 Timer = new Timer() { time_on = -1, time_off = -1 };
                 CurrentMode = null;
                 Effects = null;
-                Brightness = new BrightnessResult() { mode = "disabled", value = 100 };
+                Brightness = null;// new BrightnessResult() { mode = "disabled", value = 100 };
                 MQTTConfig = null;
                 CurrentMovie = null;
                 LedConfig = null;
                 //Message = "Unloaded";
+                ReloadNeeded = true;
             }
             //catch (Exception err)
             //{

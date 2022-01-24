@@ -602,8 +602,15 @@
             <StackPanel Orientation="Horizontal" Grid.Row="4" Grid.ColumnSpan="2">
                 <ToggleButton x:Name="RealtimeTest" 
                               Content="Realtime Test" 
-                              IsChecked="{Binding RealtimeTestRunning}"
-                              IsEnabled="{Binding CurrentMode_Realtime, Mode=OneWay}"  />
+                              Command="{Binding RealtimeTestCommand}"
+                              CommandParameter="{Binding IsChecked, RelativeSource={RelativeSource Self}}">
+                    <!--<Trigger Property="ActiveDevice.CurrentMode.mode" />-->
+                </ToggleButton>
+                <TextBlock FontWeight="Bold" VerticalAlignment="Center" Padding="8 0"
+                           IsEnabled="{Binding RealtimeTestRunning}">
+                    <Run Text="FPS:" Foreground="Orange" />
+                    <Run Text="{Binding FPS, StringFormat=N3, Mode=OneWay}" Foreground="GreenYellow" />
+                </TextBlock>
                 <Button x:Name="GetLayoutTest" Content="Get Layout"
                         Click="GetLayoutTest_Click" />
                 <Button x:Name="GetMovieConfigTest" Content="Get MovieConfig"
