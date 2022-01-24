@@ -61,8 +61,19 @@ namespace Twinkly_xled
                 var ts = new TimeSpan(0, 0, 0, 0, int.Parse(Gestalt.uptime));
                 Uptime = new DateTime(ts.Ticks);
 
-                RT_Buffer = new byte[Gestalt.number_of_led * Gestalt.bytes_per_led + 10];
-                RT_Buffer[0] = 0x01;
+                // v.1:
+                //RT_Buffer = new byte[Gestalt.number_of_led * Gestalt.bytes_per_led + 10];
+                // v.3:
+                // max 900 bytes of data can be sent (not including 12-byte header).
+                RT_Buffer = new byte[Math.Min(900, Gestalt.number_of_led * Gestalt.bytes_per_led) + 12];
+
+                // first byte is UDP packet version.
+                // 1: Generation I
+                // 2: Generation II up to firmware v.2.4.6
+                // 3: up to firmware 2.4.14
+
+                RT_Buffer[0] = 0x03;
+
                 return Gestalt;
             }
             else
@@ -836,6 +847,7 @@ namespace Twinkly_xled
             if (Authenticated && c.Length == 3)
             {
                 // Authentication
+                RT_Buffer[0] = 0x01;    // Gen.1 format, for testing
                 var token = data.GetAuthToken();
                 var tokenbytes = Convert.FromBase64String(token);
                 tokenbytes.CopyTo(RT_Buffer, 1);
@@ -857,7 +869,7 @@ namespace Twinkly_xled
         // Use RT 7777 UDP to set all lights
         // pass color as byte array RGB
         // warning: mode must be "rt" (this function does not set it)
-        public void SendFrame(byte[] c)
+        public void SendFrame(byte[] frameData, int offset=0, int length=20, byte frameFragment=0)
         {
             // Authentication
             var token = data.GetAuthToken();
@@ -865,14 +877,22 @@ namespace Twinkly_xled
             if (token == null)
                 return;
 
+            RT_Buffer[0] = 0x03;
             var tokenbytes = Convert.FromBase64String(token);
             tokenbytes.CopyTo(RT_Buffer, 1);
 
-            // Color Data
-            for (int i = 10; i < RT_Buffer.Length; i += c.Length)
-            {
-                Buffer.BlockCopy(c, 0, RT_Buffer, i, Math.Min(c.Length, RT_Buffer.Length - i));
-            }
+            RT_Buffer[9] = 0;
+            RT_Buffer[10] = 0;
+            RT_Buffer[11] = frameFragment;
+
+            // repeat frameData as many times as needed to fill buffer
+            //for (int i = 10; i < RT_Buffer.Length; i += frameData.Length)
+            //{
+            //    Buffer.BlockCopy(frameData, 0, RT_Buffer, i, Math.Min(frameData.Length, RT_Buffer.Length - i));
+            //}
+
+            // new: copy only range
+            Buffer.BlockCopy(frameData, offset, RT_Buffer, 12, length);
 
             data.RTFX(RT_Buffer);
         }
