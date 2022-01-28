@@ -119,7 +119,7 @@ namespace Twinkly_xled
         }
 
         // UDP port 7777 for realtime 
-        public void RTFX(byte[] buffer)
+        public Task<int> RTFX(byte[] buffer)
         {
             const int PORT_NUMBER = 7777;
 
@@ -129,8 +129,8 @@ namespace Twinkly_xled
                 {
 
                     // send
-                    client.Send(buffer, buffer.Length, new IPEndPoint(IPAddress, PORT_NUMBER));
-
+                    //client.Send(buffer, buffer.Length, new IPEndPoint(IPAddress, PORT_NUMBER));
+                    return client.SendAsync(buffer, buffer.Length, new IPEndPoint(IPAddress, PORT_NUMBER));
                     // Hope it made it 
 
                 }
@@ -140,6 +140,7 @@ namespace Twinkly_xled
                 // this can happen if the queue is full or a buffer is too small
                 Error = true;
                 ErrorMessage = err.Message;
+                throw;  // should we even catch this here?
             }
         }
 
