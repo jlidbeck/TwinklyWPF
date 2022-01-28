@@ -102,13 +102,27 @@ namespace TwinklyWPF
                 },
                 (isChecked) => {
                     return true;    // todo: figure out how to trigger: ActiveDevice?.CurrentMode=="rt";
-                } );
+                });
 
+
+            _arguments = arguments;
 
             _refreshGuiTimer = new System.Timers.Timer(1000) { AutoReset = true };
             _refreshGuiTimer.Elapsed += RefreshGui;
             _refreshGuiTimer.Start();
+
+            if (arguments.Contains("Manual"))
+            {
+                _manualIpAddresses = new List<string>();
+                _manualIpAddresses.Add("192.168.0.18");
+                _manualIpAddresses.Add("192.168.0.19");
+                _manualIpAddresses.Add("192.168.0.20");
+                _manualIpAddresses.Add("192.168.0.21");
+            }
+
         }
+
+        List<string> _manualIpAddresses;
 
         async public Task Initialize()
         {
@@ -116,11 +130,33 @@ namespace TwinklyWPF
 
             try
             {
-                await Discover();   // TODO: move?
+                if (_manualIpAddresses == null)
+                {
+                    await Discover();
+                }
+                else
+                {
+                    foreach (string ip in _manualIpAddresses)
+                    {
+                        Message = $"Adding device {ip}...";
+                        await AddDevice(IPAddress.Parse(ip));
+                    }
+                }
 
-                // only load if the API detected the Twinkly at startup
-                if (ActiveDevice != null)
-                    await ActiveDevice.Load();
+                if (_arguments.Contains("RT"))
+                {
+                    // do not await, since StartRealtimeTest can't execute until it has the semaphore
+                    Task _ = StartRealtimeTest();
+                }
+                else
+                {
+                    //if (ActiveDevice == null)
+                    //    await FakeLocate();
+
+                    // only load if the API detected the Twinkly at startup
+                    if (ActiveDevice != null)
+                        await ActiveDevice.Load();
+                }
             }
             finally
             {
@@ -174,17 +210,23 @@ namespace TwinklyWPF
         }
 
         // TODO
-        
+
         public async Task FakeLocate()
         {
             await _apiSemaphore.WaitAsync();
 
             try
             {
-                AddDevice(IPAddress.Parse("192.168.0.18"));
-                AddDevice(IPAddress.Parse("192.168.0.19"));
-                AddDevice(IPAddress.Parse("192.168.0.20"));
-                AddDevice(IPAddress.Parse("192.168.0.21"));
+                foreach (string ip in _manualIpAddresses)
+                {
+                    Message = $"Adding device {ip}...";
+                    await AddDevice(IPAddress.Parse(ip));
+                }
+
+                //await AddDevice(IPAddress.Parse("192.168.0.18"));
+                //await AddDevice(IPAddress.Parse("192.168.0.19"));
+                //await AddDevice(IPAddress.Parse("192.168.0.20"));
+                //await AddDevice(IPAddress.Parse("192.168.0.21"));
 
                 // do what Locate() does
                 if (ActiveDevice == null)
@@ -214,7 +256,7 @@ namespace TwinklyWPF
             if (FindDevice(ipAddress) != null)
                 return null;
 
-            await _apiSemaphore.WaitAsync();
+            //await _apiSemaphore.WaitAsync();
 
             try
             {
@@ -247,7 +289,7 @@ namespace TwinklyWPF
             }
             finally
             {
-                _apiSemaphore.Release();
+                //_apiSemaphore.Release();
             }
         }
 
@@ -289,7 +331,7 @@ namespace TwinklyWPF
                 OnPropertyChanged("ActiveDevice");
                 OnPropertyChanged("Devices");
             }
-            catch(Exception err)
+            catch (Exception err)
             {
                 Message = $"Refresh failed: {err.Message}";
             }
@@ -309,10 +351,10 @@ namespace TwinklyWPF
             get => RTMovie?.Running == true;
             set
             {
-                if (value)
-                    RTMovie.Start().Wait();
-                else
-                    RTMovie.Stop();
+                //if (value)
+                //    RTMovie.Start().Wait();
+                //else
+                //    RTMovie.Stop();
                 OnPropertyChanged();
             }
         }
@@ -328,18 +370,17 @@ namespace TwinklyWPF
             RTMovie?.Stop();
         }
 
-        public async Task StartRealtimeTest()
+        public Task StartRealtimeTest()
         {
             if (RealtimeMovieRunning)
-                return;
+                return Task.CompletedTask;
 
             Message = $"Setting up {Devices.Count()} devices...";
 
             RTMovie = new RealtimeMovie() { ApiSemaphore = _apiSemaphore, Devices = Devices };
 
-            await RTMovie.Start();
-
             Message = "Starting RT";
+            return RTMovie.Start();
         }
 
         #endregion
@@ -573,7 +614,7 @@ namespace TwinklyWPF
 
         public int SliderBrightness
         {
-            get { return Brightness?.value ?? 100; }
+            get { return Brightness == null ? 0 : Brightness.enabled ? Brightness.value : 100; }
             set
             {
                 if (value != Brightness?.value)
@@ -693,7 +734,7 @@ namespace TwinklyWPF
         }
 
         //  Clear all view model fields to reset display
-        internal async void Unload()
+        internal void Unload()
         {
             //await _apiSemaphore.WaitAsync();
 
@@ -737,7 +778,6 @@ namespace TwinklyWPF
             {
                 Message = $"GetInfo failed ({twinklyapi.Status.ToString()})";
                 throw new Exception(Message);
-                return;
             }
 
             FW = await twinklyapi.Firmware();
@@ -745,7 +785,6 @@ namespace TwinklyWPF
             {
                 Message = $"GetFirmware failed ({twinklyapi.Status.ToString()})";
                 throw new Exception(Message);
-                return;
             }
 
 

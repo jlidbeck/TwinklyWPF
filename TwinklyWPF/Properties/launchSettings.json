@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "TwinklyWPF": {
+      "commandName": "Project",
+      "commandLineArgs": "Manual RT"
+    }
+  }
+}
