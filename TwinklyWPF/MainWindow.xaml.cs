@@ -123,9 +123,20 @@ namespace TwinklyWPF
 
         private async void GetLayoutTest_Click(object sender, RoutedEventArgs e)
         {
-            var layout = await MainViewModel.ActiveDevice?.twinklyapi.GetLayout();
-            var content = JsonSerializer.Serialize(layout);
-            MessageBox.Show(content);
+            var window = new LayoutWindow { DataContext = DataContext, Owner = this };
+            window.Layout = MainViewModel.RTMovie?.Layout;
+
+            if (window.ShowDialog() == true)
+            {
+                var result = await MainViewModel.ActiveDevice?.twinklyapi.GetLayout();
+                var layout = result.coordinates;
+                var msg = $"Points: {layout.Length} Source: {result.source} Synthesized: {result.synthesized}";
+                foreach (var pt in layout)
+                    msg += $"\n{pt.x}, {pt.y}, {pt.z}";
+
+                MessageBox.Show(msg);
+
+            }
         }
 
         private async void GetMovieConfigTest_Click(object sender, RoutedEventArgs e)

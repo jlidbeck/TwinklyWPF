@@ -616,7 +616,7 @@
                     <Run Text="FPS:" Foreground="Orange" />
                     <Run Text="{Binding FPS, StringFormat=N3, Mode=OneWay}" Foreground="GreenYellow" />
                 </TextBlock>
-                <Button x:Name="GetLayoutTest" Content="Get Layout" ToolTip="ActiveDevice: led/layout/full"
+                <Button Content="Layout" ToolTip="ActiveDevice: led/layout/full"
                         Click="GetLayoutTest_Click" />
                 <Button x:Name="GetMovieConfigTest" Content="Get MovieConfig" ToolTip="ActiveDevice: led/movie/config GET test"
                         Click="GetMovieConfigTest_Click" />

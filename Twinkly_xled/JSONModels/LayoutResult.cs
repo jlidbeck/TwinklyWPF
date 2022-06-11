@@ -1,12 +1,16 @@
-﻿namespace Twinkly_xled.JSONModels
+﻿using System.Diagnostics;
+
+namespace Twinkly_xled.JSONModels
 {
-    public class XYZ
+    [DebuggerDisplay("{x}, {y}, {z}")]
+    public struct XYZ
     {
         public double x { get; set; }
         public double y { get; set; }
         public double z { get; set; }
     }
 
+    [DebuggerDisplay("[{coordinates.Length}] {source}")]
     public class Layout
     {
         public int aspectXY { get; set; }
