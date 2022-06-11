@@ -19,7 +19,13 @@ namespace Twinkly_xled
         public HttpStatusCode HttpStatus { get; private set; } = HttpStatusCode.OK;
 
         private IPAddress tw_IP { get; set; }
-        public IPAddress IPAddress
+        public string IPAddressString
+        {
+            get => tw_IP.ToString();
+            set { tw_IP = System.Net.IPAddress.Parse(value); }
+        }
+
+        public System.Net.IPAddress IPAddress
         {
             get { return tw_IP; }
             set

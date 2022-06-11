@@ -111,13 +111,15 @@ namespace TwinklyWPF
             _refreshGuiTimer.Elapsed += RefreshGui;
             _refreshGuiTimer.Start();
 
-            if (arguments.Contains("Manual"))
+            //if (arguments.Contains("Manual"))
             {
-                _manualIpAddresses = new List<string>();
-                _manualIpAddresses.Add("192.168.0.18");
-                _manualIpAddresses.Add("192.168.0.19");
-                _manualIpAddresses.Add("192.168.0.20");
-                _manualIpAddresses.Add("192.168.0.21");
+                _manualIpAddresses = new List<string>
+                {
+                    "192.168.0.18",
+                    "192.168.0.19",
+                    "192.168.0.20",
+                    //"192.168.0.21"
+                };
             }
 
         }
@@ -130,7 +132,7 @@ namespace TwinklyWPF
 
             try
             {
-                if (_manualIpAddresses == null)
+                if (true)
                 {
                     await Discover();
                 }
