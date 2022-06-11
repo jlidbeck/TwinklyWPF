@@ -157,11 +157,18 @@ namespace TwinklyWPF
             }
         }
 
+        private System.Threading.SemaphoreSlim _frameTimerSemaphore = new System.Threading.SemaphoreSlim(1, 1);
+
         private async void OnFrameTimerElapsed(object sender, System.Timers.ElapsedEventArgs e)
         {
             //random.NextBytes(frameData);
             if (_frameTimer == null)
                 return;
+
+            if (!_frameTimerSemaphore.Wait(TimeSpan.Zero))
+            {
+                return;
+            }
 
             Draw();
 
@@ -172,6 +179,9 @@ namespace TwinklyWPF
                 int offset = 0;
                 foreach (var device in Devices)
                 {
+                    if (device.LedConfig == null)
+                        continue;
+
                     // devices can only receive 900 bytes of data at a time.
                     // It seems like the strings[] array defines the expected frame ranges.
                     byte fragment = 0;
@@ -192,6 +202,7 @@ namespace TwinklyWPF
             finally
             {
                 ApiSemaphore.Release();
+                _frameTimerSemaphore.Release();
             }
         }
 
