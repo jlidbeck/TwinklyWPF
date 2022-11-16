@@ -11,7 +11,8 @@
     Height="500"
     mc:Ignorable="d"
     KeyDown="Window_KeyDown"
-    KeyUp="Window_KeyUp">
+    KeyUp="Window_KeyUp"
+    Closing="Window_Closing">
     <Window.Resources>
         <BooleanToVisibilityConverter x:Key="BoolToVis" />
 

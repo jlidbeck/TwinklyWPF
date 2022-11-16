@@ -145,7 +145,7 @@ namespace TwinklyWPF
                     }
                 }
 
-                if (_arguments.Contains("RT"))
+                if (_arguments.Contains("RT") || App.Current.Settings.AutoStart)
                 {
                     // do not await, since StartRealtimeTest can't execute until it has the semaphore
                     Task _ = StartRealtimeTest();

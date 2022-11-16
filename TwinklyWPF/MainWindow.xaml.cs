@@ -185,5 +185,27 @@ namespace TwinklyWPF
                     );
             }
         }
+
+        private void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e)
+        {
+            try
+            {
+                var placement = WindowPlacement.WindowPlacement.GetPlacement(this);
+                App.Current.Settings.MainWindowPlacement = placement;
+            }
+            catch(Exception ex)
+            {
+                // non-critical failure
+                Console.WriteLine($"Failed to save window placement settings: {ex.Message}");
+            }
+        }
+
+        protected override void OnSourceInitialized(EventArgs e)
+        {
+            base.OnSourceInitialized(e);
+
+            if(App.Current.Settings?.MainWindowPlacement.IsValid == true)
+                WindowPlacement.WindowPlacement.SetPlacement(this, App.Current.Settings.MainWindowPlacement);
+        }
     }
 }
