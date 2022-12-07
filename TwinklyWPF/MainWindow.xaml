@@ -151,7 +151,8 @@
                     Text="{Binding ActiveDevice.FW.version}" />
             </StackPanel>
             <Button x:Name="GestaltDetails" 
-                    Content="Gestalt" 
+                    Content="Gestalt"
+                    ToolTip="ActiveDevice.Gestalt"
                     Click="ShowDetails_Click"
                     Grid.Row="0"
                     Grid.Column="1"
@@ -251,6 +252,16 @@
                                 Grid.ColumnSpan="2"
                                 Orientation="Horizontal">
                 <TextBlock
+                    Margin="10,2,2,2"
+                    Foreground="LightYellow"
+                    Text="Group:">
+                    <Run Foreground="Yellow" Text="{Binding ActiveDevice.CurrentMovie.GroupName, Mode=OneWay}" />
+                    <Run Text=" (" />
+                    <Run Foreground="Yellow" Text="{Binding ActiveDevice.CurrentMovie.sync.mode, Mode=OneWay}" />
+                    <Run Text=")" />
+                </TextBlock>
+                
+                <TextBlock
                     Margin="2"
                     Foreground="LightYellow"
                     Text="Mode:" />
@@ -260,14 +271,6 @@
                     Foreground="DarkOrange"
                     Text="{Binding ActiveDevice.CurrentMode.mode}" />
 
-                <TextBlock
-                    Margin="10,2,2,2"
-                    Foreground="LightYellow"
-                    Text="Group:">
-                    <Run Foreground="Yellow" Text="{Binding ActiveDevice.CurrentMovie.sync.mode, Mode=OneWay}" />
-                    <Run Foreground="Yellow" Text="{Binding ActiveDevice.CurrentMovie.GroupName, Mode=OneWay}" />
-                </TextBlock>
-                
                 <TextBlock
                     Margin="10,2,2,2"
                     Foreground="LightYellow"
@@ -320,12 +323,14 @@
             </StackPanel>
             <Button Name="CurrentModeDetails"
                     Content="CurrentMode" 
+                    ToolTip="ActiveDevice.CurrentMode"
                     Click="ShowDetails_Click"
                     Grid.Row="5"
                     Grid.Column="1"
                     HorizontalAlignment="Right" />
             <Button Name="CurrentMovieDetails"
                     Content="CurrentMovie" 
+                    ToolTip="ActiveDevice.CurrentMovie"
                     Click="ShowDetails_Click"
                     Grid.Row="6"
                     Grid.Column="1"
@@ -611,11 +616,11 @@
                     <Run Text="FPS:" Foreground="Orange" />
                     <Run Text="{Binding FPS, StringFormat=N3, Mode=OneWay}" Foreground="GreenYellow" />
                 </TextBlock>
-                <Button x:Name="GetLayoutTest" Content="Get Layout"
+                <Button x:Name="GetLayoutTest" Content="Get Layout" ToolTip="ActiveDevice: led/layout/full"
                         Click="GetLayoutTest_Click" />
-                <Button x:Name="GetMovieConfigTest" Content="Get MovieConfig"
+                <Button x:Name="GetMovieConfigTest" Content="Get MovieConfig" ToolTip="ActiveDevice: led/movie/config GET test"
                         Click="GetMovieConfigTest_Click" />
-                <Button x:Name="SetMovieConfigTest" Content="Set MovieConfig"
+                <Button x:Name="SetMovieConfigTest" Content="Set MovieConfig" ToolTip="ActiveDevice: led/movie/config POST test"
                         Click="SetMovieConfigTest_Click" />
             </StackPanel>
                     
