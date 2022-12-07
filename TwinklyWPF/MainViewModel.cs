@@ -393,6 +393,7 @@ namespace TwinklyWPF
                 Piano = Piano
             };
 
+            App.Log("Starting RT");
             Message = "Starting RT";
             return RTMovie.Start();
         }
