@@ -2,13 +2,14 @@
 using System.IO;
 using System.Text.Json;
 using System.Threading.Tasks;
+using TwinklyWPF.Utilities;
 
 namespace TwinklyWPF
 {
     [Serializable]
     public class AppSettings
     {
-        public WindowPlacement.WINDOWPLACEMENT MainWindowPlacement { get; set; }
+        public WINDOWPLACEMENT MainWindowPlacement { get; set; }
 
         public bool AutoStart { get; set; } = true;
 

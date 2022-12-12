@@ -6,7 +6,7 @@ using System.Windows;
 using System.Xml.Serialization;
 using System.Text.Json.Serialization;
 
-namespace WindowPlacement
+namespace TwinklyWPF.Utilities
 {
     // RECT structure required by WINDOWPLACEMENT structure
     [Serializable]
@@ -20,10 +20,10 @@ namespace WindowPlacement
 
         public RECT(int left, int top, int right, int bottom)
         {
-            this.Left = left;
-            this.Top = top;
-            this.Right = right;
-            this.Bottom = bottom;
+            Left = left;
+            Top = top;
+            Right = right;
+            Bottom = bottom;
         }
 
         [XmlIgnore]
@@ -41,8 +41,8 @@ namespace WindowPlacement
 
         public POINT(int x, int y)
         {
-            this.X = x;
-            this.Y = y;
+            X = x;
+            Y = y;
         }
     }
 
@@ -70,7 +70,7 @@ namespace WindowPlacement
         {
             get
             {
-                return (showCmd > 0 && !normalPosition.IsEmpty);
+                return showCmd > 0 && !normalPosition.IsEmpty;
             }
         }
     }
@@ -93,7 +93,7 @@ namespace WindowPlacement
         {
             placement.length = Marshal.SizeOf(typeof(WINDOWPLACEMENT));
             placement.flags = 0;
-            placement.showCmd = (placement.showCmd == SW_SHOWMINIMIZED ? SW_SHOWNORMAL : placement.showCmd);
+            placement.showCmd = placement.showCmd == SW_SHOWMINIMIZED ? SW_SHOWNORMAL : placement.showCmd;
             SetWindowPlacement(windowHandle, ref placement);
         }
 
@@ -106,12 +106,12 @@ namespace WindowPlacement
 
         public static void SetPlacement(this Window window, WINDOWPLACEMENT placement)
         {
-            WindowPlacement.SetPlacement(new WindowInteropHelper(window).Handle, placement);
+            SetPlacement(new WindowInteropHelper(window).Handle, placement);
         }
 
         public static WINDOWPLACEMENT GetPlacement(this Window window)
         {
-            return WindowPlacement.GetPlacement(new WindowInteropHelper(window).Handle);
+            return GetPlacement(new WindowInteropHelper(window).Handle);
         }
 
     }

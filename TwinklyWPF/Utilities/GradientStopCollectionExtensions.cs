@@ -1,7 +1,7 @@
 ﻿using System.Linq;
 using System.Windows.Media;
 
-namespace TwinklyWPF
+namespace TwinklyWPF.Utilities
 {
     public static class GradientStopCollectionExtensions
     {

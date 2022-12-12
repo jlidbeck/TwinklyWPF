@@ -4,6 +4,7 @@ using System.Timers;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
+using TwinklyWPF.Utilities;
 
 namespace TwinklyWPF
 {
@@ -219,7 +220,7 @@ namespace TwinklyWPF
         {
             try
             {
-                var placement = WindowPlacement.WindowPlacement.GetPlacement(this);
+                var placement = WindowPlacement.GetPlacement(this);
                 App.Current.Settings.MainWindowPlacement = placement;
             }
             catch(Exception ex)
@@ -234,7 +235,7 @@ namespace TwinklyWPF
             base.OnSourceInitialized(e);
 
             if(App.Current.Settings?.MainWindowPlacement.IsValid == true)
-                WindowPlacement.WindowPlacement.SetPlacement(this, App.Current.Settings.MainWindowPlacement);
+                WindowPlacement.SetPlacement(this, App.Current.Settings.MainWindowPlacement);
         }
     }
 }

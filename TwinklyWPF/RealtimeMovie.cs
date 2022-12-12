@@ -6,6 +6,7 @@ using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 using Twinkly_xled.JSONModels;
+using TwinklyWPF.Utilities;
 
 namespace TwinklyWPF
 {

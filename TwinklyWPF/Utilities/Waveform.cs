@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace TwinklyWPF
+namespace TwinklyWPF.Utilities
 {
     public class Waveform
     {
@@ -19,13 +19,13 @@ namespace TwinklyWPF
         //      \/\/\/\/
         public static double Triangle(double x, double period)
         {
-            return Math.Abs((x / period) % 2.0 - 1.0);
+            return Math.Abs(x / period % 2.0 - 1.0);
         }
 
         //      \______/\______/
         public static double SpacedTriangle(double x, double period)
         {
-            return Math.Max(0, Math.Abs((x / (period*4.0)) % 2.0 - 1.0) * 4.0 - 3.0);
+            return Math.Max(0, Math.Abs(x / (period * 4.0) % 2.0 - 1.0) * 4.0 - 3.0);
         }
 
         // danger: for simplicity, assumes y > 0
