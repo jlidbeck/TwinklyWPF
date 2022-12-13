@@ -5,6 +5,7 @@ using System.Diagnostics;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
+using System.Windows.Media;
 using Twinkly_xled.JSONModels;
 using TwinklyWPF.Utilities;
 
@@ -19,6 +20,7 @@ namespace TwinklyWPF
         protected byte[] _frameData;
         Random _random = new Random();
 
+        public Piano Piano;
         public int Inputs = 0;
 
         protected double[] KeysDownTimes = new double[3];
@@ -40,16 +42,12 @@ namespace TwinklyWPF
             new double[3] { 0.5, 0.5, 0.5 },    // low white
         };
 
-        double[][] _currentPalette = { 
-            new double[3] { 1.0, 0.0, 0.2 },    // magenta
-            new double[3] { 0.5, 1.0, 0.0 },    // yellow-green
-            new double[3] { 0.0, 0.5, 1.0 },    // light blue
+        ColorMorph[] _currentPalette = { 
+            new ColorMorph( 1.0, 0.0, 0.2 ),    // magenta
+            new ColorMorph( 0.5, 1.0, 0.0 ),    // yellow-green
+            new ColorMorph( 0.0, 0.5, 1.0 ),    // light blue
         };
 
-        double[][] _targetPalette = null;
-        Stopwatch _paletteChangeTime = new Stopwatch();
-
-        //public XYZ[] coordinates { get; set; }
         public Layout Layout { get; set; }
         public RealtimeMovie()
         {
@@ -132,30 +130,11 @@ namespace TwinklyWPF
 
         public void ChangeColors()
         {
-            double palTime = _paletteChangeTime.ElapsedMilliseconds / 1800.0;   // transition time
-            if (_targetPalette!=null && palTime < 1.0)
-            {
-                // lock in-transition color as new starting point
-                for (int i = 0; i < _currentPalette.Length; ++i)
-                {
-                    for (int j = 0; j < 3; ++j)
-                        _currentPalette[i][j] = palTime * _targetPalette[i][j] + (1 - palTime) * _currentPalette[i][j];
-                }
-            }
-
-            // set _targetPalette to null and use a temporary to avoid race condition with Draw().
-            // TODO: use a proper semaphore
-            _targetPalette = null;
-
-            var pal = new double[_currentPalette.Length][];
-            for (int i = 0; i < pal.Length; ++i)
+            for (int i = 0; i < _currentPalette.Length; ++i)
             {
                 int j = (_random.Next() & 0xFFFF) % GoodPalette.Length;
-                pal[i] = GoodPalette[j];
+                _currentPalette[i].SetTarget(GoodPalette[j]);
             }
-
-            _targetPalette = pal;
-            _paletteChangeTime.Restart();
         }
 
         protected virtual void Draw()
@@ -219,53 +198,41 @@ namespace TwinklyWPF
                         int i = 0;
 
                         var colors = new double[3][];
-                        colors[0] = _currentPalette[0];
-                        colors[1] = _currentPalette[1];
-                        colors[2] = _currentPalette[2];
+                        colors[0] = _currentPalette[0].GetColor();
+                        colors[1] = _currentPalette[1].GetColor();
+                        colors[2] = _currentPalette[2].GetColor();
 
-                        if (_targetPalette?.Length==_currentPalette.Length)
+                        double[] angles = new double[4] { 
+                            t * Piano.Knobs[4],//0.1, 
+                            t * Piano.Knobs[5],//-0.13, 
+                            t * Piano.Knobs[6],//0.31, 
+                            t * Piano.Knobs[7],//0.01
+                        };
+                        double[] coss = new double[angles.Length];
+                        double[] sins = new double[angles.Length];
+                        for(int k=0; k<angles.Length; ++k)
                         {
-                            // color animation in progress
-                            //_paletteChangeTime = Math.Min(1.0, _paletteChangeTime + 0.03);
-                            double palTime = _paletteChangeTime.ElapsedMilliseconds / 1800.0;   // transition time
-                            if (palTime >= 1.0)
-                            {
-                                // color animation complete
-                                _paletteChangeTime.Stop();
-                                _currentPalette = _targetPalette;
-                                _targetPalette = null;
-                            }
-                            else
-                            {
-                                // interpolate colors
-                                for (int k = 0; k < colors.Length; ++k)
-                                {
-                                    for (int j = 0; j < 3; ++j)
-                                    {
-                                        colors[k][j] = palTime * _targetPalette[k][j] + (1 - palTime) * _currentPalette[k][j];
-                                    }
-                                }
-                            }
+                            coss[k] = Math.Cos(angles[k]);
+                            sins[k] = Math.Sin(angles[k]);
                         }
 
                         for (int j = 0; j*3 < _frameData.Length; ++j)
                         {
                             if (Layout.coordinates[j].z == 3 || Layout.coordinates[j].z == 11) { i += 3; continue; }
 
-                            double x = Layout.coordinates[j].x;
-                            double y = Layout.coordinates[j].y;
-                            x += y;
+                            double x = Layout.coordinates[j].x - 20.5;
+                            double y = Layout.coordinates[j].y - 10.0;
+
                             //double v = Math.Sin(0.5 * x + 1.5 * y + 1.1 * t);
                             //v *= Math.Abs(v);
                             //double w = Math.Sin(2.3 * x + 6.9 * y - 2.3 * t);
                             //w *= Math.Abs(w);
 
-                            const double wavelength1 = 5;
-                            const double wavelength2 = 5;
+                            const double wavelength = 5;
 
-                            double u = Waveform.SpacedTriangle(x + t * 0.3, wavelength1);
-                            double v = Waveform.SpacedTriangle(x - t * 0.6, wavelength2);
-                            double w = Waveform.SpacedTriangle(x + t * 0.7, wavelength2);
+                            double u = Waveform.SpacedTriangle(x+y + t * 0.3, wavelength, 4*(1-Piano.Knobs[0]));
+                            double v = Waveform.SpacedTriangle(x+y - t * 0.6, wavelength, 4*(1-Piano.Knobs[1]));
+                            double w = Waveform.SpacedTriangle(x+y + t * 0.7, wavelength, 4*(1-Piano.Knobs[2]));
 
                             _frameData[i++] = (byte)(Math.Clamp(255.5 * (v*colors[0][0] + w*colors[1][0] + u*colors[2][0]), 0, 255));
                             _frameData[i++] = (byte)(Math.Clamp(255.5 * (v*colors[0][1] + w*colors[1][1] + u*colors[2][1]), 0, 255));
