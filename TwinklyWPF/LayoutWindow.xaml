@@ -31,7 +31,7 @@
                  FontFamily="Consolas"
                  IsReadOnly="True"
                  VerticalScrollBarVisibility="Auto" />
-        <GridSplitter Grid.Row="2" Height="5" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" />
+        <GridSplitter Grid.Row="2" Height="5" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Focusable="False" />
         <Canvas Grid.Row="3" x:Name="theCanvas" Background="Black"
                 MouseWheel="Canvas_MouseWheel"
                 SizeChanged="Canvas_SizeChanged"
@@ -47,6 +47,7 @@
             <Button Content="Set" Click="SetButton_Click" Margin="4" MinWidth="60" />
             <Button Content="Load..." Click="LoadButton_Click" Margin="4" MinWidth="60" />
             <Button Content="Save..." Click="SaveButton_Click" Margin="4" MinWidth="60" />
+            <Button Content="Center" Click="CenterButton_Click" Margin="4" MinWidth="60" />
         </StackPanel>
 
     </Grid>

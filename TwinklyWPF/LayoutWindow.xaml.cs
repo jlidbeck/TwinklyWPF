@@ -58,8 +58,6 @@ namespace TwinklyWPF
         }
 
 
-
-        // TODO: separate data from view
         #region INotifyPropertyChanged
 
         public event PropertyChangedEventHandler PropertyChanged;
@@ -70,6 +68,29 @@ namespace TwinklyWPF
         }
 
         #endregion
+
+        private void CenterButton_Click(object sender, RoutedEventArgs e)
+        {
+            Rect bounds = Rect.Empty;
+            foreach (var point in Layout.coordinates)
+            {
+                bounds.Union(new Point(point.x, point.y));
+            }
+
+            ShiftPoints(-bounds.Left - bounds.Width / 2, -bounds.Top - bounds.Height / 2);
+        }
+
+        private void ShiftPoints(double dx, double dy)
+        {
+            for(int i=0; i<Layout.coordinates.Length;++i)
+            {
+                Layout.coordinates[i].x += dx;
+                Layout.coordinates[i].y += dy;
+            }
+            LayoutResult = null;
+            UpdateLayoutText();
+        }
+
 
         private async void GetButton_Click(object sender, RoutedEventArgs e)
         {
@@ -168,6 +189,18 @@ namespace TwinklyWPF
                 case System.Windows.Input.Key.Escape:
                     this.DialogResult = false;
                     this.Close();
+                    break;
+                case System.Windows.Input.Key.Left:
+                    ShiftPoints(-0.1, 0);
+                    break;
+                case System.Windows.Input.Key.Right:
+                    ShiftPoints(0.1, 0);
+                    break;
+                case System.Windows.Input.Key.Up:
+                    ShiftPoints(0, 0.1);
+                    break;
+                case System.Windows.Input.Key.Down:
+                    ShiftPoints(0, -0.1);
                     break;
             }
         }
