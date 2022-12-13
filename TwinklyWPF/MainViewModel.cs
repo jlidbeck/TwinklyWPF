@@ -45,7 +45,7 @@ namespace TwinklyWPF
         // Set by view so our colour are calculated from the same source
         public GradientStopCollection GradientStops { get; set; }
 
-
+        public Piano Piano = new Piano();
 
         public bool TwinklyDetected
         {
@@ -128,6 +128,12 @@ namespace TwinklyWPF
 
         async public Task Initialize()
         {
+
+            Piano.Initialize();
+
+
+
+
             await _apiSemaphore.WaitAsync();
 
             try
@@ -379,7 +385,12 @@ namespace TwinklyWPF
 
             Message = $"Setting up {Devices.Count()} devices...";
 
-            RTMovie = new RealtimeMovie() { ApiSemaphore = _apiSemaphore, Devices = Devices };
+            RTMovie = new RealtimeMovie()
+            {
+                ApiSemaphore = _apiSemaphore,
+                Devices = Devices,
+                Piano = Piano
+            };
 
             Message = "Starting RT";
             return RTMovie.Start();
