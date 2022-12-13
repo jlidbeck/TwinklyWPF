@@ -17,15 +17,19 @@ namespace TwinklyWPF.Utilities
         }
 
         //      \/\/\/\/
+        //      -- period
         public static double Triangle(double x, double period)
         {
-            return Math.Abs(x / period % 2.0 - 1.0);
+            return Math.Abs(fmodf(2*x / period, 2.0) - 1.0);
         }
 
         //      \______/\______/
-        public static double SpacedTriangle(double x, double period)
+        //      -------- period
+        //  frac: ratio of period to width of the triangles
+        //  
+        public static double SpacedTriangle(double x, double period, double frac)
         {
-            return Math.Max(0, Math.Abs(x / (period * 4.0) % 2.0 - 1.0) * 4.0 - 3.0);
+            return Math.Max(0, Math.Abs(fmodf(2*x / period, 2.0) - 1.0) * frac - frac + 1.0);
         }
 
         // danger: for simplicity, assumes y > 0
@@ -36,5 +40,10 @@ namespace TwinklyWPF.Utilities
                 ? x % y + y
                 : x % y;
         }
+        public static double expgrowth(double initialValue, double time, double k)
+        {
+            return initialValue * Math.Exp(k * time);
+        }
+
     }
 }
