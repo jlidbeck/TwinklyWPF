@@ -47,7 +47,7 @@ namespace TwinklyWPF
         };
 
         double[][] _targetPalette = null;
-        double _paletteChangeTime = 0;
+        Stopwatch _paletteChangeTime = new Stopwatch();
 
         //public XYZ[] coordinates { get; set; }
         public Layout Layout { get; set; }
@@ -132,13 +132,14 @@ namespace TwinklyWPF
 
         public void ChangeColors()
         {
-            if (_targetPalette!=null && _paletteChangeTime < 1.0)
+            double palTime = _paletteChangeTime.ElapsedMilliseconds / 1800.0;   // transition time
+            if (_targetPalette!=null && palTime < 1.0)
             {
-                // lock in-transition color
+                // lock in-transition color as new starting point
                 for (int i = 0; i < _currentPalette.Length; ++i)
                 {
                     for (int j = 0; j < 3; ++j)
-                        _currentPalette[i][j] = _paletteChangeTime * _targetPalette[i][j] + (1 - _paletteChangeTime) * _currentPalette[i][j];
+                        _currentPalette[i][j] = palTime * _targetPalette[i][j] + (1 - palTime) * _currentPalette[i][j];
                 }
             }
 
@@ -154,7 +155,7 @@ namespace TwinklyWPF
             }
 
             _targetPalette = pal;
-            _paletteChangeTime = 0;
+            _paletteChangeTime.Restart();
         }
 
         protected virtual void Draw()
@@ -225,12 +226,12 @@ namespace TwinklyWPF
                         if (_targetPalette?.Length==_currentPalette.Length)
                         {
                             // color animation in progress
-                            _paletteChangeTime = Math.Min(1.0, _paletteChangeTime + 0.03);
-
-                            if (_paletteChangeTime >= 1.0)
+                            //_paletteChangeTime = Math.Min(1.0, _paletteChangeTime + 0.03);
+                            double palTime = _paletteChangeTime.ElapsedMilliseconds / 1800.0;   // transition time
+                            if (palTime >= 1.0)
                             {
                                 // color animation complete
-                                _paletteChangeTime = 1;
+                                _paletteChangeTime.Stop();
                                 _currentPalette = _targetPalette;
                                 _targetPalette = null;
                             }
@@ -241,7 +242,7 @@ namespace TwinklyWPF
                                 {
                                     for (int j = 0; j < 3; ++j)
                                     {
-                                        colors[k][j] = _paletteChangeTime * _targetPalette[k][j] + (1 - _paletteChangeTime) * _currentPalette[k][j];
+                                        colors[k][j] = palTime * _targetPalette[k][j] + (1 - palTime) * _currentPalette[k][j];
                                     }
                                 }
                             }
