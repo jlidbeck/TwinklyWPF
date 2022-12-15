@@ -122,7 +122,7 @@ namespace TwinklyWPF
 
         #endregion
 
-        private async void GetLayoutTest_Click(object sender, RoutedEventArgs e)
+        private async void Layout_Click(object sender, RoutedEventArgs e)
         {
             var window = new LayoutWindow { DataContext = DataContext, Owner = this };
             window.Layout = MainViewModel.RTMovie?.Layout;
@@ -136,26 +136,17 @@ namespace TwinklyWPF
                     msg += $"\n{pt.x}, {pt.y}, {pt.z}";
 
                 MessageBox.Show(msg);
-
             }
         }
 
-        private async void GetMovieConfigTest_Click(object sender, RoutedEventArgs e)
+        private async void MovieConfig_Click(object sender, RoutedEventArgs e)
         {
-            var config = await MainViewModel.ActiveDevice?.twinklyapi.GetMovieConfig();
-            var content = JsonSerializer.Serialize(
-                config,
-                new JsonSerializerOptions(JsonSerializerDefaults.General) { WriteIndented = true });
-            MessageBox.Show(content, $"GetMovieConfig: {(config.IsOK ? "Ok" : "FAILED")}");
-            if (config.IsOK)
-                MainViewModel.ActiveDevice.CurrentMovie = config;
-        }
+            var window = new MovieConfigWindow { DataContext = DataContext, Owner = this };
+            window.MovieConfig = MainViewModel.ActiveDevice?.CurrentMovie;
 
-        private async void SetMovieConfigTest_Click(object sender, RoutedEventArgs e)
-        {
-            var config = MainViewModel.ActiveDevice?.CurrentMovie;
-            var result = await MainViewModel.ActiveDevice?.twinklyapi.SetMovieConfig(config);
-            MessageBox.Show($"SetMovieConfig result: {result.ToString()}");
+            if (window.ShowDialog() == true)
+            {
+            }
         }
 
         private void ShowDetails_Click(object sender, RoutedEventArgs e)

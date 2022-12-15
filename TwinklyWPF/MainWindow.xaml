@@ -55,7 +55,7 @@
             HorizontalAlignment="Center"
             FontSize="25"
             Foreground="Fuchsia"
-            Text="Twinkly" />
+            Text="Chromatic Aberrations" />
         <TextBlock
             Grid.Row="0"
             Grid.RowSpan="2"
@@ -321,20 +321,6 @@
                     Foreground="LightYellow"
                     Text="{Binding ActiveDevice.Effects.effects_number}" />
             </StackPanel>
-            <Button Name="CurrentModeDetails"
-                    Content="CurrentMode" 
-                    ToolTip="ActiveDevice.CurrentMode"
-                    Click="ShowDetails_Click"
-                    Grid.Row="5"
-                    Grid.Column="1"
-                    HorizontalAlignment="Right" />
-            <Button Name="CurrentMovieDetails"
-                    Content="CurrentMovie" 
-                    ToolTip="ActiveDevice.CurrentMovie"
-                    Click="ShowDetails_Click"
-                    Grid.Row="6"
-                    Grid.Column="1"
-                    HorizontalAlignment="Right" />
 
             <StackPanel
                 x:Name="Brightness"
@@ -617,11 +603,9 @@
                     <Run Text="{Binding FPS, StringFormat=N3, Mode=OneWay}" Foreground="GreenYellow" />
                 </TextBlock>
                 <Button Content="Layout" ToolTip="ActiveDevice: led/layout/full"
-                        Click="GetLayoutTest_Click" />
-                <Button x:Name="GetMovieConfigTest" Content="Get MovieConfig" ToolTip="ActiveDevice: led/movie/config GET test"
-                        Click="GetMovieConfigTest_Click" />
-                <Button x:Name="SetMovieConfigTest" Content="Set MovieConfig" ToolTip="ActiveDevice: led/movie/config POST test"
-                        Click="SetMovieConfigTest_Click" />
+                        Click="Layout_Click" />
+                <Button x:Name="MovieConfig" Content="MovieConfig" ToolTip="Get and set MovieConfig for active device"
+                        Click="MovieConfig_Click" />
             </StackPanel>
                     
         </Grid>
