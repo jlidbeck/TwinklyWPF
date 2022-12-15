@@ -1,4 +1,5 @@
-﻿using System;
+﻿using NAudio.Midi;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
@@ -8,6 +9,7 @@ using System.Threading.Tasks;
 using System.Windows.Media;
 using Twinkly_xled.JSONModels;
 using TwinklyWPF.Utilities;
+using static TwinklyWPF.Piano;
 
 namespace TwinklyWPF
 {
@@ -15,8 +17,12 @@ namespace TwinklyWPF
     {
         private System.Timers.Timer _frameTimer;
         protected Stopwatch _stopwatch;
+        protected double CurrentTime => _stopwatch.ElapsedMilliseconds* 0.001;
+
         public int FrameCounter { get; private set; }
-        
+
+        public byte[] FrameData => _frameData;
+
         protected byte[] _frameData;
         Random _random = new Random();
 
@@ -26,7 +32,7 @@ namespace TwinklyWPF
         protected double[] KeysDownTimes = new double[3];
         protected double[] KeysUpTimes = new double[3];
 
-        public int ColorMode = 3;
+        public int ColorMode = 4;
 
         public static double[][] GoodPalette = { 
             new double[3] { 1.0, 0.0, 0.5 },    // hot pink
@@ -40,10 +46,11 @@ namespace TwinklyWPF
             new double[3] { 0.0, 0.1, 1.0 },    // blue blue
             new double[3] { 0.5, 0.0, 1.0 },    // purple
             new double[3] { 0.5, 0.5, 0.5 },    // low white
+            new double[3] { 0.2, 0.2, 0.2 },    // low white
         };
 
-        ColorMorph[] _currentPalette = { 
-            new ColorMorph( 1.0, 0.0, 0.2 ),    // magenta
+        ColorMorph[] _currentPalette = {
+            new ColorMorph( 1.0, 0.4, 0.0 ),    // gold
             new ColorMorph( 0.5, 1.0, 0.0 ),    // yellow-green
             new ColorMorph( 0.0, 0.5, 1.0 ),    // light blue
         };
@@ -51,11 +58,15 @@ namespace TwinklyWPF
         public Layout Layout { get; set; }
         public RealtimeMovie()
         {
-            InitializeLayout(600);
         }
 
-        void InitializeLayout(int n)
+        public bool Initialized { get; private set; } = false;
+
+        void Initialize()
         {
+            if (Initialized) return;
+
+            int n = 600;        // hardcoded for now, first layout
             if (n != 600) throw new Exception($"Bad n! {n}");
 
             Layout houseLayout = new Layout { aspectXY=0, aspectXZ=0, source="2d", synthesized=true };
@@ -73,7 +84,7 @@ namespace TwinklyWPF
                     case 224: ++zone; xyz.z = zone; zi = 0; break;  // 5: doorframe L up
                     case 248: ++zone; xyz.z = zone; zi = 0; break;  // 6: doorframe top
                     case 271: ++zone; xyz.z = zone; zi = 0; break;  // 7: doorframe R down
-                    case 300: ++zone; xyz.z = zone; zi = 0; xyz = new XYZ { x = 0.05, y = 10.0, z = 5.0 }; break; // back main
+                    case 300: ++zone; xyz.z = zone; zi = 0; xyz = new XYZ { x = 0.05, y = 10.0, z = 5.0 }; break; // string 2
                     case 395: ++zone; xyz.z = zone; zi = 0; break;  // 9: short run
                     case 443: ++zone; xyz.z = zone; zi = 0; break;  // 10: main
                     case 557: ++zone; xyz.z = zone; zi = 0; break;  // 11: leftover/downspout
@@ -88,7 +99,7 @@ namespace TwinklyWPF
                     case 2:
                         xyz.x += 0.1;
                         break;
-                    case 3: // dead to doorframe
+                    case 3: // link to doorframe (always off)
                         xyz.x += 0.08;
                         xyz.y -= 0.05;
                         break;
@@ -107,13 +118,57 @@ namespace TwinklyWPF
                     case 8: // strand #2 back main
                     case 9:
                     case 10:
-                    case 11: // dead return
                         xyz.x += 0.1;
+                        break;
+                    case 11: // hanging end (always off)
+                        xyz.y -= 0.1;
                         break;
                 }
             }
 
             this.Layout = houseLayout;
+
+            // initialze piano listeners
+            if (Piano != null)
+            {
+                Piano.PianoKeyDownEvent += new EventHandler(HandlePianoKeyDownEvent);
+            }
+
+            // done
+            Initialized = true;
+        }
+
+        struct SpatialEvent
+        {
+            public NoteEvent noteEvent;
+            public double x, y;
+            public double t;
+        }
+        SpatialEvent[] _lastNotes = new SpatialEvent[12];
+        int _lastNotesIndex = 0;
+
+        private int _nextColorToChange = 0; // should be treated as static in this function
+        private void HandlePianoKeyDownEvent(object s, EventArgs evt_)
+        {
+            if (!Running)
+                return;
+
+            var evt = (PianoKeyDownEventArgs)evt_;
+
+            // change one of the palette colors to the played tone color
+            int colorIndex = evt.NoteEvent.NoteNumber % GoodPalette.Length;
+            _currentPalette[_nextColorToChange].SetTarget(GoodPalette[colorIndex]);
+            _nextColorToChange = (_nextColorToChange + 1) % _currentPalette.Length;
+
+            // add note to circular buffer.
+            // we're not worried about circular buffer overruns here (low stakes)
+            _lastNotes[_lastNotesIndex] = new SpatialEvent { 
+                t = CurrentTime, 
+                noteEvent = evt.NoteEvent, 
+                x =       9.0*(_random.NextDouble()-0.5), 
+                y = 1.0 + 2.0*(_random.NextDouble()-0.5)
+            };
+            _lastNotesIndex = (_lastNotesIndex + 1) % _lastNotes.Length;
         }
 
         public void KeyDown(int keyId)
@@ -141,9 +196,9 @@ namespace TwinklyWPF
         {
             double t = _stopwatch.ElapsedMilliseconds * 0.001;
 
-            switch (ColorMode % 4)
+            switch (ColorMode % 5)
             {
-                case 1:
+                case 1: // calibration pattern
                 {
                     var color = new byte[3];
                     for (int i = 0; i < _frameData.Length;)
@@ -177,7 +232,7 @@ namespace TwinklyWPF
                 }
                 return;
 
-                case 2:
+                case 2: // simple chromatic abberration
                 {
                     int i = 0;
                     for (int j = 0; j < _frameData.Length/3; ++j)
@@ -193,7 +248,7 @@ namespace TwinklyWPF
                 }
                 return;
 
-                case 3:
+                case 3: // slow panning ribbons
                     {
                         int i = 0;
 
@@ -237,9 +292,67 @@ namespace TwinklyWPF
                             _frameData[i++] = (byte)(Math.Clamp(255.5 * (v*colors[0][0] + w*colors[1][0] + u*colors[2][0]), 0, 255));
                             _frameData[i++] = (byte)(Math.Clamp(255.5 * (v*colors[0][1] + w*colors[1][1] + u*colors[2][1]), 0, 255));
                             _frameData[i++] = (byte)(Math.Clamp(255.5 * (v*colors[0][2] + w*colors[1][2] + u*colors[2][2]), 0, 255));
+
+                            var chromaPower = Piano.ChromaPower();
+                            if(_random.NextDouble() < chromaPower[j%12])
+                            {
+                                for (int k = i - 3; k < i; ++k)
+                                    _frameData[k] = 255;
+                            }
                         }
                     }
                     return;
+
+                case 4: // chroma key ripples
+                    {
+                        int i = 0;
+
+                        for (int j = 0; j * 3 < _frameData.Length; ++j)
+                        {
+                            if (Layout.coordinates[j].z == 3 || Layout.coordinates[j].z == 11) { i += 3; continue; }
+
+                            double x = Layout.coordinates[j].x - 20.5;
+                            double y = Layout.coordinates[j].y -  7.0;
+
+                            double r=0, g=0, b=0;
+                            foreach(var evt in _lastNotes)
+                            {
+                                if (evt.noteEvent != null)
+                                {
+                                    var age = t - evt.t;
+                                    if (age >= 0)
+                                    {
+                                        const double velocity = 5.0;    // units/second
+                                        var dx = evt.x - x;
+                                        var dy = evt.y - y;
+                                        var dist = Math.Sqrt(dx * dx + dy * dy);
+                                        var w = age*velocity - dist;
+                                        if (w > 0)
+                                        {
+                                            var decay = 5.0 * Waveform.expgrowth(evt.noteEvent.Velocity / 127.0, age, -0.2);
+                                            var v = decay * Waveform.SpacedTriangle(w*2, 3.0, 2.0);
+                                            var color = GoodPalette[evt.noteEvent.NoteNumber % GoodPalette.Length];
+                                            r += v * color[0];
+                                            g += v * color[1];
+                                            b += v * color[2];
+                                        }
+                                    }
+                                }
+                            }
+                            _frameData[i++] = (byte)(Math.Clamp(255.5 * r, 0, 255));
+                            _frameData[i++] = (byte)(Math.Clamp(255.5 * g, 0, 255));
+                            _frameData[i++] = (byte)(Math.Clamp(255.5 * b, 0, 255));
+
+                            var chromaPower = Piano.ChromaPower();
+                            if (_random.NextDouble() < 0.01)
+                            {
+                                for (int k = i - 3; k < i; ++k)
+                                    _frameData[k] = 255;
+                            }
+                        }
+                    }
+                    return;
+
 
             }
 
@@ -369,6 +482,9 @@ namespace TwinklyWPF
         {
             if (Running)
                 return;
+
+            if (!Initialized)
+                Initialize();
 
             await ApiSemaphore.WaitAsync();
 

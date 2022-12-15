@@ -1,4 +1,5 @@
 ﻿using Microsoft.Win32;
+using System;
 using System.ComponentModel;
 using System.IO;
 using System.Runtime.CompilerServices;
@@ -7,6 +8,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
 using System.Windows.Shapes;
+using System.Windows.Threading;
 using Twinkly_xled.JSONModels;
 
 namespace TwinklyWPF
@@ -44,6 +46,7 @@ namespace TwinklyWPF
 
         private string _filename;
 
+        private DispatcherTimer _updateTimer;
 
         public LayoutWindow()
         {
@@ -51,10 +54,18 @@ namespace TwinklyWPF
 
         }
 
-        private void ThisLayoutWindow_Loaded(object sender, RoutedEventArgs e)
+        private void Window_Loaded(object sender, RoutedEventArgs e)
         {
             OnPropertyChanged("Layout");
-            UpdateLayoutText();
+            Redraw();
+            _updateTimer = new DispatcherTimer(
+                new System.TimeSpan(0, 0, 0, 0, 20),
+                DispatcherPriority.Render,
+                OnFrameTimerElapsed,
+                Dispatcher.CurrentDispatcher);
+            _updateTimer.Tag = this;
+            _updateTimer.Start();
+
         }
 
 
@@ -88,7 +99,7 @@ namespace TwinklyWPF
                 Layout.coordinates[i].y += dy;
             }
             LayoutResult = null;
-            UpdateLayoutText();
+            Redraw();
         }
 
 
@@ -98,7 +109,7 @@ namespace TwinklyWPF
 
             LayoutResult = result;
             Layout = result;
-            UpdateLayoutText();
+            Redraw();
         }
 
         private async void SetButton_Click(object sender, RoutedEventArgs e)
@@ -120,7 +131,7 @@ namespace TwinklyWPF
                     var str = await sr.ReadToEndAsync();
                     LayoutResult = null;
                     Layout = JsonSerializer.Deserialize<Layout>(str);
-                    UpdateLayoutText();
+                    Redraw();
                 }
             }
         }
@@ -131,9 +142,9 @@ namespace TwinklyWPF
             if (dialog.ShowDialog() == true)
             {
                 var stream = dialog.OpenFile();
-                using (var sw = new Utf8JsonWriter(stream, new JsonWriterOptions { Indented = true }))
+                //using (var sw = new Utf8JsonWriter(stream, new JsonWriterOptions { Indented = true }))
                 {
-                    JsonSerializer.Serialize(sw, Layout);
+                    await JsonSerializer.SerializeAsync(stream, Layout, new JsonSerializerOptions { WriteIndented = true });
                 }
             }
         }
@@ -145,7 +156,9 @@ namespace TwinklyWPF
             App.Log($"{theCanvas.ActualWidth} x {theCanvas.ActualHeight}");
         }
 
-        private void UpdateLayoutText()
+        int _scale = 25;
+
+        private void Redraw()
         {
             if(!(Layout?.coordinates?.Length > 0))
             {
@@ -171,18 +184,45 @@ namespace TwinklyWPF
                 var dot = new Ellipse { Width = 3, Height = 3, Stroke = null, Fill = Brushes.YellowGreen };
                 theCanvas.Children.Add(dot);
                 // since spacing is typically 0.1, and canvas is fat pixely, scale up
-                Canvas.SetLeft(dot, 20*point.x);
-                Canvas.SetTop(dot, 20*point.y);
-                bounds.Union(new Point(point.x, point.y));
+                Canvas.SetLeft(dot, _scale * point.x);
+                Canvas.SetTop(dot, _scale * point.y);
+                bounds.Union(new Point(_scale * point.x, _scale * point.y));
             }
             bounds.Inflate(bounds.Width * 0.1, bounds.Width * 0.1);
 
-            double h = theCanvas.ActualHeight;
-            double w = theCanvas.ActualWidth;
-            mt.Matrix = new Matrix(1, 0, 0, -1, 0, (h>0?h:300));
+            theCanvas.Width = bounds.Right;
+            theCanvas.Height = bounds.Bottom;
+
+            //double h = theCanvas.ActualHeight;
+            //double w = theCanvas.ActualWidth;
+
+            // flip vertically.
+            // can't do much else with this transform matrix, since it affects the entire
+            // canvas relative to its parent
+            mt.Matrix = new Matrix(1, 0, 0, -1, 0, (bounds.Bottom > 0? bounds.Bottom : 300));
         }
 
-        private void ThisLayoutWindow_KeyDown(object sender, System.Windows.Input.KeyEventArgs e)
+        private void UpdateColors()
+        {
+            if (!(MainViewModel.RTMovie?.FrameData?.Length > 0))
+            {
+                return;
+            }
+
+            var frame = MainViewModel.RTMovie.FrameData;
+            int i = 0;
+            foreach (FrameworkElement elm in theCanvas.Children)
+            {
+                var dot = elm as Ellipse;
+                if (dot != null)
+                {
+                    dot.Fill = new SolidColorBrush(Color.FromRgb(frame[i], frame[i + 1], frame[i + 2]));
+                    i += 3;
+                }
+            }
+        }
+
+        private void Window_KeyDown(object sender, System.Windows.Input.KeyEventArgs e)
         {
             switch(e.Key)
             {
@@ -207,12 +247,23 @@ namespace TwinklyWPF
 
         private void Canvas_MouseWheel(object sender, System.Windows.Input.MouseWheelEventArgs e)
         {
-
+            if (e.Delta < 0)
+                --_scale;
+            else
+                ++_scale;
+            Redraw();
         }
 
         private void Canvas_SizeChanged(object sender, SizeChangedEventArgs e)
         {
-            UpdateLayoutText();
+            Redraw();
         }
+
+        private static void OnFrameTimerElapsed(object sender, EventArgs e)
+        {
+            ((LayoutWindow)((DispatcherTimer)sender).Tag).UpdateColors();
+        }
+
+
     }
 }

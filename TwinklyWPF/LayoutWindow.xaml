@@ -5,11 +5,11 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:TwinklyWPF"
         mc:Ignorable="d"
-        Name="ThisLayoutWindow"
+        Name="ThisWindow"
         Title="Layout" Height="600" Width="800" 
         WindowStartupLocation="CenterOwner"
-        Loaded="ThisLayoutWindow_Loaded"
-        KeyDown="ThisLayoutWindow_KeyDown"
+        Loaded="Window_Loaded"
+        KeyDown="Window_KeyDown"
         ShowInTaskbar="False">
     <Grid>
         <Grid.RowDefinitions>
@@ -21,11 +21,11 @@
         </Grid.RowDefinitions>
         <TextBlock FontWeight="Bold">
             <Run Text="Code: " />
-            <Run Text="{Binding ElementName=ThisLayoutWindow, Path=LayoutResult.code, Mode=OneWay}" />
+            <Run Text="{Binding ElementName=ThisWindow, Path=LayoutResult.code, Mode=OneWay}" />
             <Run Text="Source: " />
-            <Run Text="{Binding ElementName=ThisLayoutWindow, Path=Layout.source, Mode=OneWay}" />
+            <Run Text="{Binding ElementName=ThisWindow, Path=Layout.source, Mode=OneWay}" />
             <Run Text="Synthesized: " />
-            <Run Text="{Binding ElementName=ThisLayoutWindow, Path=Layout.synthesized, Mode=OneWay}" />
+            <Run Text="{Binding ElementName=ThisWindow, Path=Layout.synthesized, Mode=OneWay}" />
         </TextBlock>
         <TextBox Grid.Row="1" Text="{Binding ElementName=ThisLayoutWindow, Path=LayoutText, Mode=OneWay}" 
                  FontFamily="Consolas"
@@ -35,6 +35,8 @@
         <Canvas Grid.Row="3" x:Name="theCanvas" Background="Black"
                 MouseWheel="Canvas_MouseWheel"
                 SizeChanged="Canvas_SizeChanged"
+                HorizontalAlignment="Center"
+                VerticalAlignment="Center"
                 ClipToBounds="True">
             <Canvas.RenderTransform>
                 <TransformGroup>
