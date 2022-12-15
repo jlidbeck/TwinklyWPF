@@ -17,17 +17,29 @@ namespace TwinklyWPF
         // cooked MIDI state
 
         public double[] Knobs = new double[8];
-        public double[] Pads = new double[8];
+
         NoteDownCounter[] chromaCount = new NoteDownCounter[12];
-        const double chromaPowerDecay = -5.0;  // exponential decay. -5 => halflife: .14 s; -3 => .23 s; -1 => .69
+        const double chromaPowerDecay = -1.0;  // exponential decay. -5 => halflife: .14 s; -3 => .23 s; -1 => .69
 
         // track last bass note
         NoteState bassNote = new NoteState();
         const double bassBumpDecay = -4.0f;   // exponential decay factor. k=-40 ==> halflife 0.17s
 
         // track high notes
-        public NoteState[] m_melodyNotesRing { get; } = new NoteState[12];
+        public NoteState[] melodyNotesRing { get; } = new NoteState[12];
         int melodyNotesRingIndex = 0;
+
+        // handlers can receive a keydown event after it's processed here
+        public event EventHandler PianoKeyDownEvent;
+        public class PianoKeyDownEventArgs : EventArgs
+        {
+            public NoteEvent NoteEvent;
+
+            public PianoKeyDownEventArgs(NoteEvent evt)
+            {
+                this.NoteEvent = evt;
+            }
+        }
 
         public void Initialize()
         {
@@ -49,17 +61,17 @@ namespace TwinklyWPF
             {
                 return (bassNote.note > 0 ?
                     // bassNote.velocity / (1.0f + bassNoteAge())    // slow decay: 1/(1+x)
-                    decay(bassNote.velocity, CurrentTime, bassNote.startTime, bassBumpDecay)         // exponential decay: e^-x. k=-40 ==> halflife 0.17s
+                    decay(bassNote.velocity, bassNote.startTime, bassBumpDecay)         // exponential decay: e^-x. k=-40 ==> halflife 0.17s
                     : 0);
             }
         }
 
-        public double decay(double initialValue, double currentTime, double startTime, double decayRate)
+        public double decay(double initialValue, double startTime, double decayRate)
         {
-            return initialValue * Math.Exp(decayRate * (currentTime - startTime));
+            return initialValue * Math.Exp(decayRate * (CurrentTime - startTime));
         }
 
-        public NoteState[] MelodyNotes => m_melodyNotesRing;
+        public NoteState[] MelodyNotes => melodyNotesRing;
 
         //inline auto chromaCount() const { return m_chromaCount; }
 
@@ -71,7 +83,7 @@ namespace TwinklyWPF
             for (int i = 0; i < 12; ++i)
             {
                 chromaPower[i] = chromaCount[i].noteCount == 0
-                    ? Utilities.Waveform.expgrowth(chromaCount[i].velocity, t - chromaCount[i].startTime, chromaPowerDecay)
+                    ? decay(chromaCount[i].velocity, chromaCount[i].startTime, chromaPowerDecay)
                     : 1.0f;
             }
             return chromaPower;
@@ -126,69 +138,14 @@ namespace TwinklyWPF
 
         void midiIn_MessageReceived(object sender, MidiInMessageEventArgs e)
         {
-            var t = CurrentTime;
-
             switch (e.MidiEvent.CommandCode)
             {
                 case MidiCommandCode.NoteOn:
-                    {
-                        var evt = (NoteEvent)e.MidiEvent;
-
-                        //previousNoteCount = noteCountSmoothed();
-                        //previousNoteCountTime = t;
-
-                        //m_notes[evt.NoteNumber] = evt.Velocity;
-                        //m_notesDown.insert(evt.NoteNumber);
-
-                        var c = evt.NoteNumber % 12;
-                        ++chromaCount[c].noteCount;
-                        chromaCount[c].velocity = evt.Velocity / 127.0f;
-                        chromaCount[c].startTime = t;
-
-                        // reset noteCountSmoothed--smoothing doesn't apply to noteCount increasing
-                        // always making certain that noteCountSmoothed never drops suddenly
-                        //if (previousNoteCount < m_notesDown.size())
-                        //{
-                        //    previousNoteCount = m_notesDown.size();
-                        //}
-
-                        if (evt.NoteNumber < PandaKeys.MiddleC())
-                        {
-                            bassNote.note = evt.NoteNumber;
-                            bassNote.velocity = evt.Velocity / 127.0f;
-                            bassNote.startTime = t;
-                        }
-                        else
-                        {
-                            // add high note 
-                            m_melodyNotesRing[melodyNotesRingIndex].note = evt.NoteNumber;
-                            m_melodyNotesRing[melodyNotesRingIndex].velocity = evt.Velocity / 127.0f;
-                            m_melodyNotesRing[melodyNotesRingIndex].startTime = t;
-                            melodyNotesRingIndex = (melodyNotesRingIndex + 1) % m_melodyNotesRing.Length;
-                        }
-                        //VERBOSE("[ ] %8lf: %4s %02x %02x\n", message.timestamp, msgTypeString, message[1], message[2]);
-
-                        if (evt.NoteNumber <= 12)
-                            App.Log(e.MidiEvent.ToString());
-                    }
+                    HandleMidiNoteOn((NoteEvent)e.MidiEvent);
                     break;
 
                 case MidiCommandCode.NoteOff:
-                    {
-                        var evt = (NoteEvent)e.MidiEvent;
-
-                        //previousNoteCount = noteCountSmoothed();
-                        //previousNoteCountTime = t;
-
-                        //m_notes[evt.NoteNumber] = 0;
-                        //m_notesDown.erase(evt.NoteNumber);
-
-                        var c = evt.NoteNumber % 12;
-                        --chromaCount[c].noteCount;
-
-                        if (evt.NoteNumber <= 12)
-                            App.Log(e.MidiEvent.ToString());
-                    }
+                    HandleMidiNoteOff((NoteEvent)e.MidiEvent);
                     break;
 
                 case MidiCommandCode.ControlChange:
@@ -220,6 +177,76 @@ namespace TwinklyWPF
                         e.Timestamp, e.RawMessage, e.MidiEvent));
                     break;
             }
+        }
+
+        public double TimeOfLastNote = double.MinValue;
+
+        void HandleMidiNoteOn(NoteEvent evt)
+        {
+            // pad toggles don't send note-off, instead they send another note-on with zero velocity
+            if(evt.Velocity==0)
+            {
+                HandleMidiNoteOff(evt);
+                return;
+            }
+
+            var t = CurrentTime;
+
+            //previousNoteCount = noteCountSmoothed();
+            //previousNoteCountTime = t;
+
+            //m_notes[evt.NoteNumber] = evt.Velocity;
+            //m_notesDown.insert(evt.NoteNumber);
+
+            var c = evt.NoteNumber % 12;
+            ++chromaCount[c].noteCount;
+            chromaCount[c].velocity = evt.Velocity / 127.0f;
+            chromaCount[c].startTime = t;
+
+            // reset noteCountSmoothed--smoothing doesn't apply to noteCount increasing
+            // always making certain that noteCountSmoothed never drops suddenly
+            //if (previousNoteCount < m_notesDown.size())
+            //{
+            //    previousNoteCount = m_notesDown.size();
+            //}
+
+            if (evt.NoteNumber < PandaKeys.MiddleC())
+            {
+                bassNote.note = evt.NoteNumber;
+                bassNote.velocity = evt.Velocity / 127.0f;
+                bassNote.startTime = t;
+            }
+            else
+            {
+                // add high note 
+                melodyNotesRing[melodyNotesRingIndex].note = evt.NoteNumber;
+                melodyNotesRing[melodyNotesRingIndex].velocity = evt.Velocity / 127.0f;
+                melodyNotesRing[melodyNotesRingIndex].startTime = t;
+                melodyNotesRingIndex = (melodyNotesRingIndex + 1) % melodyNotesRing.Length;
+            }
+            //VERBOSE("[ ] %8lf: %4s %02x %02x\n", message.timestamp, msgTypeString, message[1], message[2]);
+
+            if (PianoKeyDownEvent != null)
+                PianoKeyDownEvent(this, new PianoKeyDownEventArgs(evt));
+
+            TimeOfLastNote = t;
+        }
+
+        void HandleMidiNoteOff(NoteEvent evt)
+        {
+            var t = CurrentTime;
+
+            //previousNoteCount = noteCountSmoothed();
+            //previousNoteCountTime = t;
+
+            //m_notes[evt.NoteNumber] = 0;
+            //m_notesDown.erase(evt.NoteNumber);
+
+            var c = evt.NoteNumber % 12;
+            if (chromaCount[c].noteCount > 0)
+                --chromaCount[c].noteCount;
+
+            TimeOfLastNote = t;
         }
 
         #endregion
