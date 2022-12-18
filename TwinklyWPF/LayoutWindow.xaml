@@ -20,36 +20,39 @@
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
         <TextBlock FontWeight="Bold">
-            <Run Text="Code: " />
+            <Run Text=" Code:" Foreground="DarkSlateGray" />
             <Run Text="{Binding ElementName=ThisWindow, Path=LayoutResult.code, Mode=OneWay}" />
-            <Run Text="Source: " />
+            <Run Text=" Source:" Foreground="DarkSlateGray" />
             <Run Text="{Binding ElementName=ThisWindow, Path=Layout.source, Mode=OneWay}" />
-            <Run Text="Synthesized: " />
+            <Run Text=" Synthesized:" Foreground="DarkSlateGray" />
             <Run Text="{Binding ElementName=ThisWindow, Path=Layout.synthesized, Mode=OneWay}" />
+            <Run Text=" Bounds:" Foreground="DarkSlateGray" />
+            <Run Text="{Binding ElementName=ThisWindow, Path=LayoutBoundsText, Mode=OneWay}" />
         </TextBlock>
-        <TextBox Grid.Row="1" Text="{Binding ElementName=ThisLayoutWindow, Path=LayoutText, Mode=OneWay}" 
+        <TextBox Grid.Row="1" Text="{Binding ElementName=ThisWindow, Path=LayoutText, Mode=OneWay}" 
                  FontFamily="Consolas"
                  IsReadOnly="True"
                  VerticalScrollBarVisibility="Auto" />
         <GridSplitter Grid.Row="2" Height="5" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Focusable="False" />
-        <Canvas Grid.Row="3" x:Name="theCanvas" Background="Black"
+        <ScrollViewer Grid.Row="3" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto">
+            <Canvas Grid.Row="3" x:Name="theCanvas" Background="Black"
                 MouseWheel="Canvas_MouseWheel"
                 SizeChanged="Canvas_SizeChanged"
-                HorizontalAlignment="Center"
-                VerticalAlignment="Center"
                 ClipToBounds="True">
-            <Canvas.RenderTransform>
-                <TransformGroup>
-                    <MatrixTransform x:Name="mt"/>
-                </TransformGroup>
-            </Canvas.RenderTransform>
-        </Canvas>
+                <Canvas.RenderTransform>
+                    <TransformGroup>
+                        <MatrixTransform x:Name="mt"/>
+                    </TransformGroup>
+                </Canvas.RenderTransform>
+            </Canvas>
+        </ScrollViewer>
         <StackPanel Orientation="Horizontal" Grid.Row="4">
             <Button Content="Get" Click="GetButton_Click" Margin="4" MinWidth="60" />
             <Button Content="Set" Click="SetButton_Click" Margin="4" MinWidth="60" />
             <Button Content="Load..." Click="LoadButton_Click" Margin="4" MinWidth="60" />
             <Button Content="Save..." Click="SaveButton_Click" Margin="4" MinWidth="60" />
             <Button Content="Center" Click="CenterButton_Click" Margin="4" MinWidth="60" />
+            <Button Content="Noise" Click="NoiseButton_Click" Margin="4" MinWidth="60" />
         </StackPanel>
 
     </Grid>

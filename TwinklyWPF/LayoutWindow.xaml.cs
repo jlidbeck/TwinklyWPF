@@ -10,6 +10,7 @@ using System.Windows.Media;
 using System.Windows.Shapes;
 using System.Windows.Threading;
 using Twinkly_xled.JSONModels;
+using TwinklyWPF.Utilities;
 
 namespace TwinklyWPF
 {
@@ -33,7 +34,13 @@ namespace TwinklyWPF
         public Layout Layout
         {
             get { return _layout; }
-            set { _layout = value; OnPropertyChanged(); }
+            set
+            {
+                _layout = value;
+                OnPropertyChanged();
+                if (MainViewModel.RTMovie != null)
+                    MainViewModel.RTMovie.Layout = value;
+            }
         }
 
         private string _layoutText;
@@ -42,6 +49,14 @@ namespace TwinklyWPF
         {
             get { return _layoutText; }
             private set { _layoutText = value; OnPropertyChanged(); }
+        }
+
+        private string _layoutBoundsText;
+
+        public string LayoutBoundsText
+        {
+            get { return _layoutBoundsText; }
+            private set { _layoutBoundsText = value; OnPropertyChanged(); }
         }
 
         private string _filename;
@@ -82,13 +97,20 @@ namespace TwinklyWPF
 
         private void CenterButton_Click(object sender, RoutedEventArgs e)
         {
+            Rect bounds = GetLayoutBounds();
+
+            ShiftPoints(-bounds.Left - bounds.Width / 2, -bounds.Top - bounds.Height / 2);
+        }
+
+        public Rect GetLayoutBounds()
+        {
             Rect bounds = Rect.Empty;
             foreach (var point in Layout.coordinates)
             {
                 bounds.Union(new Point(point.x, point.y));
             }
-
-            ShiftPoints(-bounds.Left - bounds.Width / 2, -bounds.Top - bounds.Height / 2);
+            LayoutBoundsText = $"({bounds.Left}, {bounds.Bottom} - {bounds.Right}, {bounds.Top}";
+            return bounds;
         }
 
         private void ShiftPoints(double dx, double dy)
@@ -102,6 +124,20 @@ namespace TwinklyWPF
             Redraw();
         }
 
+        private void NoiseButton_Click(object sender, RoutedEventArgs e)
+        {
+            for (int i = 0; i < Layout.coordinates.Length; ++i)
+            {
+                double dx = 0.1 * Gaussian.NextDouble();
+                double dy = 0.1 * Gaussian.NextDouble();
+                Layout.coordinates[i].x += dx;
+                Layout.coordinates[i].y += dy;
+            }
+            LayoutResult = null;
+            Redraw();
+        }
+
+
 
         private async void GetButton_Click(object sender, RoutedEventArgs e)
         {
@@ -114,8 +150,11 @@ namespace TwinklyWPF
 
         private async void SetButton_Click(object sender, RoutedEventArgs e)
         {
-            var result = await MainViewModel.ActiveDevice?.twinklyapi.SetLayout(LayoutResult);
-            if (result.code != 200)
+            var result = await MainViewModel.ActiveDevice?.twinklyapi.SetLayout(Layout);
+            ResultCode code = (ResultCode)result.code;
+            if (code == ResultCode.Ok)
+                MessageBox.Show($"Success. {result.parsed_coordinates} coordinates parsed.");
+            else
                 MessageBox.Show($"Error {result.code}");
         }
 
@@ -129,9 +168,15 @@ namespace TwinklyWPF
                 using (var sr = new StreamReader(stream))
                 {
                     var str = await sr.ReadToEndAsync();
+                    var layout = JsonSerializer.Deserialize<Layout>(str);
+                    if (layout?.IsValid != true)
+                    {
+                        MessageBox.Show("JSON deserialize failed:\n\n" + str);
+                        return;
+                    }
+
                     LayoutResult = null;
-                    Layout = JsonSerializer.Deserialize<Layout>(str);
-                    Redraw();
+                    Layout = layout;
                 }
             }
         }
@@ -172,6 +217,9 @@ namespace TwinklyWPF
                 msg += $"\n{pt.x}, {pt.y}, {pt.z}";
             LayoutText = msg;
 
+            // update text
+            GetLayoutBounds();
+
             Rect bounds = Rect.Empty;
             theCanvas.Children.Clear();
             for (int i = -2; i <= 2; ++i)
@@ -181,7 +229,7 @@ namespace TwinklyWPF
             }
             foreach (var point in Layout.coordinates)
             {
-                var dot = new Ellipse { Width = 3, Height = 3, Stroke = null, Fill = Brushes.YellowGreen };
+                var dot = new Ellipse { Width = 2, Height = 2, Stroke = null, Fill = Brushes.YellowGreen };
                 theCanvas.Children.Add(dot);
                 // since spacing is typically 0.1, and canvas is fat pixely, scale up
                 Canvas.SetLeft(dot, _scale * point.x);
@@ -227,7 +275,6 @@ namespace TwinklyWPF
             switch(e.Key)
             {
                 case System.Windows.Input.Key.Escape:
-                    this.DialogResult = false;
                     this.Close();
                     break;
                 case System.Windows.Input.Key.Left:
@@ -263,7 +310,5 @@ namespace TwinklyWPF
         {
             ((LayoutWindow)((DispatcherTimer)sender).Tag).UpdateColors();
         }
-
-
     }
 }
