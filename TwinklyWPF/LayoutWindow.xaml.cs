@@ -72,7 +72,7 @@ namespace TwinklyWPF
         private void Window_Loaded(object sender, RoutedEventArgs e)
         {
             OnPropertyChanged("Layout");
-            Redraw();
+            //Redraw();
             _updateTimer = new DispatcherTimer(
                 new System.TimeSpan(0, 0, 0, 0, 20),
                 DispatcherPriority.Render,
@@ -84,13 +84,29 @@ namespace TwinklyWPF
         }
 
 
-        #region INotifyPropertyChanged
+        private void Window_IsVisibleChanged(object sender, DependencyPropertyChangedEventArgs e)
+        {
+            if(IsVisible)
+            {
+                OnPropertyChanged("Layout");
+                //Redraw();
+            }
+        }
+
+        #region INotifyPropertyChanged boilerplate
 
         public event PropertyChangedEventHandler PropertyChanged;
 
         protected void OnPropertyChanged([CallerMemberName] string name = null)
         {
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
+
+            switch(name)
+            {
+                case "Layout":
+                Redraw();
+                break;
+            }
         }
 
         #endregion

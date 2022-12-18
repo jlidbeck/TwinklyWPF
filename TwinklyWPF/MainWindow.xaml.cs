@@ -122,20 +122,19 @@ namespace TwinklyWPF
 
         #endregion
 
+        LayoutWindow _layoutWindow;
         private async void Layout_Click(object sender, RoutedEventArgs e)
         {
-            var window = new LayoutWindow { DataContext = DataContext, Owner = this };
-            window.Layout = MainViewModel.RTMovie?.Layout;
-
-            if (window.ShowDialog() == true)
+            if (_layoutWindow == null || !_layoutWindow.IsVisible)
             {
-                var result = await MainViewModel.ActiveDevice?.twinklyapi.GetLayout();
-                var layout = result.coordinates;
-                var msg = $"Points: {layout.Length} Source: {result.source} Synthesized: {result.synthesized}";
-                foreach (var pt in layout)
-                    msg += $"\n{pt.x}, {pt.y}, {pt.z}";
-
-                MessageBox.Show(msg);
+                _layoutWindow = new LayoutWindow { DataContext = MainViewModel, Owner = this };
+                _layoutWindow.Show();
+                _layoutWindow.Layout = MainViewModel.RTMovie?.Layout;
+            }
+            else
+            {
+                _layoutWindow.Layout = MainViewModel.RTMovie?.Layout;
+                _layoutWindow.Focus();
             }
         }
 
