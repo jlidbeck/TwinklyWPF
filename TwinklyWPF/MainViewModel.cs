@@ -306,6 +306,16 @@ namespace TwinklyWPF
             get => RTMovie?.FPS ?? 0;
         }
 
+        public bool PreviewMode
+        {
+            get => RTMovie?.PreviewMode==true;
+            set
+            {
+                RTMovie.PreviewMode = value;
+                OnPropertyChanged();
+            }
+        }
+
 
         public async void RefreshGui(object sender, System.Timers.ElapsedEventArgs e)
         {

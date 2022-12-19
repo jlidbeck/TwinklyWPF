@@ -602,6 +602,11 @@
                     <Run Text="FPS:" Foreground="Orange" />
                     <Run Text="{Binding FPS, StringFormat=N3, Mode=OneWay}" Foreground="GreenYellow" />
                 </TextBlock>
+                <CheckBox Content="Preview" 
+                          IsChecked="{Binding PreviewMode}" 
+                          ToolTip="Preview mode: animates frames, but does not send to devices"
+                          FontWeight="Bold" Foreground="Orange"
+                          VerticalAlignment="Center"/>
                 <Button Content="Layout" ToolTip="ActiveDevice: led/layout/full"
                         Click="Layout_Click" />
                 <Button x:Name="MovieConfig" Content="MovieConfig" ToolTip="Get and set MovieConfig for active device"

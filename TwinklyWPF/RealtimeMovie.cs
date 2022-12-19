@@ -446,6 +446,8 @@ namespace TwinklyWPF
 
         #region Realtime test
 
+        public bool PreviewMode = false;
+
         public bool Running
         {
             get => _frameTimer != null;
@@ -545,6 +547,9 @@ namespace TwinklyWPF
 
             try
             {
+                if (PreviewMode)
+                    return;
+
                 int offset = 0;
                 foreach (var device in Devices)
                 {
