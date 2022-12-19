@@ -3,13 +3,14 @@ using System.Diagnostics;
 
 namespace TwinklyWPF.Utilities
 {
+    [DebuggerDisplay("ColorMorph: {ColorToString(_startColor)} -> {ColorToString(_targetColor)}")]
     public class ColorMorph
     {
         double[] _startColor= new double[3];
         double[] _targetColor = null;
         Stopwatch _stopwatch = new Stopwatch();
 
-        public long TransitionTime = 1800;      // ms
+        public double TransitionTimeMS { get; private set; } = 1800;      // ms
 
         #region Constructors
 
@@ -17,7 +18,7 @@ namespace TwinklyWPF.Utilities
 
         public ColorMorph(double[] rgb)
         {
-            _startColor = rgb;
+            _startColor = (double[])rgb.Clone();
         }
 
         public ColorMorph(double r, double g, double b)
@@ -29,12 +30,21 @@ namespace TwinklyWPF.Utilities
 
         #endregion
 
-        //public bool InTransition => (targetColor != null && palTime < 1.0);
+        public override string ToString()
+        {
+            return $"{ColorToString(_startColor)} -> {ColorToString(_targetColor)} ({Progress})";
+        }
+
+        public bool InTransition => (_targetColor != null);
+
+        public double Progress => (_stopwatch.ElapsedMilliseconds / TransitionTimeMS);
 
         // Set the target color for the next morph. Does not change the immediate color.
-        public void SetTarget(double[] rgb)
+        // Animation begins immediately and completes in {time} seconds.
+        public void SetTarget(double[] rgb, double time=1.8)
         {
-            double palTime = _stopwatch.ElapsedMilliseconds / (double)TransitionTime;
+            // If in transition...
+            double palTime = _stopwatch.ElapsedMilliseconds / TransitionTimeMS;
             if (_targetColor != null && palTime < 1.0)
             {
                 // setting a new target mid-transition:
@@ -43,7 +53,8 @@ namespace TwinklyWPF.Utilities
                     _startColor[j] = palTime * _targetColor[j] + (1 - palTime) * _startColor[j];
             }
 
-            _targetColor = rgb;
+            TransitionTimeMS = time * 1000.0;
+            _targetColor = (double[])rgb.Clone();
             _stopwatch.Restart();
         }
 
@@ -52,7 +63,7 @@ namespace TwinklyWPF.Utilities
         //  Otherwise returns _currentPalette.
         public double[] GetColor()
         {
-            double palTime = _stopwatch.ElapsedMilliseconds / (double)TransitionTime;
+            double palTime = _stopwatch.ElapsedMilliseconds / TransitionTimeMS;
 
             if (_targetColor?.Length == _startColor.Length)
             {
@@ -79,7 +90,12 @@ namespace TwinklyWPF.Utilities
             return _startColor;
         }
 
-        internal static double[] Mix(double[] startColor, double[] targetColor, double t)
+        //  Returns target color, if currently in transition.
+        //  If not in transition returns current color.
+        public double[] TargetColor => InTransition ? _targetColor : _startColor;
+
+
+        public static double[] Mix(double[] startColor, double[] targetColor, double t)
         {
             // interpolate colors
             var colors = new double[3];
@@ -89,5 +105,75 @@ namespace TwinklyWPF.Utilities
             }
             return colors;
         }
+
+        public static string ColorToString(double[] rgb)
+        {
+            return (rgb?.Length == 3)
+                ? String.Format("{0:0.00} {0:0.00} {0:0.00}", rgb[0], rgb[1], rgb[2])
+                : "null";
+        }
+
+        //  hue: 
+        public static double[] HsvToRgb(double hue, double sat, double val)
+        {
+            double r, g, b;
+
+            if (sat <= 0)
+            {
+                // Gray scale
+                r = g = b = val;
+                return new double[3] { val, val, val };
+            }
+            //else
+            {
+                // 0 <= i<6
+                // 0.0 <= f<1.0
+                hue *= 6.0;
+                int i = (int)Math.Floor(hue);
+                double f = hue - i;
+                if (i < 0) i += 6;
+
+                double aa = val * (1 - sat);
+                double bb = val * (1 - (sat * f));
+                double cc = val * (1 - (sat * (1 - f)));
+                switch (i)
+                {
+                    default:
+                    case 0:
+                        r = val;
+                        g = cc;
+                        b = aa;
+                        break;
+                    case 1:
+                        r = bb;
+                        g = val;
+                        b = aa;
+                        break;
+                    case 2:
+                        r = aa;
+                        g = val;
+                        b = cc;
+                        break;
+                    case 3:
+                        r = aa;
+                        g = bb;
+                        b = val;
+                        break;
+                    case 4:
+                        r = cc;
+                        g = aa;
+                        b = val;
+                        break;
+                    case 5:
+                        r = val;
+                        g = aa;
+                        b = bb;
+                        break;
+                }
+            }
+
+            return new double[3] { r, g, b };
+        }
+
     }
 }
