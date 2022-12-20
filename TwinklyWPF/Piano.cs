@@ -1,8 +1,7 @@
 ﻿using NAudio.Midi;
 using System;
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.Runtime.InteropServices;
+using System.Timers;
 using System.Windows;
 
 namespace TwinklyWPF
@@ -13,6 +12,7 @@ namespace TwinklyWPF
         MidiOut midiOut;
         bool monitoring;
         Stopwatch stopwatch = new Stopwatch();
+        Timer idleTimer;
 
         // cooked MIDI state
 
@@ -29,7 +29,7 @@ namespace TwinklyWPF
         public NoteState[] melodyNotesRing { get; } = new NoteState[12];
         int melodyNotesRingIndex = 0;
 
-        // handlers can receive a keydown event after it's processed here
+        // handlers receive a keydown event after it's processed here
         public event EventHandler PianoKeyDownEvent;
         public class PianoKeyDownEventArgs : EventArgs
         {
@@ -37,9 +37,19 @@ namespace TwinklyWPF
 
             public PianoKeyDownEventArgs(NoteEvent evt)
             {
-                this.NoteEvent = evt;
+                NoteEvent = evt;
             }
         }
+
+        // 
+        public event EventHandler PianoIdleEvent;
+        public class PianoIdleEventArgs : EventArgs
+        {
+            public double LastNoteTime;
+            public double CurrentTime;
+            public double IdleTime => CurrentTime - LastNoteTime;
+        }
+
 
         public void Initialize()
         {
@@ -116,7 +126,22 @@ namespace TwinklyWPF
             //buttonMonitor.Text = "Stop";
             //comboBoxMidiInDevices.Enabled = false;
 
+            LastNoteTime = CurrentTime;
+            idleTimer = new Timer() { Enabled = true, AutoReset = true, Interval = 500 };
+            idleTimer.Elapsed += OnIdleTimerElapsed;
+            idleTimer.Start();
+
             stopwatch.Restart();
+        }
+
+        private void OnIdleTimerElapsed(object sender, ElapsedEventArgs e)
+        {
+            var t = CurrentTime - LastNoteTime;
+            if (t > 3)
+            {
+                if (PianoIdleEvent != null)
+                    PianoIdleEvent(this, new PianoIdleEventArgs { LastNoteTime = LastNoteTime, CurrentTime = CurrentTime });
+            }
         }
 
         void midiIn_ErrorReceived(object sender, MidiInMessageEventArgs e)
@@ -129,6 +154,7 @@ namespace TwinklyWPF
         {
             if (monitoring)
             {
+                idleTimer.Stop();
                 midiIn.Stop();
                 monitoring = false;
                 //buttonMonitor.Text = "Monitor";
@@ -172,6 +198,9 @@ namespace TwinklyWPF
                         e.Timestamp, e.RawMessage, e.MidiEvent));
                     break;
 
+                case MidiCommandCode.TimingClock:
+                    break;
+
                 default:
                     App.Log(String.Format("Time {0} Message 0x{1:X8} Event {2}",
                         e.Timestamp, e.RawMessage, e.MidiEvent));
@@ -179,7 +208,7 @@ namespace TwinklyWPF
             }
         }
 
-        public double TimeOfLastNote = double.MinValue;
+        public double LastNoteTime = double.MinValue;
 
         void HandleMidiNoteOn(NoteEvent evt)
         {
@@ -229,7 +258,7 @@ namespace TwinklyWPF
             if (PianoKeyDownEvent != null)
                 PianoKeyDownEvent(this, new PianoKeyDownEventArgs(evt));
 
-            TimeOfLastNote = t;
+            LastNoteTime = t;
         }
 
         void HandleMidiNoteOff(NoteEvent evt)
@@ -246,7 +275,7 @@ namespace TwinklyWPF
             if (chromaCount[c].noteCount > 0)
                 --chromaCount[c].noteCount;
 
-            TimeOfLastNote = t;
+            LastNoteTime = t;
         }
 
         #endregion

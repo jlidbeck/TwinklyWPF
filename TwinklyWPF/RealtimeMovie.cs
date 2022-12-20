@@ -396,7 +396,8 @@ namespace TwinklyWPF
             // initialze piano listeners
             if (Piano != null)
             {
-                Piano.PianoKeyDownEvent += new EventHandler(HandlePianoKeyDownEvent);
+                Piano.PianoKeyDownEvent += HandlePianoKeyDownEvent;
+                Piano.PianoIdleEvent += Piano_PianoIdleEvent;
             }
 
             // done
@@ -449,6 +450,34 @@ namespace TwinklyWPF
             };
             _lastNotesIndex = (_lastNotesIndex + 1) % _lastNotes.Length;
         }
+
+        double _timeOfLastIdleEvent = double.MinValue;
+        private void Piano_PianoIdleEvent(object sender, EventArgs evt_)
+        {
+            // every 30 seconds the piano is idle, randomly change some/all of the colors
+
+            var evt = (PianoIdleEventArgs)evt_;
+            if (evt.CurrentTime - evt.LastNoteTime > 30.0 && evt.CurrentTime - _timeOfLastIdleEvent > 30.0)
+            {
+                _timeOfLastIdleEvent = evt.CurrentTime;
+
+                if (_random.Next() % 5 < 1)
+                {
+                    for (int i = 0; i < _currentPalette.Length; ++i)
+                        _currentPalette[i].SetTarget(ColorMorph.HsvToRgb(0, 0, _random.NextDouble()));
+                }
+                else
+                {
+                    var color = ColorMorph.HsvToRgb(_random.NextDouble(), 1.0, 1.0);
+                    _currentPalette[_nextColorToChange].SetTarget(color);
+                    //_currentPalette[(_nextColorToChange + 1) % 3].SetTarget(Black);
+                    //_currentPalette[(_nextColorToChange+2)%3].SetTarget(White);
+                    _nextColorToChange = (_nextColorToChange + 1) % _currentPalette.Length;
+                }
+
+            }
+        }
+
 
         public void KeyDown(int keyId)
         {
@@ -595,7 +624,7 @@ namespace TwinklyWPF
 
                             double r=0, g=0, b=0;
 
-                            if (Piano.CurrentTime - Piano.TimeOfLastNote > 30)
+                            if (Piano.CurrentTime - Piano.LastNoteTime > 30)
                             {
                                 // no interactivity for 30 seconds
 
@@ -856,7 +885,7 @@ namespace TwinklyWPF
                 App.Log($"RT movie framesize: {frameSize} bytes over {Devices.Count()} devices");
                 _frameData = new byte[frameSize];
 
-                _frameTimer = new System.Timers.Timer { AutoReset = true, Interval = 10 };
+                _frameTimer = new System.Timers.Timer { AutoReset = true, Interval = 50 };
                 _frameTimer.Elapsed += OnFrameTimerElapsed;
                 _frameTimer.Start();
                 _stopwatch = new Stopwatch();
