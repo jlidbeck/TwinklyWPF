@@ -125,7 +125,7 @@ namespace Twinkly_xled
         }
 
         // UDP port 7777 for realtime 
-        public Task<int> RTFX(byte[] buffer)
+        public int RTFX(byte[] buffer)
         {
             const int PORT_NUMBER = 7777;
 
@@ -135,8 +135,8 @@ namespace Twinkly_xled
                 {
 
                     // send
-                    //client.Send(buffer, buffer.Length, new IPEndPoint(IPAddress, PORT_NUMBER));
-                    return client.SendAsync(buffer, buffer.Length, new IPEndPoint(IPAddress, PORT_NUMBER));
+                    return client.Send(buffer, buffer.Length, new IPEndPoint(IPAddress, PORT_NUMBER));
+                    //return client.SendAsync(buffer, buffer.Length, new IPEndPoint(IPAddress, PORT_NUMBER));
                     // Hope it made it 
 
                 }
