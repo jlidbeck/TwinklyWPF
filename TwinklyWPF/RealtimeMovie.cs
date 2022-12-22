@@ -337,7 +337,7 @@ namespace TwinklyWPF
             Layout houseLayout = new Layout { aspectXY=0, aspectXZ=0, source="2d", synthesized=true };
             houseLayout.coordinates = new XYZ[n];
             int zone = 0;
-            var xyz = new XYZ { x = 0, y = 10.0, z = 0.0 };
+            var xyz = new XYZ { x = 0, y = 8.0, z = 0.0 };
             for (int j = 0, zi = 0; j < n; ++j, ++zi)
             {
                 switch (j)
@@ -349,44 +349,51 @@ namespace TwinklyWPF
                     case 224: ++zone; xyz.z = zone; zi = 0; break;  // 5: doorframe L up
                     case 248: ++zone; xyz.z = zone; zi = 0; break;  // 6: doorframe top
                     case 271: ++zone; xyz.z = zone; zi = 0; break;  // 7: doorframe R down
-                    case 300: ++zone; xyz.z = zone; zi = 0; xyz = new XYZ { x = 0.05, y = 10.0, z = 5.0 }; break; // string 2
+                    case 300: ++zone; xyz.z = zone; zi = 0; xyz = new XYZ { x = 0.05, y = 8.0, z = 5.0 }; break; // string 2
                     case 395: ++zone; xyz.z = zone; zi = 0; break;  // 9: short run
                     case 443: ++zone; xyz.z = zone; zi = 0; break;  // 10: main
                     case 557: ++zone; xyz.z = zone; zi = 0; break;  // 11: leftover/downspout
+                    case 571: ++zone; xyz.z = zone; zi = 0; break;  // 12: downspout
                 }
 
                 houseLayout.coordinates[j] = xyz;
-                
+
+                const double s = 0.1;   // default spacing
+
                 switch (zone)
                 {
                     case 0: // back main #1
                     case 1:
                     case 2:
-                        xyz.x += 0.1;
+                        xyz.x += s;
                         break;
                     case 3: // link to doorframe (always off)
-                        xyz.x += 0.08;
-                        xyz.y -= 0.05;
+                        xyz.x += 0.8*s;
+                        xyz.y -= 0.5*s;
                         break;
                     case 4: // doorframe L down
-                        xyz.y -= 0.1;
+                        xyz.y -= s;
                         break;
                     case 5: // doorframe L up
-                        xyz.y += 0.1;
+                        xyz.y += s;
                         break;
                     case 6: // doorframe top
-                        xyz.x += 0.1;
+                        xyz.x += s;
                         break;
                     case 7: // doorframe R down
-                        xyz.y -= 0.1;
+                        xyz.y -= s;
                         break;
                     case 8: // strand #2 back main
                     case 9:
                     case 10:
-                        xyz.x += 0.1;
+                        xyz.x += s;
                         break;
                     case 11: // hanging end (always off)
-                        xyz.y -= 0.1;
+                        xyz.x -= 0.8*s;
+                        xyz.y -= 0.1*s;
+                        break;
+                    case 12: // downspout
+                        xyz.y -= s;
                         break;
                 }
             }
