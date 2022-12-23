@@ -64,6 +64,10 @@ namespace TwinklyWPF
                 Debug.Assert(value == null || Devices.Contains(value));
                 _activeDevice = value;
                 //ActiveDevice?.Reload();
+                if (_activeDevice != null)
+                {
+                    App.Current.Settings.ActiveDeviceName = ActiveDevice.Name;
+                }
                 OnPropertyChanged();
             }
         }
@@ -202,6 +206,8 @@ namespace TwinklyWPF
             {
                 // always set ActiveDevice, even if keeping same value.. need to update the API
                 ActiveDevice = Devices.FirstOrDefault((device) => device.Equals(selectedDevice));
+                if (ActiveDevice == null)
+                    ActiveDevice = Devices.FirstOrDefault((device) => device.Name == App.Current.Settings.ActiveDeviceName);
                 if (ActiveDevice == null)
                     ActiveDevice = Devices.FirstOrDefault();
 
@@ -431,7 +437,7 @@ namespace TwinklyWPF
             {
                 if (Gestalt == null)
                     return twinklyapi.data.IPAddress.ToString();
-                return $"{Gestalt.device_name} [{Gestalt.number_of_led}] ({CurrentMovie?.sync.mode})";
+                return $"{Gestalt.device_name} [{Gestalt.number_of_led}] ({CurrentMovie?.sync?.mode})";
             }
         }
 

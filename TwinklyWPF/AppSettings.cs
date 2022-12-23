@@ -13,6 +13,10 @@ namespace TwinklyWPF
 
         public bool AutoStart { get; set; } = true;
 
+        public string ActiveDeviceName { get; set; }
+
+        #region Serialization
+
         public void Save(string filename)
         {
             Directory.CreateDirectory(Path.GetDirectoryName(filename));
@@ -33,5 +37,7 @@ namespace TwinklyWPF
                 return JsonSerializer.Deserialize<AppSettings>(str);
             }
         }
+
+        #endregion
     }
 }
