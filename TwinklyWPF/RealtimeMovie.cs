@@ -22,8 +22,21 @@ namespace TwinklyWPF
         public int FrameCounter { get; private set; }
 
         public byte[] FrameData => _frameData;
-
         protected byte[] _frameData;
+
+        Layout _layout;
+        public Layout Layout
+        {
+            get { return _layout; }
+            set
+            {
+                _layout = value;
+                OnLayoutChanged();
+            }
+        }
+
+        Rect _layoutBounds;
+
         Random _random = new Random();
 
         public Piano Piano;
@@ -32,25 +45,28 @@ namespace TwinklyWPF
         protected double[] KeysDownTimes = new double[3];
         protected double[] KeysUpTimes = new double[3];
 
-        public int ColorMode = 6;
+        public int ColorMode = 1;
 
-        public static double[][] GoodPalette = { 
-            new double[3] { 1.0, 0.0, 0.5 },    // hot pink
-            new double[3] { 1.0, 0.0, 0.2 },    // magenta
-            new double[3] { 1.0, 0.2, 0.0 },    // orange
-            new double[3] { 1.0, 0.4, 0.0 },    // gold
+        public readonly static double[] Black = new double[3] { 0, 0, 0 };
+        public readonly static double[] WarmWhite = new double[3] { 1.0, 0.9, 0.5 };
+        public readonly static double[] White = new double[3] { 1, 1, 1 };
+
+        public readonly static double[][] GoodPalette = { 
+            new double[3] { 1.0, 0.0, 0.1 },    // magenta
+            new double[3] { 1.0, 0.1, 0.0 },    // orangered
+            new double[3] { 1.0, 0.3, 0.0 },    // orange
+            new double[3] { 1.0, 0.5, 0.0 },    // gold
             new double[3] { 1.0, 0.7, 0.0 },    // basically yellow
             new double[3] { 0.5, 1.0, 0.0 },    // yellow-green
-            new double[3] { 0.1, 1.0, 0.0 },    // green
+            new double[3] { 0.1, 1.0, 0.0 },    // emerald green
+            new double[3] { 0.0, 1.0, 0.1 },    // spring green
             new double[3] { 0.0, 0.5, 1.0 },    // light blue
             new double[3] { 0.0, 0.1, 1.0 },    // blue blue
-            new double[3] { 0.5, 0.0, 1.0 },    // purple
-            new double[3] { 0.5, 0.5, 0.5 },    // low white
-            new double[3] { 0.2, 0.2, 0.2 },    // low white
+            new double[3] { 0.3, 0.0, 1.0 },    // purple
+            new double[3] { 1.0, 0.0, 0.5 },    // hot pink
+            //WarmWhite
         };
 
-        readonly static double[] Black = new double[3] { 0, 0, 0 };
-        readonly static double[] White = new double[3] { 1, 1, 1 };
 
         ColorMorph[] _currentPalette = {
             new ColorMorph( 1.0, 0.4, 0.0 ),    // gold
@@ -281,10 +297,11 @@ namespace TwinklyWPF
 
             public SinePlot()
             {
+                // ugly default palette
                 palette = new ColorMorph[3] {
-                    new ColorMorph( 1.0, 0.4, 0.0 ),    // gold
-                    new ColorMorph( 0.5, 1.0, 0.0 ),    // yellow-green
-                    new ColorMorph( 0.0, 0.5, 1.0 ),    // light blue
+                    new ColorMorph( 1.0, 0.0, 0.0 ),
+                    new ColorMorph( 0.0, 1.0, 0.0 ),
+                    new ColorMorph( 0.0, 0.0, 1.0 ),
                 };
 
                 _stopwatch = new Stopwatch();
@@ -312,53 +329,51 @@ namespace TwinklyWPF
         };
         SinePlot _sinePlot;
 
-        Layout _layout;
-        public Layout Layout { 
-            get { return _layout; }
-            set { 
-                _layout = value;
-                OnLayoutChanged();
-            } }
-
-        Rect _layoutBounds;
         public RealtimeMovie()
         {
         }
 
         public bool Initialized { get; private set; } = false;
 
-        void Initialize()
+        void InitializeDefaultLayout(XYZ[] coordinates, int startOffset, int n)
         {
-            if (Initialized) return;
+            const double s = 0.3;   // default spacing
+            double startx = (startOffset % 600 + 10) * s;
+            var xyz = new XYZ { x = startx, y = 2.0, z = 0.0 };
+            for (int j = 0; j < n; ++j)
+            {
+                coordinates[j + startOffset] = xyz;
+                xyz.x += s;
+            }
+        }
 
-            int n = 600;        // hardcoded for now, first layout
-            if (n != 600) throw new Exception($"Bad n! {n}");
+        void InitializeHouseLayout(XYZ[] coordinates, int startOffset)
+        {
+            Debug.Assert(coordinates.Length >= startOffset + 600);
 
-            Layout houseLayout = new Layout { aspectXY=0, aspectXZ=0, source="2d", synthesized=true };
-            houseLayout.coordinates = new XYZ[n];
             int zone = 0;
-            var xyz = new XYZ { x = 0, y = 8.0, z = 0.0 };
-            for (int j = 0, zi = 0; j < n; ++j, ++zi)
+            var xyz = new XYZ { x = 0, y = 3.9, z = 0.0 };
+            const double s = 0.1;   // default spacing
+
+            for (int j = 0, zi = 0; j < 600; ++j, ++zi)
             {
                 switch (j)
                 {
-                    case  90: ++zone; xyz.z = zone; zi = 0; break;  // 1: short run
+                    case 90: ++zone; xyz.z = zone; zi = 0; break;  // 1: short run
                     case 136: ++zone; xyz.z = zone; zi = 0; break;  // 2: main
                     case 187: ++zone; xyz.z = zone; zi = 0; break;  // 3: dead
                     case 198: ++zone; xyz.z = zone; zi = 0; break;  // 4: doorframe L down
                     case 224: ++zone; xyz.z = zone; zi = 0; break;  // 5: doorframe L up
                     case 248: ++zone; xyz.z = zone; zi = 0; break;  // 6: doorframe top
                     case 271: ++zone; xyz.z = zone; zi = 0; break;  // 7: doorframe R down
-                    case 300: ++zone; xyz.z = zone; zi = 0; xyz = new XYZ { x = 0.05, y = 8.0, z = 5.0 }; break; // string 2
+                    case 300: ++zone; xyz.z = zone; zi = 0; xyz = new XYZ { x = 0.5 * s, y = 3.9 - 0.5 * s, z = 5.0 }; break; // string 2
                     case 395: ++zone; xyz.z = zone; zi = 0; break;  // 9: short run
                     case 443: ++zone; xyz.z = zone; zi = 0; break;  // 10: main
                     case 557: ++zone; xyz.z = zone; zi = 0; break;  // 11: leftover/downspout
                     case 571: ++zone; xyz.z = zone; zi = 0; break;  // 12: downspout
                 }
 
-                houseLayout.coordinates[j] = xyz;
-
-                const double s = 0.1;   // default spacing
+                coordinates[j + startOffset] = xyz;
 
                 switch (zone)
                 {
@@ -368,8 +383,8 @@ namespace TwinklyWPF
                         xyz.x += s;
                         break;
                     case 3: // link to doorframe (always off)
-                        xyz.x += 0.8*s;
-                        xyz.y -= 0.5*s;
+                        xyz.x += 0.8 * s;
+                        xyz.y -= 0.5 * s;
                         break;
                     case 4: // doorframe L down
                         xyz.y -= s;
@@ -384,18 +399,77 @@ namespace TwinklyWPF
                         xyz.y -= s;
                         break;
                     case 8: // strand #2 back main
+                        xyz.x += s * 90 / 95;
+                        break;
                     case 9:
+                        xyz.x += s * 46 / 48;
+                        break;
                     case 10:
                         xyz.x += s;
                         break;
                     case 11: // hanging end (always off)
-                        xyz.x -= 0.8*s;
-                        xyz.y -= 0.1*s;
+                        xyz.x -= 0.8 * s;
+                        xyz.y -= 0.1 * s;
                         break;
                     case 12: // downspout
                         xyz.y -= s;
                         break;
                 }
+            }
+        }
+
+        async Task Initialize()
+        {
+            if (Initialized) return;
+
+            // first make sure we are authorized and have gestalt for all devices
+            await ApiSemaphore.WaitAsync();
+
+            try
+            {
+                foreach (var device in Devices)
+                {
+                    if (device.Gestalt == null)
+                        await device.Load();
+
+                    if (device.LedConfig == null)
+                        await device.UpdateAuthModels();
+
+                    if (!device.CurrentMode_Realtime)
+                        await device.ChangeMode("rt");
+                }
+            }
+            finally
+            {
+                ApiSemaphore.Release();
+            }
+
+            // initialize frame buffer, layout
+
+            int frameSize = 0;
+            int n = 0;
+            foreach (var device in Devices)
+            {
+                frameSize += device.Gestalt.bytes_per_led * device.Gestalt.number_of_led;
+                n += device.Gestalt.number_of_led;
+            }
+            App.Log($"RT movie: {n} LEDs / {frameSize} bytes over {Devices.Count()} devices");
+
+            _frameData = new byte[frameSize];
+
+            //_random.NextBytes(_frameData);
+
+            Layout houseLayout = new Layout { aspectXY=0, aspectXZ=0, source="2d", synthesized=true };
+            houseLayout.coordinates = new XYZ[n];
+
+            int offset = 0;
+            foreach (var device in Devices)
+            {
+                if (device.Gestalt.number_of_led == 600)
+                    InitializeHouseLayout(houseLayout.coordinates, offset);
+                else
+                    InitializeDefaultLayout(houseLayout.coordinates, offset, device.Gestalt.number_of_led);
+                offset += device.Gestalt.number_of_led;
             }
 
             this.Layout = houseLayout;
@@ -470,15 +544,17 @@ namespace TwinklyWPF
 
                 if (_random.Next() % 5 < 1)
                 {
+                    // grayscale palette
                     for (int i = 0; i < _currentPalette.Length; ++i)
-                        _currentPalette[i].SetTarget(ColorMorph.HsvToRgb(0, 0, _random.NextDouble()));
+                    {
+                        double brightness = _random.NextDouble();
+                        _currentPalette[i].SetTarget(ColorMorph.Mix(Black, WarmWhite, brightness));
+                    }
                 }
                 else
                 {
                     var color = ColorMorph.HsvToRgb(_random.NextDouble(), 1.0, 1.0);
                     _currentPalette[_nextColorToChange].SetTarget(color);
-                    //_currentPalette[(_nextColorToChange + 1) % 3].SetTarget(Black);
-                    //_currentPalette[(_nextColorToChange+2)%3].SetTarget(White);
                     _nextColorToChange = (_nextColorToChange + 1) % _currentPalette.Length;
                 }
 
@@ -507,66 +583,61 @@ namespace TwinklyWPF
             }
         }
 
-        protected virtual void Draw()
+        protected virtual void DrawFrame()
         {
             double t = _stopwatch.ElapsedMilliseconds * 0.001;
+            int fi = 0; // byte offset to start filling _frameData
+            int n = Layout.coordinates.Length;
 
-            switch (ColorMode % 7)
+            Debug.Assert(_frameData.Length == n * 3);
+
+            switch (ColorMode % 8)
             {
-                case 1: // calibration pattern
-                {
-                    var color = new byte[3];
-                    for (int i = 0; i < _frameData.Length;)
+                case 1: // 3-color palette changing sinusoidal
                     {
-                        int j = i / 3;
+                        _sinePlot.Update();
 
-                        switch ((int)Math.Round(Layout.coordinates[j].z))
+                        for (int j = 0; j < Layout.coordinates.Length; ++j)
                         {
+                            if (Layout.coordinates[j].z == 3 || Layout.coordinates[j].z == 11) { fi += 3; continue; }
 
-                            case  0: color = new byte[3] { 255, 255, 255 };  break; // 
-                            case  1: color = new byte[3] { 255,   0,   0 };  break; // 
-                            case  2: color = new byte[3] { 255, 255, 255 };  break; // 
-                            case  3: color = new byte[3] {   0,   0,   0 };  break; // dead
-                            case  4: color = new byte[3] { 255, 255,   0 };  break; // doorframe L
-                            case  5: color = new byte[3] {   0, 127, 255 };  break; // doorframe L
-                            case  6: color = new byte[3] { 255,   0,   0 };  break; // doorframe T
-                            case  7: color = new byte[3] {   0, 255,   0 };  break; // doorframe R
-                            case  8: color = new byte[3] {   0, 255, 255 };  break; // back
-                            case  9: color = new byte[3] {   0,   0, 255 };  break; // short
-                            case 10: color = new byte[3] { 255,   0, 255 };  break; // main
-                            case 11: color = new byte[3] {   0,   0,   0 };  break; // leftover/downspout
-                            default: color = new byte[3] { 125, 255, 255 };  break;
+                            double x = Layout.coordinates[j].x;
+                            double y = Layout.coordinates[j].y;
+
+                            double[] color = _sinePlot.GetColorAt(x, y);
+
+                            if(j<60 && Piano.LastNoteTime-Piano.CurrentTime < 30)
+                            {
+                                var v = Piano.ChromaPower()[j % 12];
+                                color[0] *= v + Piano.BassBump * 5;
+                                color[1] *= v;
+                                color[2] *= v + Piano.BassBump;
+                            }
+
+                            _frameData[fi++] = (byte)(Math.Clamp(255.5 * color[0], 0, 255));
+                            _frameData[fi++] = (byte)(Math.Clamp(255.5 * color[1], 0, 255));
+                            _frameData[fi++] = (byte)(Math.Clamp(255.5 * color[2], 0, 255));
                         }
-
-                        _frameData[i++] = color[0];
-                        _frameData[i++] = color[1];
-                        _frameData[i++] = color[2];
-
                     }
-
-                }
-                return;
+                    return;
 
                 case 2: // simple chromatic abberration
                 {
-                    int i = 0;
-                    for (int j = 0; j < _frameData.Length/3; ++j)
+                    for (int j = 0; j < Layout.coordinates.Length; ++j)
                     {
-                        if (Layout.coordinates[j].z == 3 || Layout.coordinates[j].z == 11) { i += 3; continue; }
+                        if (Layout.coordinates[j].z == 3 || Layout.coordinates[j].z == 11) { fi += 3; continue; }
 
                         double v = Math.Sin(0.5 * Layout.coordinates[j].x + 1.5 * Layout.coordinates[j].y + 1.1 * t);
 
-                        _frameData[i++] = (byte)(Math.Clamp(255.5 * v, 0, 255));
-                        _frameData[i++] = (byte)(Math.Clamp(255.5 * v, 0, 255));
-                        _frameData[i++] = (byte)(Math.Clamp(255.5 * v, 0, 255));
+                        _frameData[fi++] = (byte)(Math.Clamp(255.5 * v, 0, 255));
+                        _frameData[fi++] = (byte)(Math.Clamp(255.5 * v, 0, 255));
+                        _frameData[fi++] = (byte)(Math.Clamp(255.5 * v, 0, 255));
                     }
                 }
                 return;
 
                 case 3: // slow panning ribbons
                     {
-                        int i = 0;
-
                         var colors = new double[3][];
                         colors[0] = _currentPalette[0].GetColor();
                         colors[1] = _currentPalette[1].GetColor();
@@ -586,9 +657,9 @@ namespace TwinklyWPF
                             sins[k] = Math.Sin(angles[k]);
                         }
 
-                        for (int j = 0; j*3 < _frameData.Length; ++j)
+                        for (int j = 0; j < Layout.coordinates.Length; ++j)
                         {
-                            if (Layout.coordinates[j].z == 3 || Layout.coordinates[j].z == 11) { i += 3; continue; }
+                            if (Layout.coordinates[j].z == 3 || Layout.coordinates[j].z == 11) { fi += 3; continue; }
 
                             double x = Layout.coordinates[j].x - 20.5;
                             double y = Layout.coordinates[j].y - 10.0;
@@ -604,14 +675,14 @@ namespace TwinklyWPF
                             double v = Waveform.SpacedTriangle(x+y - t * 0.6, wavelength, 4*(1-Piano.Knobs[1]));
                             double w = Waveform.SpacedTriangle(x+y + t * 0.7, wavelength, 4*(1-Piano.Knobs[2]));
 
-                            _frameData[i++] = (byte)(Math.Clamp(255.5 * (v*colors[0][0] + w*colors[1][0] + u*colors[2][0]), 0, 255));
-                            _frameData[i++] = (byte)(Math.Clamp(255.5 * (v*colors[0][1] + w*colors[1][1] + u*colors[2][1]), 0, 255));
-                            _frameData[i++] = (byte)(Math.Clamp(255.5 * (v*colors[0][2] + w*colors[1][2] + u*colors[2][2]), 0, 255));
+                            _frameData[fi++] = (byte)(Math.Clamp(255.5 * (v*colors[0][0] + w*colors[1][0] + u*colors[2][0]), 0, 255));
+                            _frameData[fi++] = (byte)(Math.Clamp(255.5 * (v*colors[0][1] + w*colors[1][1] + u*colors[2][1]), 0, 255));
+                            _frameData[fi++] = (byte)(Math.Clamp(255.5 * (v*colors[0][2] + w*colors[1][2] + u*colors[2][2]), 0, 255));
 
                             var chromaPower = Piano.ChromaPower();
                             if(_random.NextDouble() < chromaPower[j%12])
                             {
-                                for (int k = i - 3; k < i; ++k)
+                                for (int k = fi - 3; k < fi; ++k)
                                     _frameData[k] = 255;
                             }
                         }
@@ -620,11 +691,9 @@ namespace TwinklyWPF
 
                 case 4: // chroma key ripples
                     {
-                        int i = 0;
-
-                        for (int j = 0; j * 3 < _frameData.Length; ++j)
+                        for (int j = 0; j < Layout.coordinates.Length; ++j)
                         {
-                            if (Layout.coordinates[j].z == 3 || Layout.coordinates[j].z == 11) { i += 3; continue; }
+                            if (Layout.coordinates[j].z == 3 || Layout.coordinates[j].z == 11) { fi += 3; continue; }
 
                             double x = Layout.coordinates[j].x - 20.5;
                             double y = Layout.coordinates[j].y -  7.0;
@@ -673,13 +742,13 @@ namespace TwinklyWPF
                             }
                             if (_random.NextDouble() < 0.01)
                             {
-                                //for (int k = i - 3; k < i; ++k)
+                                //for (int k = fi - 3; k < fi; ++k)
                                 //  _frameData[k] += 120;
                                 b += 0.4;
                             }
-                            _frameData[i++] = (byte)(Math.Clamp(255.5 * r, 0, 255));
-                            _frameData[i++] = (byte)(Math.Clamp(255.5 * g, 0, 255));
-                            _frameData[i++] = (byte)(Math.Clamp(255.5 * b, 0, 255));
+                            _frameData[fi++] = (byte)(Math.Clamp(255.5 * r, 0, 255));
+                            _frameData[fi++] = (byte)(Math.Clamp(255.5 * g, 0, 255));
+                            _frameData[fi++] = (byte)(Math.Clamp(255.5 * b, 0, 255));
 
                             var chromaPower = Piano.ChromaPower();
                         }
@@ -688,12 +757,10 @@ namespace TwinklyWPF
 
                 case 5: // b gradients
                     {
-                        int i = 0;
-
                         _walkerGroup.Update();
-                        for (int j = 0; j * 3 < _frameData.Length; ++j)
+                        for (int j = 0; j < Layout.coordinates.Length; ++j)
                         {
-                            if (Layout.coordinates[j].z == 3 || Layout.coordinates[j].z == 11) { i += 3; continue; }
+                            if (Layout.coordinates[j].z == 3 || Layout.coordinates[j].z == 11) { fi += 3; continue; }
 
                             double x = Layout.coordinates[j].x;
 
@@ -702,35 +769,64 @@ namespace TwinklyWPF
                             var r = (byte)(Math.Clamp(255.5 * color[0], 0, 255));
                             var g = (byte)(Math.Clamp(255.5 * color[1], 0, 255));
                             var b = (byte)(Math.Clamp(255.5 * color[2], 0, 255));
-                            _frameData[i++] =  r;
-                            _frameData[i++] =  g;
-                            _frameData[i++] = b;
+                            _frameData[fi++] =  r;
+                            _frameData[fi++] =  g;
+                            _frameData[fi++] = b;
                         }
                     }
                     return;
-                
-                case 6: // 
+
+                case 6: // mapping calibration pattern
                     {
-                        _sinePlot.Update();
-
-                        int i = 0;
-
-                        for (int j = 0; j * 3 < _frameData.Length; ++j)
+                        var color = new byte[3];
+                        for (int j = 0; j < Layout.coordinates.Length; ++j)
                         {
-                            if (Layout.coordinates[j].z == 3 || Layout.coordinates[j].z == 11) { i += 3; continue; }
+                            switch ((int)Math.Round(Layout.coordinates[j].z))
+                            {
 
-                            double x = Layout.coordinates[j].x;
-                            double y = Layout.coordinates[j].y;
+                                case 0: color = new byte[3] { 255, 255, 255 }; break; // 
+                                case 1: color = new byte[3] { 255, 0, 0 }; break; // 
+                                case 2: color = new byte[3] { 255, 255, 255 }; break; // 
+                                case 3: color = new byte[3] { 0, 0, 0 }; break; // dead
+                                case 4: color = new byte[3] { 255, 255, 0 }; break; // doorframe L
+                                case 5: color = new byte[3] { 0, 127, 255 }; break; // doorframe L
+                                case 6: color = new byte[3] { 255, 0, 0 }; break; // doorframe T
+                                case 7: color = new byte[3] { 0, 255, 0 }; break; // doorframe R
+                                case 8: color = new byte[3] { 0, 255, 255 }; break; // back
+                                case 9: color = new byte[3] { 0, 0, 255 }; break; // short
+                                case 10: color = new byte[3] { 255, 0, 255 }; break; // main
+                                case 11: color = new byte[3] { 0, 0, 0 }; break; // leftover/downspout
+                                default: color = new byte[3] { 125, 255, 255 }; break;
+                            }
 
-                            double[] color = _sinePlot.GetColorAt(x, y);
+                            _frameData[fi++] = color[0];
+                            _frameData[fi++] = color[1];
+                            _frameData[fi++] = color[2];
 
+                        }
+
+                    }
+                    return;
+
+                case 7: // color calibration pattern
+                    {
+                        double offset = (t % 10.0) / 10.0 * 8.0;
+                        for (int j = 0; j < Layout.coordinates.Length; ++j)
+                        {
+                            if (Layout.coordinates[j].z == 3 || Layout.coordinates[j].z == 11) { fi += 3; continue; }
+
+                            double x = Layout.coordinates[j].x + 2.0 * Layout.coordinates[j].y;
+
+                            int coloridx = (int)((offset + x) / 8.0 * GoodPalette.Length);
+                            var color = GoodPalette[coloridx % GoodPalette.Length];
                             var r = (byte)(Math.Clamp(255.5 * color[0], 0, 255));
                             var g = (byte)(Math.Clamp(255.5 * color[1], 0, 255));
                             var b = (byte)(Math.Clamp(255.5 * color[2], 0, 255));
-                            _frameData[i++] = r;
-                            _frameData[i++] = g;
-                            _frameData[i++] = b;
+                            _frameData[fi++] = r;
+                            _frameData[fi++] = g;
+                            _frameData[fi++] = b;
                         }
+
                     }
                     return;
             }
@@ -745,23 +841,22 @@ namespace TwinklyWPF
             double osc = ((min + max) * 0.5 + (max - min) * 0.5 * Math.Cos(t * 0.1));
 
 
-            for (int i = 0; i < _frameData.Length;)
+            for (int j = 0; j < Layout.coordinates.Length; ++j)
             {
-                //int v = frameData[i];
-                //frameData[i] = (byte)(((v&1)==1)
-                //    ? (frameData[i] > 1 ? frameData[i] - 2 : 0) 
-                //    : (frameData[i] < 254 ? frameData[i] + 2 : 255));
+                //int v = frameData[fi];
+                //frameData[fi] = (byte)(((v&1)==1)
+                //    ? (frameData[fi] > 1 ? frameData[fi] - 2 : 0) 
+                //    : (frameData[fi] < 254 ? frameData[fi] + 2 : 255));
 
                 // old mapping:
-                //double x = sc * (double)((i / 3) % 300);// / _frameData.Length);
+                //double x = sc * (double)((fi / 3) % 300);// / _frameData.Length);
 
                 // new mapping:
-                int j = i / 3;
                 if (Layout.coordinates[j].z == 3 || Layout.coordinates[j].z == 11)
                 {
-                    _frameData[i++] = 0;
-                    _frameData[i++] = 0;
-                    _frameData[i++] = 0;
+                    _frameData[fi++] = 0;
+                    _frameData[fi++] = 0;
+                    _frameData[fi++] = 0;
                     continue; 
                 }
                 double x = Layout.coordinates[j].x + 3.0 * Layout.coordinates[j].y;
@@ -791,9 +886,9 @@ namespace TwinklyWPF
                     }
                 }
 
-                _frameData[i++] = (byte)(Math.Clamp(255.9 * c[0], 0, 255));
-                _frameData[i++] = (byte)(Math.Clamp(255.9 * c[1], 0, 255));
-                _frameData[i++] = (byte)(Math.Clamp(255.9 * c[2], 0, 255));
+                _frameData[fi++] = (byte)(Math.Clamp(255.9 * c[0], 0, 255));
+                _frameData[fi++] = (byte)(Math.Clamp(255.9 * c[1], 0, 255));
+                _frameData[fi++] = (byte)(Math.Clamp(255.9 * c[2], 0, 255));
             }
 
         }
@@ -865,53 +960,21 @@ namespace TwinklyWPF
                 return;
 
             if (!Initialized)
-                Initialize();
+                await Initialize();
 
-            await ApiSemaphore.WaitAsync();
+            _frameTimer = new System.Timers.Timer { AutoReset = true, Interval = 50 };
+            _frameTimer.Elapsed += OnFrameTimerElapsed;
+            _frameTimer.Start();
+            _stopwatch = new Stopwatch();
+            _stopwatch.Start();
+            FrameCounter = 0;
 
-            try
-            {
-                // make sure we are authorized and have gestalt for all devices
-                foreach (var device in Devices)
-                {
-                    if (device.Gestalt == null)
-                        await device.Load();
-
-                    if (device.LedConfig == null)
-                        await device.UpdateAuthModels();
-
-                    if (!device.CurrentMode_Realtime)
-                        await device.ChangeMode("rt");
-                }
-
-                int frameSize = 0;
-                foreach (var device in Devices)
-                {
-                    frameSize += device.Gestalt.bytes_per_led * device.Gestalt.number_of_led;
-                }
-                App.Log($"RT movie framesize: {frameSize} bytes over {Devices.Count()} devices");
-                _frameData = new byte[frameSize];
-
-                _frameTimer = new System.Timers.Timer { AutoReset = true, Interval = 50 };
-                _frameTimer.Elapsed += OnFrameTimerElapsed;
-                _frameTimer.Start();
-                _stopwatch = new Stopwatch();
-                _stopwatch.Start();
-                FrameCounter = 0;
-
-                //_random.NextBytes(_frameData);
-            }
-            finally
-            {
-                ApiSemaphore.Release();
-            }
         }
 
         private System.Threading.SemaphoreSlim _frameTimerSemaphore = new System.Threading.SemaphoreSlim(1, 1);
 
         private async void OnFrameTimerElapsed(object sender, System.Timers.ElapsedEventArgs e)
         {
-            //random.NextBytes(frameData);
             if (_frameTimer == null)
                 return;
 
@@ -920,7 +983,7 @@ namespace TwinklyWPF
                 return;
             }
 
-            Draw();
+            DrawFrame();
 
             await ApiSemaphore.WaitAsync();
 
