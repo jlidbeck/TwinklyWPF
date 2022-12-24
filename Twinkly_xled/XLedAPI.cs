@@ -50,7 +50,8 @@ namespace Twinkly_xled
 
 
         #region Unauthenticated
-        public async Task<GestaltResult> Info()
+
+        public async Task<GestaltResult> GetGestalt()
         {
             var json = await data.Get("gestalt");
             if (!data.Error)
@@ -83,7 +84,7 @@ namespace Twinkly_xled
             }
         }
 
-        public async Task<FWResult> Firmware()
+        public async Task<FWResult> GetFirmwareVersion()
         {
             var json = await data.Get("fw/version");
             if (!data.Error)
@@ -97,6 +98,7 @@ namespace Twinkly_xled
                 return new FWResult() { code = (int)data.HttpStatus };
             }
         }
+
         #endregion
 
         #region Login
@@ -168,7 +170,7 @@ namespace Twinkly_xled
                 }
                 else
                 {
-                    return Info().Result.device_name;
+                    return GetGestalt().Result.device_name;
                 }
             }
             set
@@ -179,7 +181,7 @@ namespace Twinkly_xled
         }
 
 
-        // this is available unauthenticated from Info (gestalt)
+        // this is available unauthenticated from GetGestalt
         public async Task<DeviceNameResult> GetDeviceName()
         {
             if (Authenticated)

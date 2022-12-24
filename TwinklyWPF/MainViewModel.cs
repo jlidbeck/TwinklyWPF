@@ -802,14 +802,14 @@ namespace TwinklyWPF
             //Message = "Loading...";
 
             //gestalt
-            Gestalt = await twinklyapi.Info();
+            Gestalt = await twinklyapi.GetGestalt();
             if (twinklyapi.Status != (int)HttpStatusCode.OK)
             {
                 Message = $"GetInfo failed ({twinklyapi.Status.ToString()})";
                 throw new Exception(Message);
             }
 
-            FW = await twinklyapi.Firmware();
+            FW = await twinklyapi.GetFirmwareVersion();
             if (twinklyapi.Status != (int)HttpStatusCode.OK)
             {
                 Message = $"GetFirmware failed ({twinklyapi.Status.ToString()})";
@@ -850,7 +850,7 @@ namespace TwinklyWPF
                 if (!twinklyapi.Authenticated)
                     return;
 
-                //Gestalt = await twinklyapi.Info();
+                //Gestalt = await twinklyapi.GetGestalt();
 
                 // update the authenticated api models
                 Timer = await twinklyapi.GetTimer();
