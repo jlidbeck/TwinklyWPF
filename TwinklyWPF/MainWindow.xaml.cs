@@ -123,17 +123,17 @@ namespace TwinklyWPF
         #endregion
 
         LayoutWindow _layoutWindow;
-        private async void Layout_Click(object sender, RoutedEventArgs e)
+        private void Layout_Click(object sender, RoutedEventArgs e)
         {
             if (_layoutWindow == null || !_layoutWindow.IsVisible)
             {
                 _layoutWindow = new LayoutWindow { DataContext = MainViewModel, Owner = this };
                 _layoutWindow.Show();
-                _layoutWindow.Layout = MainViewModel.RTMovie?.Layout;
+                _layoutWindow.Coordinates = MainViewModel.RTMovie?.Layout?.coordinates;
             }
             else
             {
-                _layoutWindow.Layout = MainViewModel.RTMovie?.Layout;
+                _layoutWindow.Coordinates = MainViewModel.RTMovie?.Layout?.coordinates;
                 _layoutWindow.Focus();
             }
         }

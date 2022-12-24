@@ -21,6 +21,7 @@ namespace TwinklyWPF
     {
         public MainViewModel MainViewModel => (MainViewModel)DataContext;
 
+        // if dialog is currently displaying coordinates from GetLayout from a device, the raw response is stored here
         private GetLayoutResult _layoutResult;
 
         public GetLayoutResult LayoutResult
@@ -29,17 +30,19 @@ namespace TwinklyWPF
             private set { _layoutResult = value; OnPropertyChanged(); }
         }
 
-        private Layout _layout;
+        // concatenation of all device coordinates
+        private XYZ[] _coordinates;
 
-        public Layout Layout
+        public XYZ[] Coordinates
         {
-            get { return _layout; }
+            get { return _coordinates; }
             set
             {
-                _layout = value;
+                _coordinates = (XYZ[])value?.Clone();
                 OnPropertyChanged();
-                if (MainViewModel.RTMovie != null)
-                    MainViewModel.RTMovie.Layout = value;
+                // todo: apply layout changes from dialog to realtime.
+                //if (MainViewModel.RTMovie != null)
+                //    MainViewModel.RTMovie.Layout = value;
             }
         }
 
@@ -71,7 +74,7 @@ namespace TwinklyWPF
 
         private void Window_Loaded(object sender, RoutedEventArgs e)
         {
-            OnPropertyChanged("Layout");
+            OnPropertyChanged("Coordinates");
             //Redraw();
             _updateTimer = new DispatcherTimer(
                 new System.TimeSpan(0, 0, 0, 0, 20),
@@ -88,7 +91,7 @@ namespace TwinklyWPF
         {
             if(IsVisible)
             {
-                OnPropertyChanged("Layout");
+                OnPropertyChanged("Coordinates");
                 //Redraw();
             }
         }
@@ -103,7 +106,7 @@ namespace TwinklyWPF
 
             switch(name)
             {
-                case "Layout":
+                case "Coordinates":
                 Redraw();
                 break;
             }
@@ -121,7 +124,7 @@ namespace TwinklyWPF
         public Rect GetLayoutBounds()
         {
             Rect bounds = Rect.Empty;
-            foreach (var point in Layout.coordinates)
+            foreach (var point in Coordinates)
             {
                 bounds.Union(new Point(point.x, point.y));
             }
@@ -131,10 +134,10 @@ namespace TwinklyWPF
 
         private void ShiftPoints(double dx, double dy)
         {
-            for(int i=0; i<Layout.coordinates.Length;++i)
+            for(int i=0; i<Coordinates.Length;++i)
             {
-                Layout.coordinates[i].x += dx;
-                Layout.coordinates[i].y += dy;
+                Coordinates[i].x += dx;
+                Coordinates[i].y += dy;
             }
             LayoutResult = null;
             Redraw();
@@ -142,12 +145,12 @@ namespace TwinklyWPF
 
         private void NoiseButton_Click(object sender, RoutedEventArgs e)
         {
-            for (int i = 0; i < Layout.coordinates.Length; ++i)
+            for (int i = 0; i < Coordinates.Length; ++i)
             {
                 double dx = 0.1 * Gaussian.NextDouble();
                 double dy = 0.1 * Gaussian.NextDouble();
-                Layout.coordinates[i].x += dx;
-                Layout.coordinates[i].y += dy;
+                Coordinates[i].x += dx;
+                Coordinates[i].y += dy;
             }
             LayoutResult = null;
             Redraw();
@@ -160,18 +163,19 @@ namespace TwinklyWPF
             GetLayoutResult result = await MainViewModel.ActiveDevice?.twinklyapi.GetLayout();
 
             LayoutResult = result;
-            Layout = result;
+            Coordinates = (XYZ[])result.coordinates.Clone();
             Redraw();
         }
 
         private async void SetButton_Click(object sender, RoutedEventArgs e)
         {
-            var result = await MainViewModel.ActiveDevice?.twinklyapi.SetLayout(Layout);
-            ResultCode code = (ResultCode)result.code;
-            if (code == ResultCode.Ok)
-                MessageBox.Show($"Success. {result.parsed_coordinates} coordinates parsed.");
-            else
-                MessageBox.Show($"Error {result.code}");
+            // TODO: send modified layout(s) to devices
+            //var result = await MainViewModel.ActiveDevice?.twinklyapi.SetLayout(Layout);
+            //ResultCode code = (ResultCode)result.code;
+            //if (code == ResultCode.Ok)
+            //    MessageBox.Show($"Success. {result.parsed_coordinates} coordinates parsed.");
+            //else
+            //    MessageBox.Show($"Error {result.code}");
         }
 
         private async void LoadButton_Click(object sender, RoutedEventArgs e)
@@ -192,7 +196,7 @@ namespace TwinklyWPF
                     }
 
                     LayoutResult = null;
-                    Layout = layout;
+                    Coordinates = (XYZ[])layout.coordinates.Clone();
                 }
             }
         }
@@ -205,7 +209,7 @@ namespace TwinklyWPF
                 var stream = dialog.OpenFile();
                 //using (var sw = new Utf8JsonWriter(stream, new JsonWriterOptions { Indented = true }))
                 {
-                    await JsonSerializer.SerializeAsync(stream, Layout, new JsonSerializerOptions { WriteIndented = true });
+                    await JsonSerializer.SerializeAsync(stream, Coordinates, new JsonSerializerOptions { WriteIndented = true });
                 }
             }
         }
@@ -221,15 +225,15 @@ namespace TwinklyWPF
 
         private void Redraw()
         {
-            if(!(Layout?.coordinates?.Length > 0))
+            if(!(Coordinates?.Length > 0))
             {
                 LayoutText = "empty";
                 theCanvas.Children.Clear();
                 return;
             }
 
-            var msg = $"Points: {Layout.coordinates?.Length}";
-            foreach (var pt in Layout.coordinates)
+            var msg = $"Points: {Coordinates?.Length}";
+            foreach (var pt in Coordinates)
                 msg += $"\n{pt.x}, {pt.y}, {pt.z}";
             LayoutText = msg;
 
@@ -243,7 +247,7 @@ namespace TwinklyWPF
                 theCanvas.Children.Add(new Line { Stroke = Brushes.DarkCyan, StrokeThickness = 1, X1 = i, Y1 = -1000, X2 = i, Y2 = 1000 });
                 theCanvas.Children.Add(new Line { Stroke = Brushes.DarkCyan, StrokeThickness = 1, X1 = -1000, Y1 = i, X2 = 1000, Y2 = i });
             }
-            foreach (var point in Layout.coordinates)
+            foreach (var point in Coordinates)
             {
                 var dot = new Ellipse { Width = 2, Height = 2, Stroke = null, Fill = Brushes.YellowGreen };
                 theCanvas.Children.Add(dot);

@@ -24,9 +24,9 @@
             <Run Text=" Code:" Foreground="DarkSlateGray" />
             <Run Text="{Binding ElementName=ThisWindow, Path=LayoutResult.code, Mode=OneWay}" />
             <Run Text=" Source:" Foreground="DarkSlateGray" />
-            <Run Text="{Binding ElementName=ThisWindow, Path=Layout.source, Mode=OneWay}" />
+            <Run Text="{Binding ElementName=ThisWindow, Path=LayoutResult.source, Mode=OneWay}" />
             <Run Text=" Synthesized:" Foreground="DarkSlateGray" />
-            <Run Text="{Binding ElementName=ThisWindow, Path=Layout.synthesized, Mode=OneWay}" />
+            <Run Text="{Binding ElementName=ThisWindow, Path=LayoutResult.synthesized, Mode=OneWay}" />
             <Run Text=" Bounds:" Foreground="DarkSlateGray" />
             <Run Text="{Binding ElementName=ThisWindow, Path=LayoutBoundsText, Mode=OneWay}" />
         </TextBlock>
