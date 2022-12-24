@@ -518,7 +518,7 @@ namespace TwinklyWPF
 
             // change one of the palette colors to the played tone color
             int colorIndex = evt.NoteEvent.NoteNumber % GoodPalette.Length;
-            _currentPalette[_nextColorToChange].SetTarget(GoodPalette[colorIndex]);
+            _currentPalette[_nextColorToChange].SetTarget(GoodPalette[colorIndex], 0.1);
             _nextColorToChange = (_nextColorToChange + 1) % _currentPalette.Length;
 
             // add note to circular buffer.
@@ -606,12 +606,28 @@ namespace TwinklyWPF
 
                             double[] color = _sinePlot.GetColorAt(x, y);
 
-                            if(j<60 && Piano.LastNoteTime-Piano.CurrentTime < 30)
+                            if (/*j < 60 &&*/ Piano.CurrentTime - Piano.LastNoteTime < 30)
                             {
-                                var v = Piano.ChromaPower()[j % 12];
-                                color[0] *= v + Piano.BassBump * 5;
+                                const double step = 0.3;
+                                double v = 0;
+                                var chromaPower = Piano.ChromaPower();
+                                const double octavex = 12 * step;
+                                double px = 0.33*step;
+                                foreach (var p in chromaPower)
+                                {
+                                    var w = p * Waveform.SpacedTriangle(x - px, octavex, 5);
+                                    v += w;
+
+                                    px += step;
+                                }
+
+                                v = Math.Min(1.0, v);
+
+                                // shows notes in a more quantum way
+                                //var v = Piano.ChromaPower()[j % 12];
+                                color[0] *= v;// + Piano.BassBump * 5;
                                 color[1] *= v;
-                                color[2] *= v + Piano.BassBump;
+                                color[2] *= v;// + Piano.BassBump;
                             }
 
                             _frameData[fi++] = (byte)(Math.Clamp(255.5 * color[0], 0, 255));
@@ -669,7 +685,7 @@ namespace TwinklyWPF
                             //double w = Math.Sin(2.3 * x + 6.9 * y - 2.3 * t);
                             //w *= Math.Abs(w);
 
-                            const double wavelength = 5;
+                            const double wavelength = 10;
 
                             double u = Waveform.SpacedTriangle(x+y + t * 0.3, wavelength, 4*(1-Piano.Knobs[0]));
                             double v = Waveform.SpacedTriangle(x+y - t * 0.6, wavelength, 4*(1-Piano.Knobs[1]));
@@ -730,7 +746,7 @@ namespace TwinklyWPF
                                             if (w > 0)
                                             {
                                                 var decay = 5.0 * Waveform.expgrowth(evt.noteEvent.Velocity / 127.0, age, -1);
-                                                var v = decay * Waveform.SpacedTriangle(w * 2, 3.0, 2.0);
+                                                var v = decay * Waveform.SpacedTriangle(w * 2, 6.0, 2.0);
                                                 var color = GoodPalette[evt.noteEvent.NoteNumber % GoodPalette.Length];
                                                 r += v * color[0];
                                                 g += v * color[1];

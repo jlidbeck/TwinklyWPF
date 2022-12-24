@@ -19,7 +19,7 @@ namespace TwinklyWPF
         public double[] Knobs = new double[8];
 
         NoteDownCounter[] chromaCount = new NoteDownCounter[12];
-        const double chromaPowerDecay = -1.0;  // exponential decay. -5 => halflife: .14 s; -3 => .23 s; -1 => .69
+        const double chromaPowerDecay = -3.0;  // exponential decay. -5 => halflife: .14 s; -3 => .23 s; -1 => .69
 
         // track last bass note
         NoteState bassNote = new NoteState();
@@ -90,10 +90,10 @@ namespace TwinklyWPF
         {
             var t = CurrentTime;
             var chromaPower = new double[chromaCount.Length];
-            for (int i = 0; i < 12; ++i)
+            for (int i = 0; i < chromaCount.Length; ++i)
             {
                 chromaPower[i] = chromaCount[i].noteCount == 0
-                    ? decay(chromaCount[i].velocity, chromaCount[i].startTime, chromaPowerDecay)
+                    ? decay(chromaCount[i].velocity, chromaCount[i].releaseTime, chromaPowerDecay)
                     : 1.0f;
             }
             return chromaPower;
@@ -274,7 +274,8 @@ namespace TwinklyWPF
             var c = evt.NoteNumber % 12;
             if (chromaCount[c].noteCount > 0)
                 --chromaCount[c].noteCount;
-
+            if (chromaCount[c].noteCount == 0)
+                chromaCount[c].releaseTime = t;
             LastNoteTime = t;
         }
 
@@ -336,9 +337,10 @@ namespace TwinklyWPF
     [DebuggerDisplay("NoteDownCounter: {noteCount} {velocity} {startTime}")]
     public struct NoteDownCounter
     {
-        public double noteCount;
-        public double velocity;
-        public double startTime;
+        public double noteCount;        // count of this note currently down, across all octaves
+        public double velocity;         // if noteCount > 0, the velocity of the most recent note-on event
+        public double startTime;        // if noteCount > 0, the time of the most recent note-on event
+        public double releaseTime;      // if noteCount == 0, this is the time of the last note-off event
     }
 
     [DebuggerDisplay("NoteState: {note} {velocity} {startTime}")]
