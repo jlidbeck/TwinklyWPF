@@ -49,7 +49,7 @@ namespace Twinkly_xled
         }
 
 
-        #region Unauthenticated
+        #region Unauthenticated requests
 
         public async Task<GestaltResult> GetGestalt()
         {
@@ -90,8 +90,8 @@ namespace Twinkly_xled
             if (!data.Error)
             {
                 Status = (int)data.HttpStatus;
-                var FW = JsonSerializer.Deserialize<FWResult>(json);
-                return FW;
+                var result = JsonSerializer.Deserialize<FWResult>(json);
+                return result;
             }
             else
             {
@@ -115,23 +115,26 @@ namespace Twinkly_xled
                 var json = await data.Post("login", content);
                 var result = JsonSerializer.Deserialize<LoginResult>(json);
 
-                if (result.code == 1000)
+                if (result.code != 1000)
                 {
-                    data.Authenticate(result.authentication_token, result.authentication_token_expires_in);
-
-                    // verify
-                    content = JsonSerializer.Serialize(new Verify() { challenge_response = result.challenge_response });
-                    json = await data.Post("verify", content);
-                    var result2 = JsonSerializer.Deserialize<VerifyResult>(json);
-
-                    if (result2.code != 1000)
-                    {
-                        Status = result2.code;
-                        return false;
-                    }
-                    return true;
+                    Status = result.code;
+                    return false;
                 }
-                return false;
+
+                data.Authenticate(result.authentication_token, result.authentication_token_expires_in);
+
+                // verify
+                content = JsonSerializer.Serialize(new Verify() { challenge_response = result.challenge_response });
+                json = await data.Post("verify", content);
+                var result2 = JsonSerializer.Deserialize<VerifyResult>(json);
+
+                if (result2.code != 1000)
+                {
+                    Status = result2.code;
+                    return false;
+                }
+
+                return true;
             }
         }
 
@@ -159,26 +162,27 @@ namespace Twinkly_xled
         #region Authentication required
 
         #region DeviceName
-        // Property facade to Get/Set the device name - Live
-        public string DeviceName
-        {
-            get
-            {
-                if (Authenticated)
-                {
-                    return GetDeviceName().Result.name;
-                }
-                else
-                {
-                    return GetGestalt().Result.device_name;
-                }
-            }
-            set
-            {
-                var result = SetDeviceName(value).Result;
-                //result.code should be 1000
-            }
-        }
+
+        //// Property facade to Get/Set the device name - Live
+        //public string DeviceName
+        //{
+        //    get
+        //    {
+        //        if (Authenticated)
+        //        {
+        //            return GetDeviceName().Result.name;
+        //        }
+        //        else
+        //        {
+        //            return GetGestalt().Result.device_name;
+        //        }
+        //    }
+        //    set
+        //    {
+        //        var result = SetDeviceName(value).Result;
+        //        //result.code should be 1000
+        //    }
+        //}
 
 
         // this is available unauthenticated from GetGestalt

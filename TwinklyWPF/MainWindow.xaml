@@ -148,7 +148,7 @@
                 <TextBlock
                     Margin="2"
                     Foreground="DarkOrange"
-                    Text="{Binding ActiveDevice.FW.version}" />
+                    Text="{Binding ActiveDevice.FirmwareVersion}" />
             </StackPanel>
             <Button x:Name="GestaltDetails" 
                     Content="Gestalt"

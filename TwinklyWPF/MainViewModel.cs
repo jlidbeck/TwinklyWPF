@@ -344,14 +344,10 @@ namespace TwinklyWPF
                     return;
 
                 if (ActiveDevice.ReloadNeeded)
-                {
                     await ActiveDevice.Load();
-                    await ActiveDevice.UpdateAuthModels();
-                }
-                else
-                {
-                    await ActiveDevice.UpdateAuthModels();
-                }
+
+                await ActiveDevice.UpdateAuthModels();
+
                 OnPropertyChanged("ActiveDevice");
                 OnPropertyChanged("Devices");
             }
@@ -370,18 +366,7 @@ namespace TwinklyWPF
 
         public RealtimeMovie RTMovie { get; private set; }
 
-        public bool RealtimeMovieRunning
-        {
-            get => RTMovie?.Running == true;
-            set
-            {
-                //if (value)
-                //    RTMovie.Start().Wait();
-                //else
-                //    RTMovie.Stop();
-                OnPropertyChanged();
-            }
-        }
+        public bool RealtimeMovieRunning => (RTMovie?.Running == true);
 
         public void StopRealtimeTest()
         {
@@ -493,13 +478,13 @@ namespace TwinklyWPF
             }
         }
 
-        private FWResult fw;
-        public FWResult FW
+        private string _firmwareVersion;
+        public string FirmwareVersion
         {
-            get { return fw; }
+            get { return _firmwareVersion; }
             private set
             {
-                fw = value;
+                _firmwareVersion = value;
                 OnPropertyChanged();
             }
         }
@@ -756,12 +741,6 @@ namespace TwinklyWPF
 
         public bool ReloadNeeded { get; private set; } = true;
 
-        internal void Reload()
-        {
-            Unload();
-            OnPropertyChanged("twinklyapi");
-        }
-
         //  Clear all view model fields to reset display
         internal void Unload()
         {
@@ -770,21 +749,17 @@ namespace TwinklyWPF
             try
             {
                 Gestalt = null;
-                FW = null;
+                FirmwareVersion = null;
                 Timer = new Timer() { time_on = -1, time_off = -1 };
                 CurrentMode = null;
                 Effects = null;
-                Brightness = null;// new BrightnessResult() { mode = "disabled", value = 100 };
+                Brightness = null;
                 MQTTConfig = null;
                 CurrentMovie = null;
                 LedConfig = null;
                 //Message = "Unloaded";
                 ReloadNeeded = true;
             }
-            //catch (Exception err)
-            //{
-            //    Message = $"Error during update: {err.Message}";
-            //}
             finally
             {
                 //_apiSemaphore.Release();
@@ -809,12 +784,13 @@ namespace TwinklyWPF
                 throw new Exception(Message);
             }
 
-            FW = await twinklyapi.GetFirmwareVersion();
+            var fwResult = await twinklyapi.GetFirmwareVersion();
             if (twinklyapi.Status != (int)HttpStatusCode.OK)
             {
                 Message = $"GetFirmware failed ({twinklyapi.Status.ToString()})";
                 throw new Exception(Message);
             }
+            FirmwareVersion = fwResult.version;
 
 
             if (twinklyapi.Authenticated)
@@ -829,10 +805,8 @@ namespace TwinklyWPF
                     Message = $"Login Fail {twinklyapi.Status}";
                     throw new Exception(Message);
                 }
-                else
-                {
-                    Message = $"Login Success until {twinklyapi.data.ExpiresAt:g}";
-                }
+
+                Message = $"Login Success until {twinklyapi.data.ExpiresAt:g}";
             }
 
             // update the authenticated api models
@@ -841,6 +815,7 @@ namespace TwinklyWPF
             ReloadNeeded = false;
         }
 
+        //  This function must only be called within a _apiSemaphore lock
         internal async Task UpdateAuthModels()
         {
             //Debug.Assert(_apiSemaphore.CurrentCount == 0);
