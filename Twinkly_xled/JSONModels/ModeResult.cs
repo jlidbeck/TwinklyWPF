@@ -19,7 +19,7 @@
         demo,       //- starts predefined sequence of effects that are changed after few seconds
         effect,     //- plays a predefined effect
         movie,      //- plays predefined or uploaded effect 
-        playlist,   //- cycles thru playlist of uploaded movies
+        playlist,   //- (since 2.5.6) cycles thru playlist of uploaded movies
         rt          //- receive effect in real time
     }
 }

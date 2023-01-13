@@ -14,7 +14,7 @@ namespace Twinkly_xled.JSONModels
     [DebuggerDisplay("[{coordinates.Length}] {source}")]
     public class Layout
     {
-        public int aspectXY { get; set; }
+        public int aspectXY { get; set; }  // only for 3d?
         public int aspectXZ { get; set; }
         // array of {x: y: z:} objects.
         // note ?? when read back, x seems to wrap to -1.0 at 7.0, and y wraps to 0.0 at 4.0
