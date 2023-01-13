@@ -31,6 +31,16 @@ namespace TwinklyWPF
             }
         }
 
+        public TimeSpan Uptime
+        {
+            get
+            {
+                if (Gestalt == null)
+                    return TimeSpan.Zero;
+                return TimeSpan.FromMilliseconds(double.Parse(Gestalt.uptime));
+            }
+        }
+
         #region overrides
 
         public override string ToString()

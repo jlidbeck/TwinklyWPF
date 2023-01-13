@@ -1,9 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
 using System.Net;
-using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
 using Twinkly_xled.JSONModels;
@@ -30,8 +28,6 @@ namespace Twinkly_xled
 
         public int Status { get; private set; }
 
-        public DateTime Uptime { get; private set; } = new DateTime();
-
         public bool Authenticated => (data?.ExpiresIn.TotalMinutes > 0);
 
         public IPAddress IPAddress
@@ -57,16 +53,13 @@ namespace Twinkly_xled
             if (!data.Error)
             {
                 Status = (int)data.HttpStatus;
-                var Gestalt = JsonSerializer.Deserialize<GestaltResult>(json);
-
-                var ts = new TimeSpan(0, 0, 0, 0, int.Parse(Gestalt.uptime));
-                Uptime = new DateTime(ts.Ticks);
+                var gestaltResult = JsonSerializer.Deserialize<GestaltResult>(json);
 
                 // v.1:
-                //RT_Buffer = new byte[Gestalt.number_of_led * Gestalt.bytes_per_led + 10];
+                //RT_Buffer = new byte[gestaltResult.number_of_led * gestaltResult.bytes_per_led + 10];
                 // v.3:
                 // max 900 bytes of data can be sent (not including 12-byte header).
-                RT_Buffer = new byte[Math.Min(900, Gestalt.number_of_led * Gestalt.bytes_per_led) + 12];
+                RT_Buffer = new byte[Math.Min(900, gestaltResult.number_of_led * gestaltResult.bytes_per_led) + 12];
 
                 // first byte is UDP packet version.
                 // 1: Generation I
@@ -75,7 +68,7 @@ namespace Twinkly_xled
 
                 RT_Buffer[0] = 0x03;
 
-                return Gestalt;
+                return gestaltResult;
             }
             else
             {

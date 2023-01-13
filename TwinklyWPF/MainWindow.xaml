@@ -212,7 +212,7 @@
                 <TextBlock
                     Margin="2"
                     Foreground="LightYellow"
-                    Text="{Binding ActiveDevice.twinklyapi.Uptime, StringFormat=HH\\:mm\\:ss}" />
+                    Text="{Binding ActiveDevice.Uptime, StringFormat={}{0:dd'd 'hh':'mm':'ss}}" />
             </StackPanel>
 
             <StackPanel x:Name="Timers"
