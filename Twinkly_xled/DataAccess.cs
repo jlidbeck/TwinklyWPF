@@ -226,7 +226,7 @@ namespace Twinkly_xled
         }
 
         // Note the use of X-Auth-Token indicates a less than state of the art authentication system
-        public void Authenticate(string token, int expires)
+        public void SetAuthToken(string token, int expires)
         {
             if (HttpClient.DefaultRequestHeaders.Contains("X-Auth-Token"))
                 HttpClient.DefaultRequestHeaders.Remove("X-Auth-Token");

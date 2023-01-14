@@ -28,7 +28,7 @@ namespace Twinkly_xled
 
         public int Status { get; private set; }
 
-        public bool Authenticated => (data?.ExpiresIn.TotalMinutes > 0);
+        public bool Authenticated => (data?.ExpiresAt > DateTime.Now);
 
         public IPAddress IPAddress
         {
@@ -114,7 +114,7 @@ namespace Twinkly_xled
                     return false;
                 }
 
-                data.Authenticate(result.authentication_token, result.authentication_token_expires_in);
+                data.SetAuthToken(result.authentication_token, result.authentication_token_expires_in);
 
                 // verify
                 content = JsonSerializer.Serialize(new Verify() { challenge_response = result.challenge_response });
