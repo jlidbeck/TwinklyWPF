@@ -167,8 +167,9 @@ namespace TwinklyWPF
                 {
                     _currentMode = value;
                     OnPropertyChanged();
-                    OnPropertyChanged("CurrentMode_Movie");
                     OnPropertyChanged("CurrentMode_Off");
+                    OnPropertyChanged("CurrentMode_Color");
+                    OnPropertyChanged("CurrentMode_Movie");
                     OnPropertyChanged("CurrentMode_Demo");
                     OnPropertyChanged("CurrentMode_Realtime");
 

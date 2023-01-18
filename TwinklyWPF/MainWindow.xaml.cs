@@ -91,7 +91,7 @@ namespace TwinklyWPF
                 return;
             }
 
-            MainViewModel.ModeCommand.Execute("color");
+            //MainViewModel.ModeCommand.Execute("color");
 
             m_hueSliderValueChanged = true;
             OnHueSliderTimerElapsed(null, null);
