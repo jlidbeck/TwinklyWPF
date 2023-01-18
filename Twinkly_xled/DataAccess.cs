@@ -231,8 +231,15 @@ namespace Twinkly_xled
             if (HttpClient.DefaultRequestHeaders.Contains("X-Auth-Token"))
                 HttpClient.DefaultRequestHeaders.Remove("X-Auth-Token");
 
-            HttpClient.DefaultRequestHeaders.Add("X-Auth-Token", token);
-            ExpiresAt = DateTime.Now.AddSeconds(expires);
+            if (string.IsNullOrEmpty(token))
+            {
+                ExpiresAt = DateTime.Now;
+            }
+            else
+            {
+                HttpClient.DefaultRequestHeaders.Add("X-Auth-Token", token);
+                ExpiresAt = DateTime.Now.AddSeconds(expires);
+            }
 
             Debug.WriteLine($"Auth Token {token} expires at {ExpiresAt:T}");
         }

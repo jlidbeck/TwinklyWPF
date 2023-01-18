@@ -145,7 +145,9 @@ namespace Twinkly_xled
                     return false;
                 }
 
-                // could remove auth header to ensure logout
+                // remove auth header to ensure logout
+                data.SetAuthToken(null, 0);
+
                 return true;
             }
             return true;
@@ -844,11 +846,14 @@ namespace Twinkly_xled
         // pass color as byte array RGB
         public async Task SingleColor(byte[] c)
         {
-            if (Authenticated && c.Length == 3)
+            Debug.Assert(c.Length == 3);
+
+//            if (Authenticated && c.Length == 3)
             {
                 // Authentication
                 RT_Buffer[0] = 0x01;    // Gen.1 format, for testing
-                var token = data.GetAuthToken();
+                //var token = data.GetAuthToken();
+                var token = await GetAuthToken(true);
                 var tokenbytes = Convert.FromBase64String(token);
                 tokenbytes.CopyTo(RT_Buffer, 1);
 
@@ -864,6 +869,19 @@ namespace Twinkly_xled
                     data.RTFX(RT_Buffer);
                 }
             }
+        }
+
+        async Task<string> GetAuthToken(bool autoReauth)
+        {
+            if (data.ExpiresIn.TotalMinutes <= 1)
+            {
+                if (!autoReauth)
+                    return null;
+
+                await Login();
+            }
+
+            return data.GetAuthToken();
         }
 
         // Use RT 7777 UDP to set all lights
