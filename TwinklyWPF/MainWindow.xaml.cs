@@ -176,7 +176,7 @@ namespace TwinklyWPF
                     case Key.LeftShift: MainViewModel.RTMovie.KeyDown(1); break;
                     case Key.LeftAlt: MainViewModel.RTMovie.KeyDown(2); break;
                     case Key.Z: MainViewModel.RTMovie.ColorMode++; break;
-                    case Key.X: MainViewModel.RTMovie.ChangeColors(); break;
+                    case Key.X: MainViewModel.RTMovie.RandomizePalette(); break;
                 }
 
                 MainViewModel.RTMovie.Inputs = (

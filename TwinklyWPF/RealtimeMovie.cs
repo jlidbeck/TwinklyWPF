@@ -574,7 +574,7 @@ namespace TwinklyWPF
             KeysUpTimes[keyId % KeysDownTimes.Length] = _stopwatch.ElapsedMilliseconds * 0.001;
         }
 
-        public void ChangeColors()
+        public void RandomizePalette()
         {
             for (int i = 0; i < _currentPalette.Length; ++i)
             {
@@ -1001,13 +1001,14 @@ namespace TwinklyWPF
 
             DrawFrame();
 
+            // in preview mode, we don't need to actually send the image to the devices
+            if (PreviewMode)
+                return;
+
             await ApiSemaphore.WaitAsync();
 
             try
             {
-                if (PreviewMode)
-                    return;
-
                 int offset = 0;
                 foreach (var device in Devices)
                 {
