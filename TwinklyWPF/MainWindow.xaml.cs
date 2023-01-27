@@ -20,6 +20,14 @@ namespace TwinklyWPF
             InitializeComponent();
         }
 
+        protected override void OnSourceInitialized(EventArgs e)
+        {
+            base.OnSourceInitialized(e);
+
+            if (App.Current.Settings?.MainWindowPlacement.IsValid == true)
+                WindowPlacement.SetPlacement(this, App.Current.Settings.MainWindowPlacement);
+        }
+
         private async void Grid_Loaded(object sender, RoutedEventArgs e)
         {
             if (DataContext != null)
@@ -245,14 +253,6 @@ namespace TwinklyWPF
                 // non-critical failure
                 Console.WriteLine($"Failed to save window placement settings: {ex.Message}");
             }
-        }
-
-        protected override void OnSourceInitialized(EventArgs e)
-        {
-            base.OnSourceInitialized(e);
-
-            if(App.Current.Settings?.MainWindowPlacement.IsValid == true)
-                WindowPlacement.SetPlacement(this, App.Current.Settings.MainWindowPlacement);
         }
     }
 }
