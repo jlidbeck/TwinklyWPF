@@ -183,18 +183,19 @@ namespace TwinklyWPF
             {
                 switch(e.Key)
                 {
-                    case Key.LeftCtrl: MainViewModel.RTMovie.KeyDown(0); break;
-                    case Key.LeftShift: MainViewModel.RTMovie.KeyDown(1); break;
-                    case Key.LeftAlt: MainViewModel.RTMovie.KeyDown(2); break;
-                    case Key.Z: MainViewModel.RTMovie.ColorMode++; break;
+                    //case Key.LeftCtrl: MainViewModel.RTMovie.KeyDown(0); break;
+                    //case Key.LeftShift: MainViewModel.RTMovie.KeyDown(1); break;
+                    //case Key.LeftAlt: MainViewModel.RTMovie.KeyDown(2); break;
+                    case Key.Z: MainViewModel.RTMovie.NextColorMode(); break;
                     case Key.X: MainViewModel.RTMovie.RandomizePalette(); break;
+                    case Key.Q: MainViewModel.RTMovie.Purple(); break;
                 }
 
-                MainViewModel.RTMovie.Inputs = (
-                    (Keyboard.IsKeyDown(Key.LeftCtrl ) ? 1 : 0) |
-                    (Keyboard.IsKeyDown(Key.LeftShift) ? 2 : 0) |
-                    (Keyboard.IsKeyDown(Key.LeftAlt  ) ? 4 : 0)
-                    );
+                //MainViewModel.RTMovie.Inputs = (
+                //    (Keyboard.IsKeyDown(Key.LeftCtrl ) ? 1 : 0) |
+                //    (Keyboard.IsKeyDown(Key.LeftShift) ? 2 : 0) |
+                //    (Keyboard.IsKeyDown(Key.LeftAlt  ) ? 4 : 0)
+                //    );
             }
         }
 
@@ -202,18 +203,18 @@ namespace TwinklyWPF
         {
             if (MainViewModel.RealtimeMovieRunning)
             {
-                switch (e.Key)
-                {
-                    case Key.LeftCtrl: MainViewModel.RTMovie.KeyUp(0); break;
-                    case Key.LeftShift: MainViewModel.RTMovie.KeyUp(1); break;
-                    case Key.LeftAlt: MainViewModel.RTMovie.KeyUp(2); break;
-                }
+                //switch (e.Key)
+                //{
+                //    case Key.LeftCtrl: MainViewModel.RTMovie.KeyUp(0); break;
+                //    case Key.LeftShift: MainViewModel.RTMovie.KeyUp(1); break;
+                //    case Key.LeftAlt: MainViewModel.RTMovie.KeyUp(2); break;
+                //}
 
-                MainViewModel.RTMovie.Inputs = (
-                    (Keyboard.IsKeyDown(Key.LeftCtrl ) ? 1 : 0) |
-                    (Keyboard.IsKeyDown(Key.LeftShift) ? 2 : 0) |
-                    (Keyboard.IsKeyDown(Key.LeftAlt  ) ? 4 : 0)
-                    );
+                //MainViewModel.RTMovie.Inputs = (
+                //    (Keyboard.IsKeyDown(Key.LeftCtrl ) ? 1 : 0) |
+                //    (Keyboard.IsKeyDown(Key.LeftShift) ? 2 : 0) |
+                //    (Keyboard.IsKeyDown(Key.LeftAlt  ) ? 4 : 0)
+                //    );
             }
         }
 
