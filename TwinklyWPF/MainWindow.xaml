@@ -606,7 +606,18 @@
                 <Button x:Name="MovieConfig" Content="MovieConfig" ToolTip="Get and set MovieConfig for active device"
                         Click="MovieConfig_Click" />
             </StackPanel>
-                    
+
+            <StackPanel Orientation="Horizontal" Grid.Row="5" Grid.ColumnSpan="2">
+                <ToggleButton x:Name="MIDIEnabled" 
+                              Content="MIDI" 
+                              IsChecked="{Binding RTMovie.Piano.IsMonitoring, Mode=OneWay}" 
+                              Click="MIDIEnabled_Click" />
+                <TextBlock FontWeight="Bold" VerticalAlignment="Center" Padding="8 0" >
+                    <Run Text="Mode:" Foreground="Orange" />
+                    <Run Text="{Binding RTMovie.Piano, Mode=OneWay}" Foreground="GreenYellow" />
+                </TextBlock>
+            </StackPanel>
+
         </Grid>
     </Grid>
 </Window>

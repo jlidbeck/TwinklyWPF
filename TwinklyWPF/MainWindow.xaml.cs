@@ -218,6 +218,21 @@ namespace TwinklyWPF
             }
         }
 
+
+        private void MIDIEnabled_Click(object sender, RoutedEventArgs e)
+        {
+            var cb = (System.Windows.Controls.Primitives.ToggleButton)sender;
+            if (cb.IsChecked == true && MainViewModel?.RTMovie?.Piano?.IsMonitoring == false)
+            {
+                MainViewModel.Piano.StartMonitoring();
+            }
+            if (cb.IsChecked == false && MainViewModel?.RTMovie?.Piano?.IsMonitoring == true)
+            {
+                MainViewModel.Piano.StopMonitoring();
+            }
+
+        }
+
         private void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e)
         {
             try
