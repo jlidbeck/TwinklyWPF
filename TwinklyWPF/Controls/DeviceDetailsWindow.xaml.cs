@@ -25,6 +25,18 @@ namespace TwinklyWPF.Controls
 
         private void Grid_Loaded(object sender, RoutedEventArgs e)
         {
+            Console.WriteLine($"loaded. datacontext={DataContext}");
+        }
+
+        private async void ModeRadioButton_Checked(object sender, RoutedEventArgs e)
+        {
+            //MainViewModel.StopRealtimeTest();
+            var x = ((RadioButton)sender).Name;
+            //switch (x)
+            //{
+            //    case "off":break;
+            //}
+            await Device?.ChangeMode(x);
         }
 
         #region Hue slider
@@ -100,9 +112,9 @@ namespace TwinklyWPF.Controls
             MessageBox.Show(json, ((Button)e.Source).Name);
         }
 
-        private void UpdateTimerCommand(object sender, RoutedEventArgs e)
+        private void TimerChanged(object sender, RoutedEventArgs e)
         {
-
+            Device?.ChangeTimer();
         }
     }
 }

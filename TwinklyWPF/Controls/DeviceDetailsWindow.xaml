@@ -6,6 +6,40 @@
              xmlns:local="clr-namespace:TwinklyWPF.Controls"
              mc:Ignorable="d" 
              d:DesignHeight="400" d:DesignWidth="800">
+    <UserControl.Resources>
+        <ResourceDictionary>
+            <Style x:Key="ValidatingControl" TargetType="{x:Type FrameworkElement}">
+                <Style.Triggers>
+                    <Trigger Property="Validation.HasError" Value="True">
+                        <Setter Property="ToolTip" Value="{Binding Path=(Validation.Errors)[0].ErrorContent, RelativeSource={x:Static RelativeSource.Self}}" />
+                    </Trigger>
+                </Style.Triggers>
+            </Style>
+
+            <Style TargetType="{x:Type ToolTip}">
+                <Setter Property="Background" Value="DarkRed" />
+                <Setter Property="Foreground" Value="Yellow" />
+                <Setter Property="FontSize" Value="14" />
+                <Setter Property="FontWeight" Value="Bold" />
+            </Style>
+
+            <Style TargetType="TextBlock">
+                <Setter Property="Margin" Value="8 2" />
+            </Style>
+            <Style TargetType="TextBlock" x:Key="LabelStyle">
+                <Setter Property="Padding" Value="8 2 0 2" />
+                <Setter Property="Foreground" Value="White" />
+            </Style>
+            <Style TargetType="TextBlock" x:Key="TechStyle">
+                <Setter Property="Margin" Value="8 4" />
+                <Setter Property="FontFamily" Value="Consolas" />
+                <Setter Property="Foreground" Value="GreenYellow" />
+            </Style>
+
+
+        </ResourceDictionary>
+    </UserControl.Resources>
+    
     <Grid Background="Black" Loaded="Grid_Loaded">
         <Grid.RowDefinitions>
             <RowDefinition Height="auto" />
@@ -13,12 +47,11 @@
             <RowDefinition Height="auto" />
         </Grid.RowDefinitions>
         <TextBlock
+            Style="{StaticResource LabelStyle}"
             Grid.Row="0"
-            Margin="2,0,2,2"
             FontSize="15"
-            Foreground="WhiteSmoke"
             ToolTip="ActiveDevice.Message"
-            Text="{Binding ActiveDevice.Message}"
+            Text="{Binding Message}"
             TextWrapping="Wrap" />
 
         <!--  info  -->
@@ -44,42 +77,35 @@
             </Grid.RowDefinitions>
 
             <StackPanel x:Name="Product"
-                                Grid.Row="0"
-                                Grid.Column="0"
-                                Grid.ColumnSpan="2"
-                                Orientation="Horizontal">
+                        Grid.Row="0"
+                        Grid.Column="0"
+                        Grid.ColumnSpan="2"
+                        Orientation="Horizontal">
                 <TextBlock
-                    Margin="2,0,2,2"
-                    Foreground="LightYellow"
-                    Text="{Binding ActiveDevice.Gestalt.product_name}" />
+                    Style="{StaticResource LabelStyle}"
+                    Text="{Binding Gestalt.product_name}" />
                 <TextBlock
-                    Margin="2,0,2,2"
                     Foreground="DarkOrange"
-                    Text="{Binding ActiveDevice.Gestalt.product_code}" />
+                    Text="{Binding Gestalt.product_code}" />
                 <TextBlock
-                    Margin="2,0,2,2"
-                    Foreground="LightYellow"
-                    Text="{Binding ActiveDevice.Gestalt.device_name}" />
+                    Style="{StaticResource LabelStyle}"
+                    Text="{Binding Gestalt.device_name}" />
                 <TextBlock
-                    Margin="2,0,2,2"
                     Foreground="DarkOrange"
-                    Text="{Binding ActiveDevice.Gestalt.led_profile}" />
+                    Text="{Binding Gestalt.led_profile}" />
                 <TextBlock
-                    Margin="2,0,0,2"
-                    Foreground="LightYellow"
+                    Style="{StaticResource LabelStyle}"
                     Text="Firmware:" />
                 <TextBlock
-                    Margin="2"
                     Foreground="DarkOrange"
-                    Text="{Binding ActiveDevice.Gestalt.fw_family}" />
+                    Text="{Binding Gestalt.fw_family}" />
                 <TextBlock
-                    Margin="2"
                     Foreground="DarkOrange"
-                    Text="{Binding ActiveDevice.FirmwareVersion}" />
+                    Text="{Binding FirmwareVersion}" />
             </StackPanel>
             <Button x:Name="GestaltDetails" 
                     Content="Gestalt"
-                    ToolTip="ActiveDevice.Gestalt"
+                    ToolTip="Gestalt"
                     Click="ShowDetails_Click"
                     Grid.Row="0"
                     Grid.Column="1"
@@ -90,12 +116,12 @@
                         Grid.Column="0"
                         Grid.ColumnSpan="2"
                         Orientation="Horizontal">
-                <TextBlock FontFamily="Consolas" Foreground="LightGreen" Margin="2,0,2,2">
-                    <Run Text="{Binding ActiveDevice.twinklyapi.data.IPAddressString}" />
+                <TextBlock Style="{StaticResource TechStyle}">
+                    <Run Text="{Binding twinklyapi.data.IPAddressString}" />
                     <Run Text="   " />
-                    <Run Text="{Binding ActiveDevice.Gestalt.mac}" />
+                    <Run Text="{Binding Gestalt.mac}" />
                     <Run Text="   " />
-                    <Run Text="{Binding ActiveDevice.Gestalt.uuid}" />
+                    <Run Text="{Binding Gestalt.uuid}" />
                 </TextBlock>
             </StackPanel>
 
@@ -106,25 +132,25 @@
                                 Orientation="Horizontal">
                 <TextBlock
                     Margin="2,0,0,2"
-                    Foreground="LightYellow"
+                    Style="{StaticResource LabelStyle}"
                     Text="©" />
                 <TextBlock
                     Margin="2,0,2,2"
                     Foreground="DarkOrange"
-                    Text="{Binding ActiveDevice.Gestalt.copyright}" />
+                    Text="{Binding Gestalt.copyright}" />
 
                 <TextBlock
                     Margin="20,0,2,2"
                     Foreground="Yellow"
-                    Text="{Binding ActiveDevice.Gestalt.number_of_led}" />
+                    Text="{Binding Gestalt.number_of_led}" />
                 <TextBlock
                     Margin="0,0,2,2"
-                    Foreground="LightYellow"
+                    Style="{StaticResource LabelStyle}"
                     Text="Leds - Type:" />
                 <TextBlock
                     Margin="2,0,2,2"
                     Foreground="Yellow"
-                    Text="{Binding ActiveDevice.Gestalt.led_type}" />
+                    Text="{Binding Gestalt.led_type}" />
             </StackPanel>
 
             <StackPanel x:Name="Uptime"
@@ -133,13 +159,11 @@
                         Grid.ColumnSpan="2"
                         Orientation="Horizontal">
                 <TextBlock
-                    Margin="2"
-                    Foreground="LightYellow"
+                    Style="{StaticResource LabelStyle}"
                     Text="Uptime:" />
                 <TextBlock
-                    Margin="2"
-                    Foreground="LightYellow"
-                    Text="{Binding ActiveDevice.Uptime, StringFormat={}{0:dd'd 'hh':'mm':'ss}}" />
+                    Style="{StaticResource TechStyle}"
+                    Text="{Binding Uptime, StringFormat={}{0:dd'd 'hh':'mm':'ss}}" />
             </StackPanel>
 
             <StackPanel x:Name="Timers"
@@ -148,29 +172,23 @@
                         Grid.ColumnSpan="2"
                         Orientation="Horizontal">
                 <TextBlock
-                    Margin="2"
-                    Foreground="LightYellow"
+                    Style="{StaticResource LabelStyle}"
                     Text="Timer:" />
                 <TextBlock
-                    Margin="2"
-                    Foreground="LightYellow"
-                    Text="{Binding ActiveDevice.TimerNow, StringFormat=HH\\:mm\\:ss}" />
+                    Style="{StaticResource TechStyle}"
+                    Text="{Binding TimerNow, StringFormat=HH\\:mm\\:ss}" />
                 <TextBlock
-                    Margin="2"
-                    Foreground="LightYellow"
+                    Style="{StaticResource LabelStyle}"
                     Text="On:" />
                 <TextBlock
-                    Margin="2"
-                    Foreground="LightYellow"
-                    Text="{Binding ActiveDevice.Timer.time_on}" />
+                    Style="{StaticResource TechStyle}"
+                    Text="{Binding Timer.time_on}" />
                 <TextBlock
-                    Margin="2"
-                    Foreground="LightYellow"
+                    Style="{StaticResource LabelStyle}"
                     Text="Off:" />
                 <TextBlock
-                    Margin="2"
-                    Foreground="LightYellow"
-                    Text="{Binding ActiveDevice.Timer.time_off}" />
+                    Style="{StaticResource TechStyle}"
+                    Text="{Binding Timer.time_off}" />
             </StackPanel>
 
             <StackPanel x:Name="Effects"
@@ -179,74 +197,71 @@
                                 Grid.ColumnSpan="2"
                                 Orientation="Horizontal">
                 <TextBlock
-                    Margin="10,2,2,2"
-                    Foreground="LightYellow"
-                    Text="Group:">
-                    <Run Foreground="Yellow" Text="{Binding ActiveDevice.CurrentMovie.GroupName, Mode=OneWay}" />
+                    Style="{StaticResource LabelStyle}" >
+                    <Run Text="Group:" />
+                    <Run Foreground="Yellow" Text="{Binding CurrentMovie.GroupName, Mode=OneWay}" />
                     <Run Text=" (" />
-                    <Run Foreground="Yellow" Text="{Binding ActiveDevice.CurrentMovie.sync.mode, Mode=OneWay}" />
+                    <Run Foreground="Yellow" Text="{Binding CurrentMovie.sync.mode, Mode=OneWay}" />
                     <Run Text=")" />
                 </TextBlock>
 
                 <TextBlock
-                    Margin="2"
-                    Foreground="LightYellow"
+                    Style="{StaticResource LabelStyle}"
                     Text="Mode:" />
                 <TextBlock
                     Margin="2"
                     FontWeight="Bold"
                     Foreground="DarkOrange"
-                    Text="{Binding ActiveDevice.CurrentMode.mode}" />
+                    Text="{Binding CurrentMode.mode}" />
 
                 <TextBlock
                     Margin="10,2,2,2"
-                    Foreground="LightYellow"
+                    Style="{StaticResource LabelStyle}"
                     Text="Movie frames:" />
                 <TextBlock
                     Margin="2"
                     Foreground="Yellow"
-                    Text="{Binding ActiveDevice.CurrentMovie.frames_number}" />
+                    Text="{Binding CurrentMovie.frames_number}" />
                 <TextBlock
                     Margin="2"
-                    Foreground="LightYellow"
+                    Style="{StaticResource LabelStyle}"
                     Text="delay:" />
                 <TextBlock
                     Margin="2"
                     Foreground="Yellow"
-                    Text="{Binding ActiveDevice.CurrentMovie.frame_delay, StringFormat={}{0}ms}" />
+                    Text="{Binding CurrentMovie.frame_delay, StringFormat={}{0}ms}" />
                 <TextBlock
                     Margin="2"
-                    Foreground="LightYellow"
+                    Style="{StaticResource LabelStyle}"
                     Text="leds:" />
                 <TextBlock
                     Margin="2"
                     Foreground="LightYellow"
-                    Text="{Binding ActiveDevice.CurrentMovie.leds_number}" />
+                    Text="{Binding CurrentMovie.leds_number}" />
                 <TextBlock
                     Margin="2"
-                    Foreground="LightYellow"
+                    Style="{StaticResource LabelStyle}"
                     Text="loop type:" />
                 <TextBlock
                     Margin="2"
                     Foreground="LightYellow"
-                    Text="{Binding ActiveDevice.CurrentMovie.loop_type}" />
+                    Text="{Binding CurrentMovie.loop_type}" />
 
                 <TextBlock
                     Margin="10,2,2,2"
-                    Foreground="LightYellow"
+                    Style="{StaticResource LabelStyle}"
                     Text="Effect:" />
                 <TextBlock
                     Margin="2"
                     Foreground="Yellow"
-                    Text="{Binding ActiveDevice.Effects.effect_id}" />
+                    Text="{Binding Effects.effect_id}" />
                 <TextBlock
-                    Margin="2"
-                    Foreground="LightYellow"
+                    Style="{StaticResource LabelStyle}"
                     Text="of" />
                 <TextBlock
                     Margin="2"
                     Foreground="LightYellow"
-                    Text="{Binding ActiveDevice.Effects.effects_number}" />
+                    Text="{Binding Effects.effects_number}" />
             </StackPanel>
 
             <StackPanel
@@ -256,17 +271,15 @@
                 Grid.ColumnSpan="2"
                 Orientation="Horizontal">
                 <TextBlock
-                    Margin="2"
-                    Foreground="LightYellow"
+                    Style="{StaticResource LabelStyle}"
                     Text="Brightness:" />
                 <TextBlock
-                    Margin="2"
                     Foreground="DarkOrange"
-                    Text="{Binding ActiveDevice.Brightness.mode}" />
+                    Text="{Binding Brightness.mode}" />
                 <TextBlock
                     Margin="2"
                     Foreground="Yellow"
-                    Text="{Binding ActiveDevice.Brightness.value, StringFormat={}{0}%}" />
+                    Text="{Binding Brightness.value, StringFormat={}{0}%}" />
             </StackPanel>
 
             <StackPanel
@@ -276,37 +289,30 @@
                 Grid.ColumnSpan="2"
                 Orientation="Horizontal">
                 <TextBlock
-                    Margin="2"
-                    Foreground="LightYellow"
+                    Style="{StaticResource LabelStyle}"
                     Text="MQTT:" />
                 <TextBlock
-                    Margin="2,2,0,2"
-                    Foreground="LightYellow"
-                    Text="{Binding ActiveDevice.MQTTConfig.broker_host}" />
+                    Style="{StaticResource TechStyle}"
+                    Text="{Binding MQTTConfig.broker_host}" />
                 <TextBlock
-                    Margin="0,2,0,2"
-                    Foreground="LightYellow"
+                    Style="{StaticResource TechStyle}"
+                    Margin="0"
                     Text=":" />
                 <TextBlock
-                    Margin="0,2,2,2"
-                    Foreground="LightYellow"
-                    Text="{Binding ActiveDevice.MQTTConfig.broker_port}" />
+                    Style="{StaticResource TechStyle}"
+                    Text="{Binding MQTTConfig.broker_port}" />
                 <TextBlock
-                    Margin="2"
-                    Foreground="LightYellow"
-                    Text="{Binding ActiveDevice.MQTTConfig.client_id}" />
+                    Style="{StaticResource TechStyle}"
+                    Text="{Binding MQTTConfig.client_id}" />
                 <TextBlock
-                    Margin="2"
-                    Foreground="LightYellow"
-                    Text="{Binding ActiveDevice.MQTTConfig.user}" />
+                    Style="{StaticResource TechStyle}"
+                    Text="{Binding MQTTConfig.user}" />
                 <TextBlock
-                    Margin="10,2,0,2"
-                    Foreground="LightYellow"
+                    Style="{StaticResource LabelStyle}"
                     Text="keep alive:" />
                 <TextBlock
-                    Margin="2"
-                    Foreground="LightYellow"
-                    Text="{Binding ActiveDevice.MQTTConfig.keep_alive_interval}" />
+                    Style="{StaticResource TechStyle}"
+                    Text="{Binding MQTTConfig.keep_alive_interval}" />
             </StackPanel>
         </Grid>
 
@@ -339,7 +345,7 @@
                 FontWeight="Bold"
                 Foreground="Orange" />
             <Slider x:Name="BrightSlider"
-                    Value="{Binding ActiveDevice.SliderBrightness}"
+                    Value="{Binding SliderBrightness}"
                     Minimum="0"
                     Maximum="100"
                     LargeChange="20"
@@ -368,7 +374,8 @@
                     HorizontalAlignment="Left"
                     FontSize="20"
                     GroupName="RBMode"
-                    IsChecked="{Binding ActiveDevice.CurrentMode_Off, Mode=OneWay}" >
+                    Click="ModeRadioButton_Checked"
+                    IsChecked="{Binding CurrentMode_Off, Mode=OneWay}" >
                     <TextBlock Foreground="Cornsilk" Text="Off" />
                 </RadioButton>
                 <RadioButton Name="movie"
@@ -376,7 +383,8 @@
                     HorizontalAlignment="Left"
                     FontSize="20"
                     GroupName="RBMode"
-                    IsChecked="{Binding ActiveDevice.CurrentMode_Movie, Mode=OneWay}">
+                    Click="ModeRadioButton_Checked"
+                    IsChecked="{Binding CurrentMode_Movie, Mode=OneWay}">
                     <TextBlock Foreground="Cornsilk" Text="Movie" />
                 </RadioButton>
                 <RadioButton Name="demo"
@@ -384,7 +392,8 @@
                     HorizontalAlignment="Left"
                     FontSize="20"
                     GroupName="RBMode"
-                    IsChecked="{Binding ActiveDevice.CurrentMode_Demo, Mode=OneWay}">
+                    Click="ModeRadioButton_Checked"
+                    IsChecked="{Binding CurrentMode_Demo, Mode=OneWay}">
                     <TextBlock Foreground="Cornsilk" Text="Demo" />
                 </RadioButton>
                 <RadioButton Name="rt"
@@ -392,7 +401,8 @@
                     HorizontalAlignment="Left"
                     FontSize="20"
                     GroupName="RBMode"
-                    IsChecked="{Binding ActiveDevice.CurrentMode_Realtime, Mode=OneWay}">
+                    Click="ModeRadioButton_Checked"
+                    IsChecked="{Binding CurrentMode_Realtime, Mode=OneWay}">
                     <TextBlock Foreground="Cornsilk" Text="Realtime" />
                 </RadioButton>
             </StackPanel>
@@ -408,7 +418,8 @@
                         HorizontalAlignment="Left"
                         FontSize="20"
                         GroupName="RBMode"
-                        IsChecked="{Binding ActiveDevice.CurrentMode_Color, Mode=OneWay}">
+                        Click="ModeRadioButton_Checked"
+                        IsChecked="{Binding CurrentMode_Color, Mode=OneWay}">
                     <TextBlock Foreground="Cornsilk" Text="Color" />
                 </RadioButton>
                 <Rectangle Margin="28,0" Grid.Column="1">
@@ -426,7 +437,7 @@
                 </Rectangle>
                 <Slider x:Name="HueSlider"
                         Grid.Column="1"
-                        Value="{Binding ActiveDevice.HueSliderValue}"
+                        Value="{Binding HueSliderValue}"
                         ValueChanged="HueSlider_ValueChanged"
                         Minimum="0"
                         Maximum="1.0"
@@ -453,7 +464,7 @@
 
                 <TextBlock
                     Margin="10,2,0,2"
-                    Foreground="LightYellow"
+                    Style="{StaticResource LabelStyle}"
                     Text="turn on @:" />
                 <TextBox
                     x:Name="Timeon"
@@ -465,13 +476,13 @@
                     Foreground="AliceBlue"
                     IsTabStop="True"
                     Style="{StaticResource ValidatingControl}"
-                    Text="{Binding ActiveDevice.ScheduleOnText, ValidatesOnDataErrors=True, UpdateSourceTrigger=PropertyChanged}"
-                    LostFocus="UpdateTimerCommand">
+                    Text="{Binding ScheduleOnText, ValidatesOnDataErrors=True, UpdateSourceTrigger=PropertyChanged}"
+                    LostFocus="TimerChanged">
                 </TextBox>
 
                 <TextBlock
                     Margin="10,2,0,2"
-                    Foreground="LightYellow"
+                    Style="{StaticResource LabelStyle}"
                     Text="turn off @:" />
                 <TextBox
                     x:Name="Timeoff"
@@ -483,8 +494,8 @@
                     Foreground="AliceBlue"
                     IsTabStop="True"
                     Style="{StaticResource ValidatingControl}"
-                    Text="{Binding ActiveDevice.ScheduleOffText, ValidatesOnDataErrors=True, UpdateSourceTrigger=PropertyChanged}"
-                    LostFocus="UpdateTimerCommand">
+                    Text="{Binding ScheduleOffText, ValidatesOnDataErrors=True, UpdateSourceTrigger=PropertyChanged}"
+                    LostFocus="TimerChanged">
                 </TextBox>
             </StackPanel>
 
