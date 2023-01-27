@@ -6,6 +6,7 @@ using System.Diagnostics;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
+using System.Timers;
 using System.Windows;
 using Twinkly_xled.JSONModels;
 using TwinklyWPF.Utilities;
@@ -13,6 +14,17 @@ using static TwinklyWPF.Piano;
 
 namespace TwinklyWPF
 {
+    public class RealtimeMovieSettings
+    {
+        public int ColorMode = 1;
+
+        // interactivity timeout
+        public bool IdleTimeoutEnabled = true;
+        public double IdleTimeout = 30;
+
+        public double ColorMorphTime = 1.8;
+    }
+
     public class RealtimeMovie: INotifyPropertyChanged
     {
         private System.Timers.Timer _frameTimer;
@@ -40,12 +52,36 @@ namespace TwinklyWPF
         Random _random = new Random();
 
         public Piano Piano;
-        public int Inputs = 0;
 
-        protected double[] KeysDownTimes = new double[3];
-        protected double[] KeysUpTimes = new double[3];
+        // timestamp of last non-MIDI user interaction
+        double LastInteractionTime = double.NegativeInfinity;
+        public double IdleTime => CurrentTime - LastInteractionTime;
 
-        public int ColorMode = 1;
+        System.Timers.Timer idleTimer;
+
+        //private int ColorMode = 1;
+
+        RealtimeMovieSettings _settings = new RealtimeMovieSettings();
+
+        public void NextColorMode()
+        {
+            ++_settings.ColorMode;
+            //ColorModeName = $"ColorMode: {_settings.ColorMode}";
+            LastInteractionTime = CurrentTime;
+        }
+
+        public string ColorModeName
+        {
+            get 
+            {
+                switch (_settings.ColorMode)
+                {
+                    case 6: return "TestPattern";
+                    case 7: return "Palette Test Pattern";
+                    default: return $"ColorMode: {_settings.ColorMode}";
+                }
+            }
+        }
 
         public readonly static double[] Black = new double[3] { 0, 0, 0 };
         public readonly static double[] WarmWhite = new double[3] { 1.0, 0.9, 0.5 };
@@ -73,6 +109,8 @@ namespace TwinklyWPF
             new ColorMorph( 0.5, 1.0, 0.0 ),    // yellow-green
             new ColorMorph( 0.0, 0.5, 1.0 ),    // light blue
         };
+
+        public ColorMorph[] CurrentPalette => _currentPalette;
 
         class WalkerGroup
         {
@@ -474,13 +512,6 @@ namespace TwinklyWPF
 
             this.Layout = houseLayout;
 
-            // initialze piano listeners
-            if (Piano != null)
-            {
-                Piano.PianoKeyDownEvent += HandlePianoKeyDownEvent;
-                Piano.PianoIdleEvent += Piano_PianoIdleEvent;
-            }
-
             // done
             Initialized = true;
         }
@@ -532,15 +563,34 @@ namespace TwinklyWPF
             _lastNotesIndex = (_lastNotesIndex + 1) % _lastNotes.Length;
         }
 
-        double _timeOfLastIdleEvent = double.MinValue;
+
+        // the no-piano idle timer
+        private void OnIdleTimerElapsed(object sender, ElapsedEventArgs e)
+        {
+            var t = CurrentTime - LastInteractionTime;
+            if (t > 3)
+            {
+                Piano_PianoIdleEvent(this, new PianoIdleEventArgs { LastNoteTime = LastInteractionTime, CurrentTime = CurrentTime });
+            }
+        }
+
+        // an IdleEvent means the RT has changed its settings due to user inactivity
+        double _timeOfLastIdleEvent = double.NegativeInfinity;
+        public double IdleEventTime => CurrentTime - _timeOfLastIdleEvent;
+
         private void Piano_PianoIdleEvent(object sender, EventArgs evt_)
         {
             // every 30 seconds the piano is idle, randomly change some/all of the colors
 
             var evt = (PianoIdleEventArgs)evt_;
-            if (evt.CurrentTime - evt.LastNoteTime > 30.0 && evt.CurrentTime - _timeOfLastIdleEvent > 30.0)
+
+            // If it's been 30 seconds since any MIDI or GUI input has been received
+            // AND 30 seconds since the last idle event...
+            if (Piano.IdleTime > _settings.IdleTimeout &&
+                IdleTime       > _settings.IdleTimeout &&
+                IdleEventTime  > _settings.IdleTimeout)
             {
-                _timeOfLastIdleEvent = evt.CurrentTime;
+                _timeOfLastIdleEvent = CurrentTime;
 
                 if (_random.Next() % 5 < 1)
                 {
@@ -548,30 +598,17 @@ namespace TwinklyWPF
                     for (int i = 0; i < _currentPalette.Length; ++i)
                     {
                         double brightness = _random.NextDouble();
-                        _currentPalette[i].SetTarget(ColorMorph.Mix(Black, WarmWhite, brightness));
+                        _currentPalette[i].SetTarget(ColorMorph.Mix(Black, WarmWhite, brightness), _settings.ColorMorphTime);
                     }
                 }
                 else
                 {
                     var color = ColorMorph.HsvToRgb(_random.NextDouble(), 1.0, 1.0);
-                    _currentPalette[_nextColorToChange].SetTarget(color);
+                    _currentPalette[_nextColorToChange].SetTarget(color, _settings.ColorMorphTime);
                     _nextColorToChange = (_nextColorToChange + 1) % _currentPalette.Length;
                 }
 
             }
-        }
-
-
-        public void KeyDown(int keyId)
-        {
-            KeysDownTimes[keyId % KeysDownTimes.Length] = _stopwatch.ElapsedMilliseconds * 0.001;
-            KeysUpTimes[keyId % KeysDownTimes.Length] = 0;
-        }
-
-        public void KeyUp(int keyId)
-        {
-            KeysDownTimes[keyId % KeysDownTimes.Length] = 0;
-            KeysUpTimes[keyId % KeysDownTimes.Length] = _stopwatch.ElapsedMilliseconds * 0.001;
         }
 
         public void RandomizePalette()
@@ -579,8 +616,17 @@ namespace TwinklyWPF
             for (int i = 0; i < _currentPalette.Length; ++i)
             {
                 int j = (_random.Next() & 0xFFFF) % GoodPalette.Length;
-                _currentPalette[i].SetTarget(GoodPalette[j]);
+                _currentPalette[i].SetTarget(GoodPalette[j], _settings.ColorMorphTime);
             }
+            LastInteractionTime = CurrentTime;
+        }
+
+        public void Purple()
+        {
+            _currentPalette[0].SetTarget(new double[3] { 0.2, 0.0, 0.4 }, _settings.ColorMorphTime);
+            _currentPalette[1].SetTarget(new double[3] { 0.1, 0.0, 0.4 }, _settings.ColorMorphTime);
+            _currentPalette[2].SetTarget(new double[3] { 0.0, 0.1, 0.3 }, _settings.ColorMorphTime);
+            LastInteractionTime = CurrentTime;
         }
 
         protected virtual void DrawFrame()
@@ -591,7 +637,7 @@ namespace TwinklyWPF
 
             Debug.Assert(_frameData.Length == n * 3);
 
-            switch (ColorMode % 8)
+            switch (_settings.ColorMode % 8)
             {
                 case 1: // 3-color palette changing sinusoidal
                     {
@@ -606,7 +652,8 @@ namespace TwinklyWPF
 
                             double[] color = _sinePlot.GetColorAt(x, y);
 
-                            if (/*j < 60 &&*/ Piano.CurrentTime - Piano.LastNoteTime < 30)
+                            // if a note has recently been played...
+                            if (/*j < 60 &&*/ Piano.CurrentTime - Piano.LastNoteTime < _settings.IdleTimeout)
                             {
                                 const double step = 0.3;
                                 double v = 0;
@@ -716,7 +763,7 @@ namespace TwinklyWPF
 
                             double r=0, g=0, b=0;
 
-                            if (Piano.CurrentTime - Piano.LastNoteTime > 30)
+                            if (Piano.CurrentTime - Piano.LastNoteTime > _settings.IdleTimeout)
                             {
                                 // no interactivity for 30 seconds
 
@@ -885,7 +932,7 @@ namespace TwinklyWPF
                 c[2] = Math.Sin( x + t*0.05 + wave);
 
                 // add some key state
-                for (int k = 0; k < 3; ++k)
+                /*for (int k = 0; k < 3; ++k)
                 {
                     if (KeysDownTimes[k] > 0)
                     {
@@ -900,7 +947,7 @@ namespace TwinklyWPF
                             c[k] = Math.Exp(-2.5 * tt);
                         }
                     }
-                }
+                }*/
 
                 _frameData[fi++] = (byte)(Math.Clamp(255.9 * c[0], 0, 255));
                 _frameData[fi++] = (byte)(Math.Clamp(255.9 * c[1], 0, 255));
@@ -978,12 +1025,27 @@ namespace TwinklyWPF
             if (!Initialized)
                 await Initialize();
 
+            // start timers
             _frameTimer = new System.Timers.Timer { AutoReset = true, Interval = 50 };
             _frameTimer.Elapsed += OnFrameTimerElapsed;
             _frameTimer.Start();
             _stopwatch = new Stopwatch();
             _stopwatch.Start();
             FrameCounter = 0;
+
+            // start piano listeners/interactivity timers
+            if (Piano?.IsMonitoring == true)
+            {
+                Piano.PianoKeyDownEvent += HandlePianoKeyDownEvent;
+                Piano.PianoIdleEvent += Piano_PianoIdleEvent;
+            }
+            else
+            {
+                idleTimer = new System.Timers.Timer() { Enabled = true, AutoReset = true, Interval = 500 };
+                idleTimer.Elapsed += OnIdleTimerElapsed;
+                idleTimer.Start();
+                LastInteractionTime = CurrentTime;
+            }
 
         }
 

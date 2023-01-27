@@ -64,6 +64,7 @@ namespace TwinklyWPF
 
         private string _filename;
 
+        // polling UI update timer
         private DispatcherTimer _updateTimer;
 
         public LayoutWindow()
@@ -77,9 +78,9 @@ namespace TwinklyWPF
             OnPropertyChanged("Coordinates");
             //Redraw();
             _updateTimer = new DispatcherTimer(
-                new System.TimeSpan(0, 0, 0, 0, 20),
+                new TimeSpan(0, 0, 0, 0, 20),   // ms
                 DispatcherPriority.Render,
-                OnFrameTimerElapsed,
+                OnUpdateTimerElapsed,
                 Dispatcher.CurrentDispatcher);
             _updateTimer.Tag = this;
             _updateTimer.Start();
@@ -288,6 +289,24 @@ namespace TwinklyWPF
                     i += 3;
                 }
             }
+
+            // update the text fields
+            MovieRunningText.Text = MainViewModel.RTMovie?.Running == true ? "Running" : "Stopped";
+            MovieDescriptionText.Text = MainViewModel.RTMovie.ToString();
+            MovieColorModeText.Text = MainViewModel.RTMovie.ColorModeName;
+            ColorMorph[] palette = MainViewModel.RTMovie.CurrentPalette;
+            MoviePalette.Background = new SolidColorBrush(palette[0].InTransition ? Color.FromRgb(55, 55, 55) : Color.FromRgb(0, 0, 0));
+            double[] color;
+            color = palette[0].GetColor();
+            MoviePalette0.Background = new SolidColorBrush(Color.FromScRgb(1, (float)color[0], (float)color[1], (float)color[2]));
+            color = palette[1].GetColor();
+            MoviePalette1.Background = new SolidColorBrush(Color.FromScRgb(1, (float)color[0], (float)color[1], (float)color[2]));
+            color = palette[2].GetColor();
+            MoviePalette2.Background = new SolidColorBrush(Color.FromScRgb(1, (float)color[0], (float)color[1], (float)color[2]));
+            
+            IdleEventTimeText.Text = $"{MainViewModel.RTMovie.IdleEventTime:0.0}";
+            IdleTimeText.Text = $"{MainViewModel.RTMovie.IdleTime:0.0}";
+            PianoIdleTimeText.Text = $"{MainViewModel.RTMovie.Piano?.IdleTime:0.0}";
         }
 
         private void Window_KeyDown(object sender, System.Windows.Input.KeyEventArgs e)
@@ -326,9 +345,14 @@ namespace TwinklyWPF
             Redraw();
         }
 
-        private static void OnFrameTimerElapsed(object sender, EventArgs e)
+        private static void OnUpdateTimerElapsed(object sender, EventArgs e)
         {
             ((LayoutWindow)((DispatcherTimer)sender).Tag).UpdateColors();
+        }
+
+        private void MoviePalette_MouseDown(object sender, System.Windows.Input.MouseButtonEventArgs e)
+        {
+            MainViewModel.RTMovie?.RandomizePalette();
         }
     }
 }

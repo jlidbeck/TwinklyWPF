@@ -11,28 +11,58 @@
         Loaded="Window_Loaded"
         IsVisibleChanged="Window_IsVisibleChanged"
         KeyDown="Window_KeyDown"
-        ShowInTaskbar="False">
+        ShowInTaskbar="False"
+        Background="#222222">
+    <Window.Resources>
+        <BooleanToVisibilityConverter x:Key="BoolToVis" />
+
+        <!--  ValidatingControl Style  -->
+        <Style x:Key="ValidatingControl" TargetType="{x:Type FrameworkElement}">
+            <Style.Triggers>
+                <Trigger Property="Validation.HasError" Value="True">
+                    <Setter Property="ToolTip" Value="{Binding Path=(Validation.Errors)[0].ErrorContent, RelativeSource={x:Static RelativeSource.Self}}" />
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+        <Style TargetType="{x:Type ToolTip}">
+            <Setter Property="Background" Value="DarkRed" />
+            <Setter Property="Foreground" Value="Yellow" />
+            <Setter Property="FontSize" Value="14" />
+            <Setter Property="FontWeight" Value="Bold" />
+        </Style>
+
+        <Style TargetType="TextBlock">
+            <Setter Property="Padding" Value="8 2" />
+            <Setter Property="Background" Value="Black" />
+            <Setter Property="Foreground" Value="YellowGreen" />
+            <Setter Property="FontWeight" Value="Bold" />
+        </Style>
+    </Window.Resources>
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
-            <RowDefinition Height="*" />
+            <RowDefinition Height="1*" />
             <RowDefinition Height="Auto" />
-            <RowDefinition Height="*" />
+            <RowDefinition Height="2*" />
+            <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
-        <TextBlock FontWeight="Bold">
-            <Run Text=" Code:" Foreground="DarkSlateGray" />
-            <Run Text="{Binding ElementName=ThisWindow, Path=LayoutResult.code, Mode=OneWay}" />
-            <Run Text=" Source:" Foreground="DarkSlateGray" />
-            <Run Text="{Binding ElementName=ThisWindow, Path=LayoutResult.source, Mode=OneWay}" />
-            <Run Text=" Synthesized:" Foreground="DarkSlateGray" />
-            <Run Text="{Binding ElementName=ThisWindow, Path=LayoutResult.synthesized, Mode=OneWay}" />
-            <Run Text=" Bounds:" Foreground="DarkSlateGray" />
-            <Run Text="{Binding ElementName=ThisWindow, Path=LayoutBoundsText, Mode=OneWay}" />
+        <TextBlock>
+            <Run Text=" Code:" />
+            <Run Text="{Binding ElementName=ThisWindow, Path=LayoutResult.code, Mode=OneWay}" Foreground="White"/>
+            <Run Text=" Source:" />
+            <Run Text="{Binding ElementName=ThisWindow, Path=LayoutResult.source, Mode=OneWay}" Foreground="White" />
+            <Run Text=" Synthesized:" />
+            <Run Text="{Binding ElementName=ThisWindow, Path=LayoutResult.synthesized, Mode=OneWay}" Foreground="White"/>
+            <Run Text=" Bounds:" />
+            <Run Text="{Binding ElementName=ThisWindow, Path=LayoutBoundsText, Mode=OneWay}" Foreground="White"/>
         </TextBlock>
         <TextBox Grid.Row="1" Text="{Binding ElementName=ThisWindow, Path=LayoutText, Mode=OneWay}" 
                  FontFamily="Consolas"
                  IsReadOnly="True"
+                 Background="Black"
+                 Foreground="Teal"
                  VerticalScrollBarVisibility="Auto" />
         <GridSplitter Grid.Row="2" Height="5" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Focusable="False" />
         <ScrollViewer Grid.Row="3" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto">
@@ -48,12 +78,29 @@
             </Canvas>
         </ScrollViewer>
         <StackPanel Orientation="Horizontal" Grid.Row="4">
+            <TextBlock Text="Layout:" />
             <Button Content="Get" Click="GetButton_Click" Margin="4" MinWidth="60" />
             <Button Content="Set" Click="SetButton_Click" Margin="4" MinWidth="60" />
             <Button Content="Load..." Click="LoadButton_Click" Margin="4" MinWidth="60" />
             <Button Content="Save..." Click="SaveButton_Click" Margin="4" MinWidth="60" />
             <Button Content="Center" Click="CenterButton_Click" Margin="4" MinWidth="60" />
             <Button Content="Noise" Click="NoiseButton_Click" Margin="4" MinWidth="60" />
+        </StackPanel>
+        <StackPanel Orientation="Horizontal" Grid.Row="5">
+            <TextBlock x:Name="MovieRunningText" Text="NA" />
+            <TextBlock x:Name="MovieDescriptionText" Text="NA" />
+            <TextBlock x:Name="MovieColorModeText" Text="NA" />
+            <TextBlock x:Name="MoviePalette" Background="Black" >
+                <Run Name="MoviePalette0" Text="    " MouseDown="MoviePalette_MouseDown" />
+                <Run Name="MoviePalette1" Text="    " MouseDown="MoviePalette_MouseDown" />
+                <Run Name="MoviePalette2" Text="    " MouseDown="MoviePalette_MouseDown" />
+            </TextBlock>
+            <TextBlock Text="Idle:" Foreground="White" />
+            <TextBlock x:Name="IdleEventTimeText" Width="40" />
+            <TextBlock Text="PC Idle:" Foreground="White" />
+            <TextBlock x:Name="IdleTimeText" Width="40" />
+            <TextBlock Text="MIDI Idle:" Foreground="White" />
+            <TextBlock x:Name="PianoIdleTimeText" Width="40" />
         </StackPanel>
 
     </Grid>

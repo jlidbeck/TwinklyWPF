@@ -10,7 +10,9 @@ namespace TwinklyWPF
     {
         MidiIn midiIn;
         MidiOut midiOut;
-        bool monitoring;
+        
+        public bool IsMonitoring { get; private set; }
+        
         Stopwatch stopwatch = new Stopwatch();
         Timer idleTimer;
 
@@ -50,10 +52,13 @@ namespace TwinklyWPF
             public double IdleTime => CurrentTime - LastNoteTime;
         }
 
+        public override string ToString()
+        {
+            return $"MIDI device 0 of {MidiIn.NumberOfDevices}";
+        }
 
         public void Initialize()
         {
-
             // MIDI
 
             for (int device = 0; device < MidiIn.NumberOfDevices; device++)
@@ -65,6 +70,9 @@ namespace TwinklyWPF
         }
 
         public double CurrentTime => stopwatch.ElapsedMilliseconds * 0.001;
+        public double LastNoteTime = double.NegativeInfinity;
+        public double IdleTime => CurrentTime - LastNoteTime;
+
         public double BassBump
         {
             get
@@ -101,8 +109,13 @@ namespace TwinklyWPF
 
         #region Start/Stop
 
-        private void StartMonitoring()
+        public void StartMonitoring()
         {
+            if(IsMonitoring)
+            {
+                return;
+            }
+
             if (MidiIn.NumberOfDevices <= 0)
             {
                 MessageBox.Show("No MIDI input devices available");
@@ -122,11 +135,11 @@ namespace TwinklyWPF
             midiIn.ErrorReceived += midiIn_ErrorReceived;
 
             midiIn.Start();
-            monitoring = true;
+            IsMonitoring = true;
             //buttonMonitor.Text = "Stop";
             //comboBoxMidiInDevices.Enabled = false;
 
-            LastNoteTime = CurrentTime;
+            //LastNoteTime = CurrentTime;
             idleTimer = new Timer() { Enabled = true, AutoReset = true, Interval = 500 };
             idleTimer.Elapsed += OnIdleTimerElapsed;
             idleTimer.Start();
@@ -150,13 +163,13 @@ namespace TwinklyWPF
                 e.Timestamp, e.RawMessage, e.MidiEvent));
         }
 
-        private void StopMonitoring()
+        public void StopMonitoring()
         {
-            if (monitoring)
+            if (IsMonitoring)
             {
                 idleTimer.Stop();
                 midiIn.Stop();
-                monitoring = false;
+                IsMonitoring = false;
                 //buttonMonitor.Text = "Monitor";
                 //comboBoxMidiInDevices.Enabled = true;
             }
@@ -207,8 +220,6 @@ namespace TwinklyWPF
                     break;
             }
         }
-
-        public double LastNoteTime = double.MinValue;
 
         void HandleMidiNoteOn(NoteEvent evt)
         {
