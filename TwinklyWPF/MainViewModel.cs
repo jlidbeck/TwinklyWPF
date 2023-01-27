@@ -22,7 +22,7 @@ namespace TwinklyWPF
 
     public class MainViewModel : INotifyPropertyChanged//, IDataErrorInfo
     {
-        public RelayCommand<string> ModeCommand { get; private set; }
+        //public RelayCommand<string> ModeCommand { get; private set; }
         public RelayCommand UpdateTimerCommand { get; private set; }
         public RelayCommand<bool> RealtimeTestCommand { get; private set; }
 
@@ -89,11 +89,6 @@ namespace TwinklyWPF
 
         public MainViewModel(IReadOnlyList<string> arguments)
         {
-            ModeCommand = new RelayCommand<string>(async (x) =>
-            {
-                StopRealtimeTest();
-                await ActiveDevice?.ChangeMode(x);
-            });
 
             UpdateTimerCommand = new RelayCommand(async () => await ActiveDevice.ChangeTimer());
 
@@ -132,6 +127,10 @@ namespace TwinklyWPF
 
         async public Task Initialize()
         {
+            // should this be called Rescan?
+            // since it can be called more than once, we should stop things first...
+            StopRealtimeTest();
+
 
             Piano.Initialize();
 
@@ -177,6 +176,8 @@ namespace TwinklyWPF
         }
 
         #endregion
+
+#region Device management
 
         private async Task Discover()
         {
@@ -307,6 +308,8 @@ namespace TwinklyWPF
             }
         }
 
+#endregion
+
         public double FPS
         {
             get => RTMovie?.FPS ?? 0;
@@ -322,6 +325,7 @@ namespace TwinklyWPF
             }
         }
 
+        #region GUI
 
         public async void RefreshGui(object sender, System.Timers.ElapsedEventArgs e)
         {
@@ -361,6 +365,9 @@ namespace TwinklyWPF
             }
         }
 
+
+
+        #endregion
 
         #region Realtime test
 

@@ -30,6 +30,17 @@ namespace TwinklyWPF
             }
         }
 
+        private async void ModeRadioButton_Checked(object sender, RoutedEventArgs e)
+        {
+            //MainViewModel.StopRealtimeTest();
+            var x = ((RadioButton)sender).Name;
+            //switch (x)
+            //{
+            //    case "off":break;
+            //}
+            await MainViewModel.ActiveDevice?.ChangeMode(x);
+        }
+
         #region Device locate
 
         private async void Rescan_Click(object sender, RoutedEventArgs e)

@@ -468,11 +468,13 @@ namespace TwinklyWPF
         /// </summary>
         public async Task ChangeMode(string mode)
         {
+            if (mode == CurrentMode?.mode)
+                return;
+
             VerifyResult result;
             switch (mode)
             {
                 case "off":
-                default:
                     result = await twinklyapi.SetOperationMode(LedModes.off);
                     break;
 
@@ -491,6 +493,9 @@ namespace TwinklyWPF
                 case "rt":
                     result = await twinklyapi.SetOperationMode(LedModes.rt);
                     break;
+
+                default:
+                    throw new ArgumentException($"Invalid mode: '{mode}'");
             }
 
             // refresh gui
