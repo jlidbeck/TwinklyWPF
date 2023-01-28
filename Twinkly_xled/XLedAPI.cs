@@ -54,6 +54,7 @@ namespace Twinkly_xled
             {
                 Status = (int)data.HttpStatus;
                 var gestaltResult = JsonSerializer.Deserialize<GestaltResult>(json);
+                gestaltResult.Timestamp = DateTime.Now;
 
                 // v.1:
                 //RT_Buffer = new byte[gestaltResult.number_of_led * gestaltResult.bytes_per_led + 10];
@@ -73,7 +74,7 @@ namespace Twinkly_xled
             else
             {
                 Status = (int)data.HttpStatus;
-                return new GestaltResult() { code = (int)data.HttpStatus };
+                return new GestaltResult() { code = (int)data.HttpStatus, Timestamp = DateTime.Now };
             }
         }
 

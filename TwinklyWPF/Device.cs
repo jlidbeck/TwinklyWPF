@@ -69,24 +69,24 @@ namespace TwinklyWPF
 
         #endregion
 
-        private string message = "";
+        private string _message = "";
         public string Message
         {
-            get { return message; }
+            get { return _message; }
             set
             {
-                message = value;
+                _message = value;
                 OnPropertyChanged();
             }
         }
 
-        private GestaltResult gestalt;
+        private GestaltResult _gestalt;
         public GestaltResult Gestalt
         {
-            get { return gestalt; }
+            get { return _gestalt; }
             private set
             {
-                gestalt = value;
+                _gestalt = value;
                 OnPropertyChanged();
                 OnPropertyChanged("Uptime");
                 OnPropertyChanged("Name");

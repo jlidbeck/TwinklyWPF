@@ -24,11 +24,12 @@
             </Style>
 
             <Style TargetType="TextBlock">
+                <Setter Property="Foreground" Value="WhiteSmoke" />
                 <Setter Property="Margin" Value="8 2" />
             </Style>
             <Style TargetType="TextBlock" x:Key="LabelStyle">
+                <Setter Property="Foreground" Value="WhiteSmoke" />
                 <Setter Property="Padding" Value="8 2 0 2" />
-                <Setter Property="Foreground" Value="White" />
             </Style>
             <Style TargetType="TextBlock" x:Key="TechStyle">
                 <Setter Property="Margin" Value="8 4" />
@@ -53,6 +54,19 @@
             ToolTip="ActiveDevice.Message"
             Text="{Binding Message}"
             TextWrapping="Wrap" />
+        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+            
+            <TextBlock Style="{StaticResource TechStyle}">
+                <Run Text="Login expires:" Foreground="WhiteSmoke" />
+                <Run Text="{Binding Mode=OneWay, Path=twinklyapi.data.ExpiresAt, StringFormat={}{0:M/d H:mm:ss}}" />
+                <Run Text="Last refreshed:" Foreground="WhiteSmoke" />
+                <Run Text="{Binding Mode=OneWay, Path=Gestalt.Timestamp, StringFormat={}{0:M/d H:mm:ss}}" />
+            </TextBlock>
+            <Button x:Name="RefreshButton" 
+                        Content="Refresh"
+                        ToolTip="Refresh"
+                        Click="RefreshButton_Click" />
+        </StackPanel>
 
         <!--  info  -->
         <Grid
@@ -62,7 +76,7 @@
             TextBlock.FontSize="16" >
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="auto" />
-                <ColumnDefinition Width="auto" />
+                <ColumnDefinition Width="*" />
             </Grid.ColumnDefinitions>
             <Grid.RowDefinitions>
                 <RowDefinition Height="auto" />
@@ -79,7 +93,6 @@
             <StackPanel x:Name="Product"
                         Grid.Row="0"
                         Grid.Column="0"
-                        Grid.ColumnSpan="2"
                         Orientation="Horizontal">
                 <TextBlock
                     Style="{StaticResource LabelStyle}"
@@ -103,13 +116,14 @@
                     Foreground="DarkOrange"
                     Text="{Binding FirmwareVersion}" />
             </StackPanel>
-            <Button x:Name="GestaltDetails" 
-                    Content="Gestalt"
-                    ToolTip="Gestalt"
-                    Click="ShowDetails_Click"
-                    Grid.Row="0"
-                    Grid.Column="1"
-                    HorizontalAlignment="Right" />
+
+            <StackPanel Orientation="Horizontal" Grid.Column="1">
+                <Button x:Name="GestaltDetails" 
+                        Content="Gestalt"
+                        ToolTip="Gestalt"
+                        Click="ShowDetails_Click"
+                        HorizontalAlignment="Right" />
+            </StackPanel>
 
             <StackPanel x:Name="Network"
                         Grid.Row="1"

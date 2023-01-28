@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
@@ -14,7 +16,7 @@ namespace TwinklyWPF.Controls
     /// <summary>
     /// Interaction logic for DeviceDetailsWindow.xaml
     /// </summary>
-    public partial class DeviceDetailsWindow : UserControl
+    public partial class DeviceDetailsWindow : UserControl, INotifyPropertyChanged
     {
         public Device Device => (Device)DataContext;
 
@@ -116,5 +118,24 @@ namespace TwinklyWPF.Controls
         {
             Device?.ChangeTimer();
         }
+
+        private async void RefreshButton_Click(object sender, RoutedEventArgs e)
+        {
+            if (Device == null) return;
+
+            await Device.Load();
+        }
+
+        #region INotifyPropertyChanged boilerplate
+
+        public event PropertyChangedEventHandler PropertyChanged;
+
+        protected void OnPropertyChanged([CallerMemberName] string name = null)
+        {
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
+        }
+
+        #endregion
+
     }
 }

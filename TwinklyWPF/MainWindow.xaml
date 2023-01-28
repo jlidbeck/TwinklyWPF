@@ -70,16 +70,6 @@
                     Grid.Row="1" Grid.Column="1"
                     Margin="5 0"
                     HorizontalAlignment="Right">
-            <TextBlock
-                MinWidth="260"
-                Grid.Row="2"
-                Grid.Column="1"
-                Margin="2,0,2,2"
-                FontSize="15"
-                Foreground="WhiteSmoke"
-                ToolTip="ActiveDevice.Message"
-                Text="{Binding ActiveDevice.Message}"
-                TextWrapping="Wrap" />
             <Button x:Name="Rescan"
                     Content="Rescan"
                     MinWidth="50"

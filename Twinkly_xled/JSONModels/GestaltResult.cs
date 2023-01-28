@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Text.Json.Serialization;
 
 namespace Twinkly_xled.JSONModels
 {
@@ -34,6 +35,9 @@ namespace Twinkly_xled.JSONModels
         public int wire_type { get; set; }
         public string copyright { get; set; }
         public int code { get; set; }
+
+        [JsonIgnore]
+        public DateTime Timestamp { get; set; }
 
         public override string ToString()
         {
