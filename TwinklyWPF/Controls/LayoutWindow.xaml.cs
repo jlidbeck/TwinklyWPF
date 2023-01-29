@@ -271,6 +271,16 @@ namespace TwinklyWPF
             mt.Matrix = new Matrix(1, 0, 0, -1, 0, (bounds.Bottom > 0? bounds.Bottom : 300));
         }
 
+        public static Color ConvertColor(double[] rgb)
+        {
+            return Color.FromScRgb(1, (float)rgb[0], (float)rgb[1], (float)rgb[2]);
+        }
+
+        public static SolidColorBrush ColorToBrush(double[] rgb)
+        {
+            return new SolidColorBrush(Color.FromScRgb(1, (float)rgb[0], (float)rgb[1], (float)rgb[2]));
+        }
+
         private void UpdateColors()
         {
             if (!(MainViewModel.RTMovie?.FrameData?.Length > 0))
@@ -296,14 +306,13 @@ namespace TwinklyWPF
             MovieColorModeText.Text = MainViewModel.RTMovie.ColorModeName;
             ColorMorph[] palette = MainViewModel.RTMovie.CurrentPalette;
             MoviePalette.Background = new SolidColorBrush(palette[0].InTransition ? Color.FromRgb(55, 55, 55) : Color.FromRgb(0, 0, 0));
-            double[] color;
-            color = palette[0].GetColor();
-            MoviePalette0.Background = new SolidColorBrush(Color.FromScRgb(1, (float)color[0], (float)color[1], (float)color[2]));
-            color = palette[1].GetColor();
-            MoviePalette1.Background = new SolidColorBrush(Color.FromScRgb(1, (float)color[0], (float)color[1], (float)color[2]));
-            color = palette[2].GetColor();
-            MoviePalette2.Background = new SolidColorBrush(Color.FromScRgb(1, (float)color[0], (float)color[1], (float)color[2]));
-            
+            MoviePalette0.Background = ColorToBrush(palette[0].GetColor());
+            MoviePalette1.Background = ColorToBrush(palette[1].GetColor());
+            MoviePalette2.Background = ColorToBrush(palette[2].GetColor());
+            MoviePalette0.Foreground = ColorToBrush(palette[0].TargetColor);
+            MoviePalette1.Foreground = ColorToBrush(palette[1].TargetColor);
+            MoviePalette2.Foreground = ColorToBrush(palette[2].TargetColor);
+
             IdleEventTimeText.Text = $"{MainViewModel.RTMovie.IdleEventTime:0.0}";
             IdleTimeText.Text = $"{MainViewModel.RTMovie.IdleTime:0.0}";
             PianoIdleTimeText.Text = $"{MainViewModel.RTMovie.Piano?.IdleTime:0.0}";

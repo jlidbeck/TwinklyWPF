@@ -39,6 +39,7 @@
             <Setter Property="FontWeight" Value="Bold" />
         </Style>
     </Window.Resources>
+    
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
@@ -90,10 +91,10 @@
             <TextBlock x:Name="MovieRunningText" Text="NA" />
             <TextBlock x:Name="MovieDescriptionText" Text="NA" />
             <TextBlock x:Name="MovieColorModeText" Text="NA" />
-            <TextBlock x:Name="MoviePalette" Background="Black" >
-                <Run Name="MoviePalette0" Text="    " MouseDown="MoviePalette_MouseDown" />
-                <Run Name="MoviePalette1" Text="    " MouseDown="MoviePalette_MouseDown" />
-                <Run Name="MoviePalette2" Text="    " MouseDown="MoviePalette_MouseDown" />
+            <TextBlock x:Name="MoviePalette" Background="Black" Padding="2" >
+                <Run Name="MoviePalette0" Text=" ■ " MouseDown="MoviePalette_MouseDown" />
+                <Run Name="MoviePalette1" Text=" ■ " MouseDown="MoviePalette_MouseDown" />
+                <Run Name="MoviePalette2" Text=" ■ " MouseDown="MoviePalette_MouseDown" />
             </TextBlock>
             <TextBlock Text="Idle:" Foreground="White" />
             <TextBlock x:Name="IdleEventTimeText" Width="40" />
