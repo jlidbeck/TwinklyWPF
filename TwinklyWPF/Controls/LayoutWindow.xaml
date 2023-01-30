@@ -34,10 +34,24 @@
 
         <Style TargetType="TextBlock">
             <Setter Property="Padding" Value="8 2" />
-            <Setter Property="Background" Value="Black" />
-            <Setter Property="Foreground" Value="YellowGreen" />
+            <Setter Property="Foreground" Value="GreenYellow" />
             <Setter Property="FontWeight" Value="Bold" />
         </Style>
+        <Style TargetType="CheckBox">
+            <Setter Property="Padding" Value="8 2" />
+            <Setter Property="Background" Value="Black" />
+            <Setter Property="Foreground" Value="GreenYellow" />
+            <Setter Property="FontWeight" Value="Bold" />
+        </Style>
+        <Style TargetType="Button">
+            <Setter Property="MinWidth" Value="60" />
+            <Setter Property="Padding" Value="8 4" />
+            <Setter Property="Margin" Value="4 0" />
+            <Setter Property="Background" Value="Black" />
+            <Setter Property="Foreground" Value="Orange" />
+            <Setter Property="FontWeight" Value="Bold" />
+        </Style>
+
     </Window.Resources>
     
     <Grid>
@@ -80,16 +94,28 @@
         </ScrollViewer>
         <StackPanel Orientation="Horizontal" Grid.Row="4">
             <TextBlock Text="Layout:" />
-            <Button Content="Get" Click="GetButton_Click" Margin="4" MinWidth="60" />
-            <Button Content="Set" Click="SetButton_Click" Margin="4" MinWidth="60" />
-            <Button Content="Load..." Click="LoadButton_Click" Margin="4" MinWidth="60" />
-            <Button Content="Save..." Click="SaveButton_Click" Margin="4" MinWidth="60" />
-            <Button Content="Center" Click="CenterButton_Click" Margin="4" MinWidth="60" />
-            <Button Content="Noise" Click="NoiseButton_Click" Margin="4" MinWidth="60" />
+            <Button Content="Get" Click="GetButton_Click"  />
+            <Button Content="Set" Click="SetButton_Click"  />
+            <Button Content="Load..." Click="LoadButton_Click"  />
+            <Button Content="Save..." Click="SaveButton_Click"  />
+            <Button Content="Center" Click="CenterButton_Click"  />
+            <Button Content="Noise" Click="NoiseButton_Click"  />
         </StackPanel>
         <StackPanel Orientation="Horizontal" Grid.Row="5">
+            <Button x:Name="StartStopButton" Click="StartStopButton_Click" />
+            <CheckBox Name="PreviewButton" 
+                      IsChecked="{Binding RTMovie.PreviewMode}" 
+                      IsEnabled="{Binding RTMovie.Running}" 
+                      Content="Preview" />
             <TextBlock x:Name="MovieRunningText" Text="NA" />
-            <TextBlock x:Name="MovieDescriptionText" Text="NA" />
+            <TextBlock FontWeight="Bold" VerticalAlignment="Center" Padding="8 0" IsEnabled="{Binding RTMovie.Running}">
+                <Run Text="T:" Foreground="White" />
+                <Run Text=" "/>
+                <Run Name="MovieTimeText" Text="NA" Foreground="GreenYellow" />
+                <Run Text="FPS:" Foreground="White" />
+                <Run Text=" "/>
+                <Run Text="{Binding FPS, Mode=OneWay, StringFormat=N3}" Foreground="GreenYellow" />
+            </TextBlock>
             <TextBlock x:Name="MovieColorModeText" Text="NA" />
             <TextBlock x:Name="MoviePalette" Background="Black" Padding="2" >
                 <Run Name="MoviePalette0" Text=" ■ " MouseDown="MoviePalette_MouseDown" />
@@ -98,9 +124,9 @@
             </TextBlock>
             <TextBlock Text="Idle:" Foreground="White" />
             <TextBlock x:Name="IdleEventTimeText" Width="40" />
-            <TextBlock Text="PC Idle:" Foreground="White" />
+            <TextBlock Text="PC:" Foreground="White" />
             <TextBlock x:Name="IdleTimeText" Width="40" />
-            <TextBlock Text="MIDI Idle:" Foreground="White" />
+            <TextBlock Text="MIDI:" Foreground="White" />
             <TextBlock x:Name="PianoIdleTimeText" Width="40" />
         </StackPanel>
 

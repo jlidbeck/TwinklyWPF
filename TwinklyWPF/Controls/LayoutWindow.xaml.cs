@@ -301,8 +301,11 @@ namespace TwinklyWPF
             }
 
             // update the text fields
-            MovieRunningText.Text = MainViewModel.RTMovie?.Running == true ? "Running" : "Stopped";
-            MovieDescriptionText.Text = MainViewModel.RTMovie.ToString();
+            MovieRunningText.Text = MainViewModel.RTMovie?.Running == true 
+                ? (MainViewModel.RTMovie.PreviewMode ? "Running*" : "Running") 
+                : "Stopped";
+            StartStopButton.Content = MainViewModel.RTMovie?.Running == true ? "■ Stop" : "► Start";
+            MovieTimeText.Text = String.Format("{0:0.00}", MainViewModel.RTMovie.CurrentTime);
             MovieColorModeText.Text = MainViewModel.RTMovie.ColorModeName;
             ColorMorph[] palette = MainViewModel.RTMovie.CurrentPalette;
             MoviePalette.Background = new SolidColorBrush(palette[0].InTransition ? Color.FromRgb(55, 55, 55) : Color.FromRgb(0, 0, 0));
@@ -362,6 +365,14 @@ namespace TwinklyWPF
         private void MoviePalette_MouseDown(object sender, System.Windows.Input.MouseButtonEventArgs e)
         {
             MainViewModel.RTMovie?.RandomizePalette();
+        }
+
+        private void StartStopButton_Click(object sender, RoutedEventArgs e)
+        {
+            if (MainViewModel.RTMovie?.Running == true)
+                MainViewModel.RTMovie.Stop();
+            else if (MainViewModel.RTMovie?.Running == false)
+                MainViewModel.RTMovie.Start();
         }
     }
 }

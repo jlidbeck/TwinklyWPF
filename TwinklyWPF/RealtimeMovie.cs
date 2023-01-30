@@ -29,7 +29,7 @@ namespace TwinklyWPF
     {
         private System.Timers.Timer _frameTimer;
         protected Stopwatch _stopwatch;
-        protected double CurrentTime => _stopwatch.ElapsedMilliseconds* 0.001;
+        public double CurrentTime => _stopwatch.ElapsedMilliseconds * 0.001;
 
         public int FrameCounter { get; private set; }
 
@@ -68,6 +68,7 @@ namespace TwinklyWPF
             ++_settings.ColorMode;
             //ColorModeName = $"ColorMode: {_settings.ColorMode}";
             LastInteractionTime = CurrentTime;
+            OnPropertyChanged("ColorModeName");
         }
 
         public string ColorModeName
@@ -983,7 +984,17 @@ namespace TwinklyWPF
 
         #region Realtime test
 
-        public bool PreviewMode = false;
+        // renders frames but does not send to devices
+        bool _previewMode = false;
+        public bool PreviewMode
+        {
+            get => _previewMode;
+            set
+            {
+                _previewMode = value;
+                OnPropertyChanged();
+            }
+        }
 
         public bool Running
         {
