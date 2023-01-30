@@ -121,9 +121,17 @@ namespace TwinklyWPF.Controls
 
         private async void RefreshButton_Click(object sender, RoutedEventArgs e)
         {
-            if (Device == null) return;
+            if (Device == null) 
+                return;
 
             await Device.Load();
+        }
+
+        private async void LoginButton_Click(object sender, RoutedEventArgs e)
+        {
+            if (Device == null) return;
+
+            await Device.Login();
         }
 
         #region INotifyPropertyChanged boilerplate

@@ -57,15 +57,20 @@
         <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
             
             <TextBlock Style="{StaticResource TechStyle}">
-                <Run Text="Login expires:" Foreground="WhiteSmoke" />
-                <Run Text="{Binding Mode=OneWay, Path=twinklyapi.data.ExpiresAt, StringFormat={}{0:M/d H:mm:ss}}" />
                 <Run Text="Last refreshed:" Foreground="WhiteSmoke" />
                 <Run Text="{Binding Mode=OneWay, Path=Gestalt.Timestamp, StringFormat={}{0:M/d H:mm:ss}}" />
             </TextBlock>
             <Button x:Name="RefreshButton" 
-                        Content="Refresh"
-                        ToolTip="Refresh"
-                        Click="RefreshButton_Click" />
+                    Content="Refresh"
+                    Click="RefreshButton_Click" />
+            <TextBlock Style="{StaticResource TechStyle}">
+                <Run Text="Login expires:" Foreground="WhiteSmoke" />
+                <Run Text="{Binding Mode=OneWay, Path=LoginExpiresAt, StringFormat={}{0:M/d H:mm:ss}}" />
+            </TextBlock>
+            <CheckBox IsChecked="{Binding AutoReAuth}" Foreground="WhiteSmoke">Auto Reauth</CheckBox>
+            <Button x:Name="LoginButton" 
+                    Content="Auth"
+                    Click="LoginButton_Click" />
         </StackPanel>
 
         <!--  info  -->
