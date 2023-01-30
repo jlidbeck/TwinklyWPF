@@ -471,7 +471,7 @@ namespace TwinklyWPF
                         await device.Load();
 
                     if (device.LedConfig == null)
-                        await device.UpdateAuthModels();
+                        await device.UpdateAuthModels(true);
 
                     if (!device.CurrentMode_Realtime)
                         await device.ChangeMode("rt");

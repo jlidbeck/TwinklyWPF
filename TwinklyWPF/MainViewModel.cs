@@ -4,9 +4,7 @@ using System.ComponentModel;
 using System.Net;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
-using Twinkly_xled.JSONModels;
 using Twinkly_xled;
-using Timer = Twinkly_xled.JSONModels.Timer;
 using System;
 using System.Diagnostics;
 using System.Linq;
@@ -23,7 +21,7 @@ namespace TwinklyWPF
     public class MainViewModel : INotifyPropertyChanged//, IDataErrorInfo
     {
         //public RelayCommand<string> ModeCommand { get; private set; }
-        public RelayCommand UpdateTimerCommand { get; private set; }
+        //public RelayCommand UpdateTimerCommand { get; private set; }
         public RelayCommand<bool> RealtimeTestCommand { get; private set; }
 
         #region INotifyPropertyChanged
@@ -90,7 +88,7 @@ namespace TwinklyWPF
         public MainViewModel(IReadOnlyList<string> arguments)
         {
 
-            UpdateTimerCommand = new RelayCommand(async () => await ActiveDevice.ChangeTimer());
+            //UpdateTimerCommand = new RelayCommand(async () => await ActiveDevice.ChangeTimer());
 
             RealtimeTestCommand = new RelayCommand<bool>(
                 async (isChecked) => {
@@ -166,7 +164,11 @@ namespace TwinklyWPF
 
                     // only load if the API detected the Twinkly at startup
                     if (ActiveDevice != null)
+                    {
                         await ActiveDevice.Load();
+                        await ActiveDevice.Login();
+                        // todo: load the full auth model as well?
+                    }
                 }
             }
             finally
@@ -347,10 +349,12 @@ namespace TwinklyWPF
                 if (ActiveDevice?.twinklyapi.data?.IPAddress == null)
                     return;
 
+                // get the device gestalt and firware data only if it hasn't been done yet
                 if (ActiveDevice.ReloadNeeded)
                     await ActiveDevice.Load();
 
-                await ActiveDevice.UpdateAuthModels();
+                // get all the device settings, authenticating if necessary
+                await ActiveDevice.UpdateAuthModels(true);
 
                 OnPropertyChanged("ActiveDevice");
                 OnPropertyChanged("Devices");

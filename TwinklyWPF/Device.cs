@@ -21,6 +21,8 @@ namespace TwinklyWPF
             twinklyapi.IPAddress = ipAddress;
         }
 
+        #region Gestalt shortcuts
+
         public string Name
         {
             get
@@ -40,6 +42,8 @@ namespace TwinklyWPF
                 return TimeSpan.FromMilliseconds(double.Parse(Gestalt.uptime));
             }
         }
+
+        #endregion
 
         #region overrides
 
@@ -106,8 +110,8 @@ namespace TwinklyWPF
 
         // Schedule Twinkly On and off
 
-        private Timer _timer;
-        public Timer Timer
+        private Twinkly_xled.JSONModels.Timer _timer;
+        public Twinkly_xled.JSONModels.Timer Timer
         {
             get { return _timer; }
             set
@@ -123,34 +127,34 @@ namespace TwinklyWPF
             }
         }
 
-        public DateTime TimerNow
-        {
-            get
-            {
-                if (_timer == null)
-                    return DateTime.Today;
-                return new DateTime(DateTime.Today.Year, DateTime.Today.Month, DateTime.Today.Day).AddSeconds(_timer.time_now);
-            }
-        }
+        //public DateTime TimerNow
+        //{
+        //    get
+        //    {
+        //        if (_timer == null)
+        //            return DateTime.Today;
+        //        return new DateTime(DateTime.Today.Year, DateTime.Today.Month, DateTime.Today.Day).AddSeconds(_timer.time_now);
+        //    }
+        //}
 
-        private string scheduleontext;
+        private string _scheduleOnText;
         public string ScheduleOnText
         {
-            get { return scheduleontext; }
+            get { return _scheduleOnText; }
             set
             {
-                scheduleontext = value;
+                _scheduleOnText = value;
                 OnPropertyChanged();
             }
         }
 
-        private string scheduleofftext;
+        private string _scheduleOffText;
         public string ScheduleOffText
         {
-            get { return scheduleofftext; }
+            get { return _scheduleOffText; }
             set
             {
-                scheduleofftext = value;
+                _scheduleOffText = value;
                 OnPropertyChanged();
             }
         }
@@ -185,24 +189,24 @@ namespace TwinklyWPF
         public bool CurrentMode_Realtime { get { return _currentMode?.mode == "rt"; } }
 
 
-        private MergedEffectsResult effects;
+        private MergedEffectsResult _effects;
         public MergedEffectsResult Effects
         {
-            get { return effects; }
+            get { return _effects; }
             set
             {
-                effects = value;
+                _effects = value;
                 OnPropertyChanged();
             }
         }
 
-        private MQTTConfigResult mqttconfig;
+        private MQTTConfigResult _mqttConfig;
         public MQTTConfigResult MQTTConfig
         {
-            get { return mqttconfig; }
+            get { return _mqttConfig; }
             set
             {
-                mqttconfig = value;
+                _mqttConfig = value;
                 OnPropertyChanged();
             }
         }
@@ -218,25 +222,25 @@ namespace TwinklyWPF
             }
         }
 
-        private CurrentMovieConfig currentmovie;// = new CurrentMovieConfig();
+        private CurrentMovieConfig _currentMovie;// = new CurrentMovieConfig();
         public CurrentMovieConfig CurrentMovie
         {
-            get { return currentmovie; }
+            get { return _currentMovie; }
             set
             {
-                currentmovie = value;
+                _currentMovie = value;
                 OnPropertyChanged();
             }
         }
 
-        private BrightnessResult brightness = null;// new BrightnessResult() { mode = "disabled", value = 100 };
+        private BrightnessResult _brightness = null;// new BrightnessResult() { mode = "disabled", value = 100 };
         public BrightnessResult Brightness
         {
-            get { return brightness; }
+            get { return _brightness; }
             set
             {
                 Debug.Assert(value != null);
-                brightness = value;
+                _brightness = value;
                 OnPropertyChanged();
                 OnPropertyChanged("ActiveDevice.SliderBrightness");
             }
@@ -262,13 +266,13 @@ namespace TwinklyWPF
         }
 
 
-        double m_HueSliderValue;
+        double _hueSliderValue;
         public double HueSliderValue
         {
-            get => m_HueSliderValue;
+            get => _hueSliderValue;
             set
             {
-                m_HueSliderValue = value;
+                _hueSliderValue = value;
                 OnPropertyChanged();
             }
         }
@@ -355,7 +359,7 @@ namespace TwinklyWPF
 
         #endregion
 
-        public bool ReloadNeeded { get; private set; } = true;
+        public bool ReloadNeeded => Gestalt == null;
 
         //  Clear all view model fields to reset display
         internal void Unload()
@@ -366,7 +370,7 @@ namespace TwinklyWPF
             {
                 Gestalt = null;
                 FirmwareVersion = null;
-                Timer = new Timer() { time_on = -1, time_off = -1 };
+                Timer = new Twinkly_xled.JSONModels.Timer() { time_on = -1, time_off = -1 };
                 CurrentMode = null;
                 Effects = null;
                 Brightness = null;
@@ -374,7 +378,7 @@ namespace TwinklyWPF
                 CurrentMovie = null;
                 LedConfig = null;
                 //Message = "Unloaded";
-                ReloadNeeded = true;
+                //ReloadNeeded = true;
             }
             finally
             {
@@ -382,15 +386,19 @@ namespace TwinklyWPF
             }
         }
 
-        //  Performs all initial queries (not requiring authentication),
-        //  and authenticates
+        //  Update gestalt and firmware info, which does not require authentication.
+        //  These values are not volatile or likely to change very often,
+        //  with the exception of Gestalt.uptime
         internal async Task Load()
         {
             //Debug.Assert(_apiSemaphore.CurrentCount == 0);
 
-            //Debug.Assert(TwinklyDetected);
+            var stopwatch = Stopwatch.StartNew();
 
-            //Message = "Loading...";
+            Message = "Loading...";
+
+            //Thread.Yield();
+            //Thread.Sleep(500);
 
             //gestalt
             Gestalt = await twinklyapi.GetGestalt();
@@ -408,38 +416,37 @@ namespace TwinklyWPF
             }
             FirmwareVersion = fwResult.version;
 
-
-            if (twinklyapi.Authenticated)
-            {
-                Message = $"Login Success until {twinklyapi.data.ExpiresAt:g}";
-            }
-            else
-            {
-                Message = "Authenticating...";
-                if (!await twinklyapi.Login())
-                {
-                    Message = $"Login Fail {twinklyapi.Status}";
-                    throw new Exception(Message);
-                }
-
-                Message = $"Login Success until {twinklyapi.data.ExpiresAt:g}";
-            }
-
-            // update the authenticated api models
-            //await UpdateAuthModels();
-
-            ReloadNeeded = false;
+            Message = $"Loaded gestalt at {Gestalt.Timestamp} ({stopwatch.ElapsedMilliseconds} ms)";
         }
 
+        //  Read device state and settings. Requires authentication.
+        //  Reauthenticates as needed if {autoreauth} is true.
         //  This function must only be called within a _apiSemaphore lock
-        internal async Task UpdateAuthModels()
+        //  Reading all this data can be slow (200-400 ms) so not a good choice for polling
+        internal async Task UpdateAuthModels(bool autoreauth)
         {
             //Debug.Assert(_apiSemaphore.CurrentCount == 0);
+            var stopwatch = Stopwatch.StartNew();
+
+            Message = "Loading Auth Models...";
+            //Thread.Yield();
+            //Thread.Sleep(300);
 
             try
             {
                 if (!twinklyapi.Authenticated)
-                    return;
+                {
+                    if (!autoreauth)
+                        return;
+
+                    await Login();
+                }
+
+                if(twinklyapi.data.ExpiresIn < TimeSpan.FromHours(3.9))
+                {
+                    if (autoreauth)
+                        await Login();
+                }
 
                 //Gestalt = await twinklyapi.GetGestalt();
 
@@ -456,12 +463,43 @@ namespace TwinklyWPF
                 MQTTConfig = await twinklyapi.GetMQTTConfig();
                 CurrentMovie = await twinklyapi.GetMovieConfig();
                 LedConfig = await twinklyapi.GetLedConfig();
+
+                Message = $"Success {stopwatch.ElapsedMilliseconds} ms";
             }
             catch (Exception err)
             {
                 Message = $"Error during update: {err.Message}";
             }
         }
+
+        public async Task Login()
+        {
+            Message = "Authenticating...";
+            if (!await twinklyapi.Login())
+            {
+                Message = $"Login Fail {twinklyapi.Status}";
+                throw new Exception(Message);
+            }
+
+            Message = $"Login Success until {twinklyapi.data.ExpiresAt:g}";
+            OnPropertyChanged("LoginExpiresAt");
+        }
+
+        bool _autoReAuth = false;
+        public bool AutoReAuth
+        {
+            get
+            {
+                return _autoReAuth;
+            }
+            set
+            {
+                _autoReAuth = value;
+                OnPropertyChanged();
+            }
+        }
+
+        public DateTime LoginExpiresAt { get { return twinklyapi.data.ExpiresAt; } }
 
         /// <summary>
         /// Command to call the API to change the mode
