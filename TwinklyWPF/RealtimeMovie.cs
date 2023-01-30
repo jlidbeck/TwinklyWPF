@@ -1103,7 +1103,7 @@ namespace TwinklyWPF
                     int offset = 0;
                     foreach (var device in Devices)
                     {
-                        if (device.LedConfig == null)
+                        if (device.LedConfig == null || device.CurrentMode.mode != "rt")
                             continue;
 
                         // devices can only receive 900 bytes of data at a time.
@@ -1116,7 +1116,13 @@ namespace TwinklyWPF
                             offset += n;
                         }
                     }
-                    Debug.Assert(offset == _frameData.Length);
+
+                    //Debug.Assert(offset == _frameData.Length, "Device LED counts don't match RT. Check device modes and call Initialize");
+                    if (offset != _frameData.Length)
+                    {
+                        Console.WriteLine($"Device LED counts ({offset}) doesn't match RT frame size ({_frameData.Length}). Switching to Preview mode. Check device modes and call Initialize.");
+                        PreviewMode = true;
+                    }
 
                     //if (FrameCounter % 100 == 0)
                     //    OnPropertyChanged("FPS");
