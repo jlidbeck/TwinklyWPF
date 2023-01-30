@@ -367,12 +367,13 @@ namespace TwinklyWPF
             MainViewModel.RTMovie?.RandomizePalette();
         }
 
-        private void StartStopButton_Click(object sender, RoutedEventArgs e)
+        private async void StartStopButton_Click(object sender, RoutedEventArgs e)
         {
             if (MainViewModel.RTMovie?.Running == true)
                 MainViewModel.RTMovie.Stop();
             else if (MainViewModel.RTMovie?.Running == false)
-                MainViewModel.RTMovie.Start();
+                await MainViewModel.RTMovie.Start();
         }
+
     }
 }

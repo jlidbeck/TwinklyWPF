@@ -114,18 +114,13 @@
                               Content="Realtime Test" 
                               Command="{Binding RealtimeTestCommand}"
                               CommandParameter="{Binding IsChecked, RelativeSource={RelativeSource Self}}"/>
-                <TextBlock FontWeight="Bold" VerticalAlignment="Center" Padding="8 0" >
-                    <Run Text="Mode:" Foreground="Orange" />
-                    <Run Text=" "/>
-                    <Run Text="{Binding RTMovie.ColorModeName, Mode=OneWay}" Foreground="GreenYellow" />
-                </TextBlock>
                 <TextBlock Text="{Binding RTMovie.ColorModeName, Mode=OneWay}" Foreground="GreenYellow" MinWidth="50" />
                 <TextBlock FontWeight="Bold" VerticalAlignment="Center" Padding="8 0" IsEnabled="{Binding RTMovie.Running}">
                     <Run Text="FPS:" Foreground="Orange" />
                     <Run Text=" "/><Run Text="{Binding FPS, Mode=OneWay, StringFormat=N3}" Foreground="GreenYellow" />
                 </TextBlock>
                 <CheckBox Content="Preview" 
-                          IsChecked="{Binding PreviewMode}" 
+                          IsChecked="{Binding RTMovie.PreviewMode}" 
                           ToolTip="Preview mode: animates frames, but does not send to devices"
                           FontWeight="Bold" Foreground="Orange"
                           VerticalAlignment="Center"/>

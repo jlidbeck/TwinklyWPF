@@ -372,8 +372,6 @@ namespace TwinklyWPF
         {
         }
 
-        public bool Initialized { get; private set; } = false;
-
         void InitializeDefaultLayout(XYZ[] coordinates, int startOffset, int n)
         {
             const double s = 0.3;   // default spacing
@@ -457,15 +455,17 @@ namespace TwinklyWPF
             }
         }
 
+        //  Initializes devices and allocates framedata to match layout
+        //  This should only be invoked from Start() to avoid semaphore lockouts
         async Task Initialize()
         {
-            if (Initialized) return;
-
             // first make sure we are authorized and have gestalt for all devices
             await ApiSemaphore.WaitAsync();
 
             try
             {
+                // As necessary, load device metadata, reauthenticate, and switch mode to RT
+
                 foreach (var device in Devices)
                 {
                     if (device.Gestalt == null)
@@ -512,9 +512,6 @@ namespace TwinklyWPF
             }
 
             this.Layout = houseLayout;
-
-            // done
-            Initialized = true;
         }
 
         private void OnLayoutChanged()
@@ -996,26 +993,31 @@ namespace TwinklyWPF
             }
         }
 
+        //  Use Start() and Stop() to change running status.
+        //  Setter not implemented because start and stop are time-consuming and should be async.
         public bool Running
         {
             get => _frameTimer != null;
-            set
-            {
-                if (value)
-                    Start().Wait();
-                else
-                    Stop();
-                OnPropertyChanged();
-            }
         }
 
-        public void Stop()
+        public async void Stop()
         {
             if (_stopwatch?.ElapsedMilliseconds > 0)
                 Debug.WriteLine($"FPS: {FPS}   Frames: {FrameCounter} {_stopwatch.ElapsedMilliseconds * 0.001}");
 
-            _frameTimer?.Stop();
-            _frameTimer = null;
+            await _frameTimerSemaphore.WaitAsync();
+            try
+            {
+                _frameTimer?.Stop();
+                _frameTimer = null;
+                _timeOfLastIdleEvent = double.NegativeInfinity;
+                LastInteractionTime = double.NegativeInfinity;
+                OnPropertyChanged("Running");
+            }
+            finally
+            {
+                _frameTimerSemaphore.Release();
+            }
         }
 
         public double FPS
@@ -1033,31 +1035,42 @@ namespace TwinklyWPF
             if (Running)
                 return;
 
-            if (!Initialized)
+            await _frameTimerSemaphore.WaitAsync();
+            try
+            {
                 await Initialize();
 
-            // start timers
-            _frameTimer = new System.Timers.Timer { AutoReset = true, Interval = 50 };
-            _frameTimer.Elapsed += OnFrameTimerElapsed;
-            _frameTimer.Start();
-            _stopwatch = new Stopwatch();
-            _stopwatch.Start();
-            FrameCounter = 0;
+                // start timers
+                _frameTimer = new System.Timers.Timer { AutoReset = true, Interval = 50 };
+                _frameTimer.Elapsed += OnFrameTimerElapsed;
+                _frameTimer.Start();
+                _stopwatch = new Stopwatch();
+                _stopwatch.Start();
+                FrameCounter = 0;
+                _timeOfLastIdleEvent = double.NegativeInfinity;
+                LastInteractionTime = double.NegativeInfinity;
 
-            // start piano listeners/interactivity timers
-            if (Piano?.IsMonitoring == true)
-            {
-                Piano.PianoKeyDownEvent += HandlePianoKeyDownEvent;
-                Piano.PianoIdleEvent += Piano_PianoIdleEvent;
-            }
-            else
-            {
-                idleTimer = new System.Timers.Timer() { Enabled = true, AutoReset = true, Interval = 500 };
-                idleTimer.Elapsed += OnIdleTimerElapsed;
-                idleTimer.Start();
-                LastInteractionTime = CurrentTime;
-            }
 
+                // start piano listeners/interactivity timers
+                if (Piano?.IsMonitoring == true)
+                {
+                    Piano.PianoKeyDownEvent += HandlePianoKeyDownEvent;
+                    Piano.PianoIdleEvent += Piano_PianoIdleEvent;
+                }
+                else
+                {
+                    idleTimer = new System.Timers.Timer() { Enabled = true, AutoReset = true, Interval = 500 };
+                    idleTimer.Elapsed += OnIdleTimerElapsed;
+                    idleTimer.Start();
+                    LastInteractionTime = CurrentTime;
+                }
+
+                OnPropertyChanged("Running");
+            }
+            finally
+            {
+                _frameTimerSemaphore.Release();
+            }
         }
 
         private System.Threading.SemaphoreSlim _frameTimerSemaphore = new System.Threading.SemaphoreSlim(1, 1);
@@ -1072,42 +1085,49 @@ namespace TwinklyWPF
                 return;
             }
 
-            DrawFrame();
-
-            // in preview mode, we don't need to actually send the image to the devices
-            if (PreviewMode)
-                return;
-
-            await ApiSemaphore.WaitAsync();
-
             try
             {
-                int offset = 0;
-                foreach (var device in Devices)
-                {
-                    if (device.LedConfig == null)
-                        continue;
 
-                    // devices can only receive 900 bytes of data at a time.
-                    // It seems like the strings[] array defines the expected frame ranges.
-                    byte fragment = 0;
-                    foreach (var s in device.LedConfig.strings)
-                    {
-                        var n = device.Gestalt.bytes_per_led * s.length;
-                        device.twinklyapi.SendFrame(_frameData, offset, n, fragment++);
-                        offset += n;
-                    }
-                }
-                Debug.Assert(offset == _frameData.Length);
+                DrawFrame();
 
                 FrameCounter++;
 
-                //if (FrameCounter % 100 == 0)
-                //    OnPropertyChanged("FPS");
+                // in preview mode, we don't need to actually send the image to the devices
+                if (PreviewMode)
+                    return;
+
+                await ApiSemaphore.WaitAsync();
+
+                try
+                {
+                    int offset = 0;
+                    foreach (var device in Devices)
+                    {
+                        if (device.LedConfig == null)
+                            continue;
+
+                        // devices can only receive 900 bytes of data at a time.
+                        // It seems like the strings[] array defines the expected frame ranges.
+                        byte fragment = 0;
+                        foreach (var s in device.LedConfig.strings)
+                        {
+                            var n = device.Gestalt.bytes_per_led * s.length;
+                            device.twinklyapi.SendFrame(_frameData, offset, n, fragment++);
+                            offset += n;
+                        }
+                    }
+                    Debug.Assert(offset == _frameData.Length);
+
+                    //if (FrameCounter % 100 == 0)
+                    //    OnPropertyChanged("FPS");
+                }
+                finally
+                {
+                    ApiSemaphore.Release();
+                }
             }
             finally
             {
-                ApiSemaphore.Release();
                 _frameTimerSemaphore.Release();
             }
         }
