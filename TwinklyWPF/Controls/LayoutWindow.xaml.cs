@@ -115,6 +115,8 @@ namespace TwinklyWPF
 
         #endregion
 
+        #region Layout controls
+
         private void CenterButton_Click(object sender, RoutedEventArgs e)
         {
             Rect bounds = GetLayoutBounds();
@@ -157,8 +159,6 @@ namespace TwinklyWPF
             Redraw();
         }
 
-
-
         private async void GetButton_Click(object sender, RoutedEventArgs e)
         {
             GetLayoutResult result = await MainViewModel.ActiveDevice?.twinklyapi.GetLayout();
@@ -168,7 +168,7 @@ namespace TwinklyWPF
             Redraw();
         }
 
-        private async void SetButton_Click(object sender, RoutedEventArgs e)
+        private void SetButton_Click(object sender, RoutedEventArgs e)
         {
             // TODO: send modified layout(s) to devices
             //var result = await MainViewModel.ActiveDevice?.twinklyapi.SetLayout(Layout);
@@ -214,6 +214,10 @@ namespace TwinklyWPF
                 }
             }
         }
+
+        #endregion
+
+        #region Drawing
 
         //  this is the point where the canvas size has been computed
         protected override void OnRender(DrawingContext drawingContext)
@@ -271,14 +275,9 @@ namespace TwinklyWPF
             mt.Matrix = new Matrix(1, 0, 0, -1, 0, (bounds.Bottom > 0? bounds.Bottom : 300));
         }
 
-        public static Color ConvertColor(double[] rgb)
+        private static void OnUpdateTimerElapsed(object sender, EventArgs e)
         {
-            return Color.FromScRgb(1, (float)rgb[0], (float)rgb[1], (float)rgb[2]);
-        }
-
-        public static SolidColorBrush ColorToBrush(double[] rgb)
-        {
-            return new SolidColorBrush(Color.FromScRgb(1, (float)rgb[0], (float)rgb[1], (float)rgb[2]));
+            ((LayoutWindow)((DispatcherTimer)sender).Tag).UpdateColors();
         }
 
         private void UpdateColors()
@@ -301,8 +300,8 @@ namespace TwinklyWPF
             }
 
             // update the text fields
-            MovieRunningText.Text = MainViewModel.RTMovie?.Running == true 
-                ? (MainViewModel.RTMovie.PreviewMode ? "Running*" : "Running") 
+            MovieRunningText.Text = MainViewModel.RTMovie?.Running == true
+                ? (MainViewModel.RTMovie.PreviewMode ? "Running*" : "Running")
                 : "Stopped";
             StartStopButton.Content = MainViewModel.RTMovie?.Running == true ? "■ Stop" : "► Start";
             MovieTimeText.Text = String.Format("{0:0.00}", MainViewModel.RTMovie.CurrentTime);
@@ -320,6 +319,10 @@ namespace TwinklyWPF
             IdleTimeText.Text = $"{MainViewModel.RTMovie.IdleTime:0.0}";
             PianoIdleTimeText.Text = $"{MainViewModel.RTMovie.Piano?.IdleTime:0.0}";
         }
+
+        #endregion
+
+        #region Canvas controls
 
         private void Window_KeyDown(object sender, System.Windows.Input.KeyEventArgs e)
         {
@@ -357,14 +360,18 @@ namespace TwinklyWPF
             Redraw();
         }
 
-        private static void OnUpdateTimerElapsed(object sender, EventArgs e)
+        #endregion
+
+        #region Animation controls
+
+        public static Color ConvertColor(double[] rgb)
         {
-            ((LayoutWindow)((DispatcherTimer)sender).Tag).UpdateColors();
+            return Color.FromScRgb(1, (float)rgb[0], (float)rgb[1], (float)rgb[2]);
         }
 
-        private void MoviePalette_MouseDown(object sender, System.Windows.Input.MouseButtonEventArgs e)
+        public static SolidColorBrush ColorToBrush(double[] rgb)
         {
-            MainViewModel.RTMovie?.RandomizePalette();
+            return new SolidColorBrush(Color.FromScRgb(1, (float)rgb[0], (float)rgb[1], (float)rgb[2]));
         }
 
         private async void StartStopButton_Click(object sender, RoutedEventArgs e)
@@ -375,5 +382,16 @@ namespace TwinklyWPF
                 await MainViewModel.RTMovie.Start();
         }
 
+        private void MovieColorModeText_MouseDown(object sender, System.Windows.Input.MouseButtonEventArgs e)
+        {
+            MainViewModel.RTMovie?.NextColorMode();
+        }
+
+        private void MoviePalette_MouseDown(object sender, System.Windows.Input.MouseButtonEventArgs e)
+        {
+            MainViewModel.RTMovie?.RandomizePalette();
+        }
+
+        #endregion
     }
 }

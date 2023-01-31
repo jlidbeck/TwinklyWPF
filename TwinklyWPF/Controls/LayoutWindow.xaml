@@ -62,6 +62,7 @@
             <RowDefinition Height="2*" />
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
         <TextBlock>
             <Run Text=" Code:" />
@@ -92,7 +93,7 @@
                 </Canvas.RenderTransform>
             </Canvas>
         </ScrollViewer>
-        <StackPanel Orientation="Horizontal" Grid.Row="4">
+        <StackPanel Orientation="Horizontal" Grid.Row="4" Margin="8 4">
             <TextBlock Text="Layout:" />
             <Button Content="Get" Click="GetButton_Click"  />
             <Button Content="Set" Click="SetButton_Click"  />
@@ -101,34 +102,36 @@
             <Button Content="Center" Click="CenterButton_Click"  />
             <Button Content="Noise" Click="NoiseButton_Click"  />
         </StackPanel>
-        <StackPanel Orientation="Horizontal" Grid.Row="5">
+        <StackPanel Orientation="Horizontal" Grid.Row="5" Margin="8 4">
             <Button x:Name="StartStopButton" Click="StartStopButton_Click" />
             <CheckBox Name="PreviewButton" 
                       IsChecked="{Binding RTMovie.PreviewMode}" 
                       IsEnabled="{Binding RTMovie.Running}" 
+                      ToolTip="Preview mode: animates frames, but does not send to devices"
                       Content="Preview" />
-            <TextBlock x:Name="MovieRunningText" Text="NA" />
-            <TextBlock FontWeight="Bold" VerticalAlignment="Center" Padding="8 0" IsEnabled="{Binding RTMovie.Running}">
-                <Run Text="T:" Foreground="White" />
-                <Run Text=" "/>
-                <Run Name="MovieTimeText" Text="NA" Foreground="GreenYellow" />
-                <Run Text="FPS:" Foreground="White" />
-                <Run Text=" "/>
-                <Run Text="{Binding FPS, Mode=OneWay, StringFormat=N3}" Foreground="GreenYellow" />
-            </TextBlock>
-            <TextBlock x:Name="MovieColorModeText" Text="NA" />
+            <TextBlock x:Name="MovieRunningText" Text="NA" Foreground="White" />
+            <TextBlock x:Name="MovieColorModeText" Text="NA" MouseDown="MovieColorModeText_MouseDown" />
             <TextBlock x:Name="MoviePalette" Background="Black" Padding="2" >
                 <Run Name="MoviePalette0" Text=" ■ " MouseDown="MoviePalette_MouseDown" />
                 <Run Name="MoviePalette1" Text=" ■ " MouseDown="MoviePalette_MouseDown" />
                 <Run Name="MoviePalette2" Text=" ■ " MouseDown="MoviePalette_MouseDown" />
             </TextBlock>
-            <TextBlock Text="Idle:" Foreground="White" />
-            <TextBlock x:Name="IdleEventTimeText" Width="40" />
-            <TextBlock Text="PC:" Foreground="White" />
-            <TextBlock x:Name="IdleTimeText" Width="40" />
-            <TextBlock Text="MIDI:" Foreground="White" />
-            <TextBlock x:Name="PianoIdleTimeText" Width="40" />
         </StackPanel>
-
+        <StackPanel Orientation="Horizontal" Grid.Row="6" Margin="8 4 8 8">
+            <TextBlock FontWeight="Bold" VerticalAlignment="Center" Padding="8 0" IsEnabled="{Binding RTMovie.Running}">
+                <Run Text="T:" />
+                <Run Text=" "/>
+                <Run Name="MovieTimeText" Text="NA" Foreground="White" />
+                <Run Text="FPS:" />
+                <Run Text=" "/>
+                <Run Text="{Binding FPS, Mode=OneWay, StringFormat=N3}" Foreground="White" />
+            </TextBlock>
+            <TextBlock Text="Idle:" />
+            <TextBlock x:Name="IdleEventTimeText" Width="40" Foreground="White" />
+            <TextBlock Text="PC:" />
+            <TextBlock x:Name="IdleTimeText" Width="40" Foreground="White" />
+            <TextBlock Text="MIDI:" />
+            <TextBlock x:Name="PianoIdleTimeText" Width="40" Foreground="White" />
+        </StackPanel>
     </Grid>
 </Window>
