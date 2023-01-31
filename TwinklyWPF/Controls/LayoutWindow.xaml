@@ -37,9 +37,19 @@
             <Setter Property="Foreground" Value="GreenYellow" />
             <Setter Property="FontWeight" Value="Bold" />
         </Style>
+        <Style TargetType="TextBox">
+            <Setter Property="Padding" Value="8 2" />
+            <Setter Property="Margin" Value="0 0 0 3" />
+            <Setter Property="HorizontalAlignment" Value="Center" />
+            <Setter Property="MinWidth" Value="30" />
+            <Setter Property="Background" Value="LightGray" />
+            <Setter Property="Foreground" Value="DarkSlateGray" />
+            <Setter Property="FontWeight" Value="Bold" />
+        </Style>
         <Style TargetType="CheckBox">
             <Setter Property="Padding" Value="8 2" />
-            <Setter Property="Background" Value="Black" />
+            <Setter Property="Margin" Value="0 3 0 0" />
+            <Setter Property="Background" Value="LightGray" />
             <Setter Property="Foreground" Value="GreenYellow" />
             <Setter Property="FontWeight" Value="Bold" />
         </Style>
@@ -115,7 +125,15 @@
                 <Run Name="MoviePalette0" Text=" ■ " MouseDown="MoviePalette_MouseDown" />
                 <Run Name="MoviePalette1" Text=" ■ " MouseDown="MoviePalette_MouseDown" />
                 <Run Name="MoviePalette2" Text=" ■ " MouseDown="MoviePalette_MouseDown" />
+                <Run Name="MoviePalette3" Text=" ■ " MouseDown="MoviePalette_MouseDown" />
+                <Run Name="MoviePalette4" Text=" ■ " MouseDown="MoviePalette_MouseDown" />
             </TextBlock>
+            <CheckBox Content="Autochange" 
+                      IsChecked="{Binding RTMovie.Settings.IdleTimeoutEnabled}" />
+            <TextBlock Text="Autochange (s):" />
+            <TextBox Name="AutoChangeInterval" 
+                     Text="{Binding RTMovie.Settings.IdleTimeout}"
+                     IsEnabled="{Binding RTMovie.Settings.IdleTimeoutEnabled}" />
         </StackPanel>
         <StackPanel Orientation="Horizontal" Grid.Row="6" Margin="8 4 8 8">
             <TextBlock FontWeight="Bold" VerticalAlignment="Center" Padding="8 0" IsEnabled="{Binding RTMovie.Running}">

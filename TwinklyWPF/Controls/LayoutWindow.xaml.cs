@@ -6,6 +6,7 @@ using System.Runtime.CompilerServices;
 using System.Text.Json;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Documents;
 using System.Windows.Media;
 using System.Windows.Shapes;
 using System.Windows.Threading;
@@ -306,14 +307,21 @@ namespace TwinklyWPF
             StartStopButton.Content = MainViewModel.RTMovie?.Running == true ? "■ Stop" : "► Start";
             MovieTimeText.Text = String.Format("{0:0.00}", MainViewModel.RTMovie.CurrentTime);
             MovieColorModeText.Text = MainViewModel.RTMovie.ColorModeName;
-            ColorMorph[] palette = MainViewModel.RTMovie.CurrentPalette;
+            var palette = MainViewModel.RTMovie.CurrentPalette;
             MoviePalette.Background = new SolidColorBrush(palette[0].InTransition ? Color.FromRgb(55, 55, 55) : Color.FromRgb(0, 0, 0));
-            MoviePalette0.Background = ColorToBrush(palette[0].GetColor());
-            MoviePalette1.Background = ColorToBrush(palette[1].GetColor());
-            MoviePalette2.Background = ColorToBrush(palette[2].GetColor());
-            MoviePalette0.Foreground = ColorToBrush(palette[0].TargetColor);
-            MoviePalette1.Foreground = ColorToBrush(palette[1].TargetColor);
-            MoviePalette2.Foreground = ColorToBrush(palette[2].TargetColor);
+
+            var paletteControls = new Run[] { MoviePalette0, MoviePalette1, MoviePalette2, MoviePalette3, MoviePalette4 };
+            int j = 0;
+            for(; j<palette.Count; j++)
+            {
+                paletteControls[j].Background = ColorToBrush(palette[j].GetColor());
+                paletteControls[j].Foreground = ColorToBrush(palette[j].TargetColor);
+            }
+            for(; j<paletteControls.Length; j++)
+            {
+                paletteControls[j].Background = new SolidColorBrush(Color.FromRgb(0,0,0));
+                paletteControls[j].Foreground = new SolidColorBrush(Color.FromRgb(0,0,0));
+            }
 
             IdleEventTimeText.Text = $"{MainViewModel.RTMovie.IdleEventTime:0.0}";
             IdleTimeText.Text = $"{MainViewModel.RTMovie.IdleTime:0.0}";
@@ -389,7 +397,24 @@ namespace TwinklyWPF
 
         private void MoviePalette_MouseDown(object sender, System.Windows.Input.MouseButtonEventArgs e)
         {
-            MainViewModel.RTMovie?.RandomizePalette();
+            if (e.LeftButton== System.Windows.Input.MouseButtonState.Pressed)
+            {
+                int colorIndex = -1;
+                var button = (Run)sender;
+                switch (button.Name)
+                {
+                    case "MoviePalette0": colorIndex = 0; break;
+                    case "MoviePalette1": colorIndex = 1; break;
+                    case "MoviePalette2": colorIndex = 2; break;
+                    case "MoviePalette3": colorIndex = 3; break;
+                    case "MoviePalette4": colorIndex = 4; break;
+                }
+                MainViewModel.RTMovie.RandomizeOneColor(colorIndex);
+            }
+            else
+            {
+                MainViewModel.RTMovie?.RandomizePalette();
+            }
         }
 
         #endregion

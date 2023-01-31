@@ -1,5 +1,6 @@
 ﻿using NAudio.Midi;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
@@ -14,17 +15,39 @@ using static TwinklyWPF.Piano;
 
 namespace TwinklyWPF
 {
-    public class RealtimeMovieSettings
+    public class RealtimeMovieSettings : INotifyPropertyChanged
     {
         public int ColorMode = 8;
 
         // interactivity timeout
-        public bool IdleTimeoutEnabled = true;
-        public double IdleTimeout = 30;
+        bool _idleTimeoutEnabled = true;
+        public bool IdleTimeoutEnabled
+        {
+            get => _idleTimeoutEnabled;
+            set { _idleTimeoutEnabled = value; OnPropertyChanged(); }
+        }
+        
+        double _idleTimeout = 30;
+        public double IdleTimeout
+        {
+            get => _idleTimeout;
+            set { _idleTimeout = value; OnPropertyChanged(); }
+        }
 
         public double ColorMorphTime = 1.8;
 
-        public int FrameTimerInterval = 25; // 50 ms == ~20 FPS
+        public int FrameTimerInterval = 50; // 50 ms == ~20 FPS
+
+        #region INotifyPropertyChanged
+
+        public event PropertyChangedEventHandler PropertyChanged;
+
+        protected void OnPropertyChanged([CallerMemberName] string name = null)
+        {
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
+        }
+
+        #endregion
     }
 
     public class RealtimeMovie: INotifyPropertyChanged
@@ -75,6 +98,11 @@ namespace TwinklyWPF
         System.Timers.Timer idleTimer;
 
         RealtimeMovieSettings _settings = new RealtimeMovieSettings();
+        public RealtimeMovieSettings Settings
+        {
+            get => _settings;
+            set { _settings = value; OnPropertyChanged(); }
+        }
 
         string[] ColorModes = new string[] { 
             "Old Chroma",
@@ -119,13 +147,13 @@ namespace TwinklyWPF
         };
 
 
-        ColorMorph[] _currentPalette = {
+        List<ColorMorph> _currentPalette = new() {
             new ColorMorph( 1.0, 0.4, 0.0 ),    // gold
             new ColorMorph( 0.5, 1.0, 0.0 ),    // yellow-green
             new ColorMorph( 0.0, 0.5, 1.0 ),    // light blue
         };
 
-        public ColorMorph[] CurrentPalette => _currentPalette;
+        public List<ColorMorph> CurrentPalette => _currentPalette;
 
         class WalkerGroup
         {
@@ -338,7 +366,7 @@ namespace TwinklyWPF
 
         class SinePlot
         {
-            public ColorMorph[] palette;
+            public IList<ColorMorph> palette;
 
             // state
             Stopwatch _stopwatch;
@@ -562,7 +590,7 @@ namespace TwinklyWPF
             // change one of the palette colors to the played tone color
             int colorIndex = evt.NoteEvent.NoteNumber % GoodPalette.Length;
             _currentPalette[_nextColorToChange].SetTarget(GoodPalette[colorIndex], 0.1);
-            _nextColorToChange = (_nextColorToChange + 1) % _currentPalette.Length;
+            _nextColorToChange = (_nextColorToChange + 1) % _currentPalette.Count;
 
             // add note to circular buffer.
             // we're not worried about circular buffer overruns here (low stakes)
@@ -598,7 +626,8 @@ namespace TwinklyWPF
 
             // If it's been 30 seconds since any MIDI or GUI input has been received
             // AND 30 seconds since the last idle event...
-            if (Piano.IdleTime > _settings.IdleTimeout &&
+            if (_settings.IdleTimeoutEnabled &&
+                Piano.IdleTime > _settings.IdleTimeout &&
                 IdleTime       > _settings.IdleTimeout &&
                 IdleEventTime  > _settings.IdleTimeout)
             {
@@ -607,7 +636,7 @@ namespace TwinklyWPF
                 if (_random.Next() % 50 < 1)
                 {
                     // grayscale palette
-                    for (int i = 0; i < _currentPalette.Length; ++i)
+                    for (int i = 0; i < _currentPalette.Count; ++i)
                     {
                         double brightness = _random.NextDouble();
                         _currentPalette[i].SetTarget(ColorMorph.Mix(Black, WarmWhite, brightness), _settings.ColorMorphTime);
@@ -615,29 +644,42 @@ namespace TwinklyWPF
                 }
                 else
                 {
-                    _nextColorToChange %= _currentPalette.Length;
-                    var color = ColorMorph.HsvToRgb(_random.NextDouble(), 1.0, 1.0);
-                    _currentPalette[_nextColorToChange].SetTarget(color, _settings.ColorMorphTime);
-                    _nextColorToChange++;
+                    RandomizeOneColor();
                 }
 
             }
         }
 
+        //  Changes one of the palette colors. If {colorIndex} is negative, changes the oldest color.
+        public void RandomizeOneColor(int colorIndex=-1)
+        {
+            if (colorIndex >= 0)
+                _nextColorToChange = colorIndex;
+
+            _nextColorToChange %= _currentPalette.Count;
+            var color = ColorMorph.HsvToRgb(_random.NextDouble(), 1.0, 1.0);
+            _currentPalette[_nextColorToChange].SetTarget(color, _settings.ColorMorphTime);
+            _nextColorToChange++;
+
+            LastInteractionTime = CurrentTime;
+        }
+
         public void RandomizePalette(int numEntries=-1)
         {
-            if (numEntries > 0 && _currentPalette.Length != numEntries)
+            if (numEntries > 0)
             {
-                _currentPalette = new ColorMorph[numEntries];
-                for (int i = 0; i < _currentPalette.Length; ++i)
+                while (_currentPalette.Count > numEntries)
                 {
-                    int j = (_random.Next() & 0xFFFF) % GoodPalette.Length;
-                    _currentPalette[i] = new ColorMorph(GoodPalette[j]);
+                    _currentPalette.RemoveAt(numEntries);
                 }
-                return;
+
+                while (_currentPalette.Count < numEntries)
+                {
+                    _currentPalette.Add(new ColorMorph(WarmWhite));
+                }
             }
 
-            for (int i = 0; i < _currentPalette.Length; ++i)
+            for (int i = 0; i < _currentPalette.Count; ++i)
             {
                 int j = (_random.Next() & 0xFFFF) % GoodPalette.Length;
                 _currentPalette[i].SetTarget(GoodPalette[j], _settings.ColorMorphTime);
@@ -663,8 +705,13 @@ namespace TwinklyWPF
 
             switch (_settings.ColorMode)
             {
-                case 1: // 3-color palette changing sinusoidal
+                case 1: // trinity: 3-color palette changing sinusoidal
                     {
+                        if (_currentPalette.Count != 3)
+                        {
+                            RandomizePalette(3);
+                        }
+
                         _sinePlot.Update();
 
                         for (int j = 0; j < Layout.coordinates.Length; ++j)
@@ -917,16 +964,23 @@ namespace TwinklyWPF
                     }
                     return;
 
-                case 8: // old-school
+                case 8: // old-school quantum
                     {
-                        if(_currentPalette.Length != 5)
+                        if(_currentPalette.Count != 5)
                         {
                             RandomizePalette(5);
+
+                            if (Piano.Knobs[4]==0)
+                            {
+                                Piano.Knobs[4] = 0.1;
+                                Piano.Knobs[5] = 0.5;
+                                Piano.Knobs[6] = 0.2;
+                            }
                         }
 
-                        double k = Piano.Knobs[4];    // 0.3 colors per meter?
+                        double k = 3.0 * Piano.Knobs[4];    // 0.3 colors per meter?
                         double noiseLevel = 2.0 * Piano.Knobs[5];
-                        double crawlSpeed = 0.1 * Piano.Knobs[6];
+                        double crawlSpeed = 5.0 * Piano.Knobs[6];
                         for (int j = 0; j < Layout.coordinates.Length; ++j)
                         {
                             double noise = Math.Cos((double)j * 32.7);
@@ -937,7 +991,7 @@ namespace TwinklyWPF
                             double x = Layout.coordinates[j].x + 2.0 * Layout.coordinates[j].y;
                             //x %= _currentPalette.Length;
 
-                            int coloridx = (((int)(x*k+t* crawlSpeed+noise)) % _currentPalette.Length);
+                            int coloridx = (((int)(x*k+t* crawlSpeed+noise)) % _currentPalette.Count);
                             var color = _currentPalette[coloridx].GetColor();
                             var r = (byte)(Math.Clamp(255.5 * color[0], 0, 255));
                             var g = (byte)(Math.Clamp(255.5 * color[1], 0, 255));
