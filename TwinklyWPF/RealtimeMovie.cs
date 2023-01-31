@@ -16,13 +16,15 @@ namespace TwinklyWPF
 {
     public class RealtimeMovieSettings
     {
-        public int ColorMode = 1;
+        public int ColorMode = 8;
 
         // interactivity timeout
         public bool IdleTimeoutEnabled = true;
         public double IdleTimeout = 30;
 
         public double ColorMorphTime = 1.8;
+
+        public int FrameTimerInterval = 25; // 50 ms == ~20 FPS
     }
 
     public class RealtimeMovie: INotifyPropertyChanged
@@ -59,29 +61,28 @@ namespace TwinklyWPF
 
         System.Timers.Timer idleTimer;
 
-        //private int ColorMode = 1;
-
         RealtimeMovieSettings _settings = new RealtimeMovieSettings();
+
+        string[] ColorModes = new string[] { 
+            "Old Chroma",
+            "Trinity",
+            "Chromatic Aberration",
+            "Ribbons",
+            "Chroma key ripples",
+            "B gradients",
+            "TestPattern",
+            "Palette Test Pattern",
+            "Oldschool Quantum"
+        };
+
+        public string ColorModeName => ColorModes[_settings.ColorMode];
 
         public void NextColorMode()
         {
-            ++_settings.ColorMode;
+            _settings.ColorMode = (_settings.ColorMode + 1) % ColorModes.Length;
             //ColorModeName = $"ColorMode: {_settings.ColorMode}";
             LastInteractionTime = CurrentTime;
             OnPropertyChanged("ColorModeName");
-        }
-
-        public string ColorModeName
-        {
-            get 
-            {
-                switch (_settings.ColorMode)
-                {
-                    case 6: return "TestPattern";
-                    case 7: return "Palette Test Pattern";
-                    default: return $"ColorMode: {_settings.ColorMode}";
-                }
-            }
         }
 
         public readonly static double[] Black = new double[3] { 0, 0, 0 };
@@ -590,7 +591,7 @@ namespace TwinklyWPF
             {
                 _timeOfLastIdleEvent = CurrentTime;
 
-                if (_random.Next() % 5 < 1)
+                if (_random.Next() % 50 < 1)
                 {
                     // grayscale palette
                     for (int i = 0; i < _currentPalette.Length; ++i)
@@ -601,16 +602,28 @@ namespace TwinklyWPF
                 }
                 else
                 {
+                    _nextColorToChange %= _currentPalette.Length;
                     var color = ColorMorph.HsvToRgb(_random.NextDouble(), 1.0, 1.0);
                     _currentPalette[_nextColorToChange].SetTarget(color, _settings.ColorMorphTime);
-                    _nextColorToChange = (_nextColorToChange + 1) % _currentPalette.Length;
+                    _nextColorToChange++;
                 }
 
             }
         }
 
-        public void RandomizePalette()
+        public void RandomizePalette(int numEntries=-1)
         {
+            if (numEntries > 0 && _currentPalette.Length != numEntries)
+            {
+                _currentPalette = new ColorMorph[numEntries];
+                for (int i = 0; i < _currentPalette.Length; ++i)
+                {
+                    int j = (_random.Next() & 0xFFFF) % GoodPalette.Length;
+                    _currentPalette[i] = new ColorMorph(GoodPalette[j]);
+                }
+                return;
+            }
+
             for (int i = 0; i < _currentPalette.Length; ++i)
             {
                 int j = (_random.Next() & 0xFFFF) % GoodPalette.Length;
@@ -635,7 +648,7 @@ namespace TwinklyWPF
 
             Debug.Assert(_frameData.Length == n * 3);
 
-            switch (_settings.ColorMode % 8)
+            switch (_settings.ColorMode)
             {
                 case 1: // 3-color palette changing sinusoidal
                     {
@@ -890,6 +903,39 @@ namespace TwinklyWPF
 
                     }
                     return;
+
+                case 8: // old-school
+                    {
+                        if(_currentPalette.Length != 5)
+                        {
+                            RandomizePalette(5);
+                        }
+
+                        double k = Piano.Knobs[4];    // 0.3 colors per meter?
+                        double noiseLevel = 2.0 * Piano.Knobs[5];
+                        double crawlSpeed = 0.1 * Piano.Knobs[6];
+                        for (int j = 0; j < Layout.coordinates.Length; ++j)
+                        {
+                            double noise = Math.Cos((double)j * 32.7);
+                            noise *= noise;
+                            noise *= noiseLevel;
+                            if (Layout.coordinates[j].z == 3 || Layout.coordinates[j].z == 11) { fi += 3; continue; }
+
+                            double x = Layout.coordinates[j].x + 2.0 * Layout.coordinates[j].y;
+                            //x %= _currentPalette.Length;
+
+                            int coloridx = (((int)(x*k+t* crawlSpeed+noise)) % _currentPalette.Length);
+                            var color = _currentPalette[coloridx].GetColor();
+                            var r = (byte)(Math.Clamp(255.5 * color[0], 0, 255));
+                            var g = (byte)(Math.Clamp(255.5 * color[1], 0, 255));
+                            var b = (byte)(Math.Clamp(255.5 * color[2], 0, 255));
+                            _frameData[fi++] = r;
+                            _frameData[fi++] = g;
+                            _frameData[fi++] = b;
+                        }
+                    }
+                    return;
+
             }
 
             // reasonable, but singularity gets crazy
@@ -971,6 +1017,8 @@ namespace TwinklyWPF
             get => _devices;
             set 
             {
+                if (Running)
+                    throw new ArgumentException("Devices can't be changed while animation is running");
                 _devices = value;
                 OnPropertyChanged();
             }
@@ -1041,7 +1089,7 @@ namespace TwinklyWPF
                 await Initialize();
 
                 // start timers
-                _frameTimer = new System.Timers.Timer { AutoReset = true, Interval = 50 };
+                _frameTimer = new System.Timers.Timer { AutoReset = true, Interval = _settings.FrameTimerInterval };
                 _frameTimer.Elapsed += OnFrameTimerElapsed;
                 _frameTimer.Start();
                 _stopwatch = new Stopwatch();
