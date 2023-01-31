@@ -73,6 +73,7 @@
             <Button x:Name="Rescan"
                     Content="Rescan"
                     MinWidth="50"
+                    ToolTip="Scan all Twinkly and MIDI devices"
                     Click="Rescan_Click" />
             <ComboBox ItemsSource="{Binding Devices}"
                       DisplayMemberPath="Name"
@@ -119,11 +120,6 @@
                     <Run Text="FPS:" Foreground="Orange" />
                     <Run Text=" "/><Run Text="{Binding FPS, Mode=OneWay, StringFormat=N3}" Foreground="GreenYellow" />
                 </TextBlock>
-                <CheckBox Content="Preview" 
-                          IsChecked="{Binding RTMovie.PreviewMode}" 
-                          ToolTip="Preview mode: animates frames, but does not send to devices"
-                          FontWeight="Bold" Foreground="Orange"
-                          VerticalAlignment="Center"/>
                 <Button Content="Layout" ToolTip="ActiveDevice: led/layout/full"
                         Click="Layout_Click" />
                 <Button x:Name="MovieConfig" Content="MovieConfig" ToolTip="Get and set MovieConfig for active device"

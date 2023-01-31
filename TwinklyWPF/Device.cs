@@ -119,23 +119,12 @@ namespace TwinklyWPF
                 Debug.Assert(value != null);
                 _timer = value;
                 OnPropertyChanged();
-                OnPropertyChanged("TimerNow");
                 if (string.IsNullOrWhiteSpace(ScheduleOffText))
                     ScheduleOffText = value.time_off == -1 ? "-1" : new DateTime(DateTime.Today.Year, DateTime.Today.Month, DateTime.Today.Day).AddSeconds(value.time_off).ToString("HH:mm");
                 if (string.IsNullOrWhiteSpace(ScheduleOnText))
                     ScheduleOnText = value.time_on == -1 ? "-1" : new DateTime(DateTime.Today.Year, DateTime.Today.Month, DateTime.Today.Day).AddSeconds(value.time_on).ToString("HH:mm");
             }
         }
-
-        //public DateTime TimerNow
-        //{
-        //    get
-        //    {
-        //        if (_timer == null)
-        //            return DateTime.Today;
-        //        return new DateTime(DateTime.Today.Year, DateTime.Today.Month, DateTime.Today.Day).AddSeconds(_timer.time_now);
-        //    }
-        //}
 
         private string _scheduleOnText;
         public string ScheduleOnText

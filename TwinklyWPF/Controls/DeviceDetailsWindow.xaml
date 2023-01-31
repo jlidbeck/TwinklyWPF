@@ -186,16 +186,12 @@
             </StackPanel>
 
             <StackPanel x:Name="Timers"
-                        Grid.Row="5"
-                        Grid.Column="0"
-                        Grid.ColumnSpan="2"
+                        Grid.Row="4"
+                        Grid.Column="1"
                         Orientation="Horizontal">
                 <TextBlock
                     Style="{StaticResource LabelStyle}"
                     Text="Timer:" />
-                <TextBlock
-                    Style="{StaticResource TechStyle}"
-                    Text="{Binding TimerNow, StringFormat=HH\\:mm\\:ss}" />
                 <TextBlock
                     Style="{StaticResource LabelStyle}"
                     Text="On:" />
@@ -211,7 +207,7 @@
             </StackPanel>
 
             <StackPanel x:Name="Effects"
-                                Grid.Row="6"
+                                Grid.Row="5"
                                 Grid.Column="0"
                                 Grid.ColumnSpan="2"
                                 Orientation="Horizontal">
@@ -284,26 +280,8 @@
             </StackPanel>
 
             <StackPanel
-                x:Name="Brightness"
-                Grid.Row="7"
-                Grid.Column="0"
-                Grid.ColumnSpan="2"
-                Orientation="Horizontal">
-                <TextBlock
-                    Style="{StaticResource LabelStyle}"
-                    Text="Brightness:" />
-                <TextBlock
-                    Foreground="DarkOrange"
-                    Text="{Binding Brightness.mode}" />
-                <TextBlock
-                    Margin="2"
-                    Foreground="Yellow"
-                    Text="{Binding Brightness.value, StringFormat={}{0}%}" />
-            </StackPanel>
-
-            <StackPanel
                 x:Name="MQTT"
-                Grid.Row="8"
+                Grid.Row="6"
                 Grid.Column="0"
                 Grid.ColumnSpan="2"
                 Orientation="Horizontal">
@@ -333,6 +311,25 @@
                     Style="{StaticResource TechStyle}"
                     Text="{Binding MQTTConfig.keep_alive_interval}" />
             </StackPanel>
+            
+            <StackPanel
+                    x:Name="Brightness"
+                    Grid.Row="7"
+                    Grid.Column="0"
+                    Grid.ColumnSpan="2"
+                    Orientation="Horizontal">
+                <TextBlock
+                        Style="{StaticResource LabelStyle}"
+                        Text="Brightness:" />
+                <TextBlock
+                        Foreground="DarkOrange"
+                        Text="{Binding Brightness.mode}" />
+                <TextBlock
+                        Margin="2"
+                        Foreground="Yellow"
+                        Text="{Binding Brightness.value, StringFormat={}{0}%}" />
+            </StackPanel>
+
         </Grid>
 
         <!--  Control  -->

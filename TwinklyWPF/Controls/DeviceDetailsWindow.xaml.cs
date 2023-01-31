@@ -86,7 +86,7 @@ namespace TwinklyWPF.Controls
 
         #endregion
 
-        private async void MovieConfig_Click(object sender, RoutedEventArgs e)
+        private void MovieConfig_Click(object sender, RoutedEventArgs e)
         {
             var window = new MovieConfigWindow { DataContext = DataContext, Owner = this.Parent as Window };
             window.MovieConfig = Device?.CurrentMovie;
