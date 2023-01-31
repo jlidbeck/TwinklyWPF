@@ -18,6 +18,8 @@ namespace Twinkly_xled
         public string ErrorMessage { get; private set; }
         public HttpStatusCode HttpStatus { get; private set; } = HttpStatusCode.OK;
 
+        static public Exception LastError { get; private set; }
+
         private IPAddress tw_IP { get; set; }
         public string IPAddressString
         {
@@ -68,6 +70,8 @@ namespace Twinkly_xled
 
             const int PORT_NUMBER = 5555;
 
+            LastError = null;
+
             using (var udp = new UdpClient())
             {
                 udp.EnableBroadcast = true;
@@ -77,6 +81,9 @@ namespace Twinkly_xled
 
                 try
                 {
+                    // todo: try async
+                    //await udp.SendAsync(sendbuf, sendbuf.Length, new IPEndPoint(IPAddress.Broadcast, PORT_NUMBER));
+
                     udp.Send(sendbuf, sendbuf.Length, new IPEndPoint(
                              IPAddress.Broadcast,
                              PORT_NUMBER));
@@ -94,6 +101,8 @@ namespace Twinkly_xled
                             addresses.Add(result.RemoteEndPoint.Address.ToString());
                         }
                     });
+
+                    // wait 3 seconds for responses to broadcast
                     task.Wait(3000);
                 }
                 catch (SocketException err)
@@ -104,6 +113,7 @@ namespace Twinkly_xled
                     {
                         // Unexpected error
                         //Error = true;
+                        LastError = err;
                         Debug.WriteLine($"Terminating: {err.Message}");
                         throw;
                     }

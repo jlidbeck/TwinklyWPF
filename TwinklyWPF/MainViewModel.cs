@@ -222,8 +222,9 @@ namespace TwinklyWPF
             //}
             else
             {
-                Message = $"Locate failed. Status=?";
+                Message = $"Locate failed. Status={DataAccess.LastError}";
             }
+
         }
 
         // TODO
