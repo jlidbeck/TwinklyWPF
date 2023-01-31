@@ -84,6 +84,8 @@ namespace Twinkly_xled
                     // todo: try async
                     //await udp.SendAsync(sendbuf, sendbuf.Length, new IPEndPoint(IPAddress.Broadcast, PORT_NUMBER));
 
+                    var stopwatch = Stopwatch.StartNew();
+
                     udp.Send(sendbuf, sendbuf.Length, new IPEndPoint(
                              IPAddress.Broadcast,
                              PORT_NUMBER));
@@ -97,12 +99,14 @@ namespace Twinkly_xled
 
                             // don't need to parse the message - we know who responded
                             // <ip>OK<device_name>
-                            Debug.WriteLine($"Reply: {result.RemoteEndPoint.Address}: {BitConverter.ToString(result.Buffer)}");
+                            Debug.WriteLine($"{stopwatch.ElapsedMilliseconds}ms Reply: {result.RemoteEndPoint.Address}: {BitConverter.ToString(result.Buffer)}");
                             addresses.Add(result.RemoteEndPoint.Address.ToString());
                         }
                     });
 
-                    // wait 3 seconds for responses to broadcast
+                    // wait 3 seconds to collect responses to broadcast
+                    // each device seems to respond twice.
+                    // I've observed the first response 300-400ms, the last at 600-800ms
                     task.Wait(3000);
                 }
                 catch (SocketException err)
