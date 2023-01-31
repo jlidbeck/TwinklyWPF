@@ -55,6 +55,19 @@ namespace TwinklyWPF
 
         public Piano Piano;
 
+        IEnumerable<Device> _devices;
+        public IEnumerable<Device> Devices
+        {
+            get => _devices;
+            set
+            {
+                if (Running)
+                    throw new ArgumentException("Devices can't be changed while animation is running");
+                _devices = value;
+                OnPropertyChanged();
+            }
+        }
+
         // timestamp of last non-MIDI user interaction
         double LastInteractionTime = double.NegativeInfinity;
         public double IdleTime => CurrentTime - LastInteractionTime;
@@ -1010,19 +1023,6 @@ namespace TwinklyWPF
         }
 
         #endregion
-
-        IEnumerable<Device> _devices;
-        public IEnumerable<Device> Devices 
-        { 
-            get => _devices;
-            set 
-            {
-                if (Running)
-                    throw new ArgumentException("Devices can't be changed while animation is running");
-                _devices = value;
-                OnPropertyChanged();
-            }
-        }
 
         // owner can replace this semaphore
         public System.Threading.SemaphoreSlim ApiSemaphore = new System.Threading.SemaphoreSlim(1, 1);

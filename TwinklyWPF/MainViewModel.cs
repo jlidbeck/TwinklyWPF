@@ -421,10 +421,23 @@ namespace TwinklyWPF
 
             Message = $"Setting up {Devices.Count()} devices...";
 
+            List<Device> devices = new List<Device>();
+            foreach (Device device in Devices)
+            {
+                if (App.Current.Settings.RTMovieDevices == null || App.Current.Settings.RTMovieDevices.Contains(device.Name))
+                    devices.Add(device);
+            }
+
+            if(devices.Count == 0)
+            {
+                Message = $"Unable to find any devices for RTMovie. 0 of {Devices.Count} devices matched RTMovieDevices setting.";
+                return Task.CompletedTask;
+            }
+
             RTMovie = new RealtimeMovie()
             {
                 ApiSemaphore = _apiSemaphore,
-                Devices = Devices,
+                Devices = devices,
                 Piano = Piano
             };
 

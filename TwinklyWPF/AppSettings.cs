@@ -18,6 +18,8 @@ namespace TwinklyWPF
 
         public Dictionary<string, object> KnownDevices { get; set; }
 
+        public IEnumerable<string> RTMovieDevices { get; set; }
+
         #region Serialization
 
         public void Save(string filename)
