@@ -71,7 +71,7 @@ namespace TwinklyWPF
                 //MainViewModel.twinklyapi.Devices.Add(new Twinkly_xled.Device(ipAddress));
                 _devicesComboTextInputChanged = true;
             }
-            catch (Exception _)
+            catch (Exception)
             {
                 return;
             }
@@ -87,7 +87,7 @@ namespace TwinklyWPF
                     await MainViewModel.AddDevice(ipAddress);
                 }
             }
-            catch (Exception _)
+            catch (Exception)
             {
             }
 
@@ -208,6 +208,8 @@ namespace TwinklyWPF
                 // non-critical failure
                 Console.WriteLine($"Failed to save window placement settings: {ex.Message}");
             }
+
+            MainViewModel.SaveDeviceList();
         }
     }
 }

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Text.Json;
 using System.Threading.Tasks;
@@ -14,6 +15,8 @@ namespace TwinklyWPF
         public bool AutoStart { get; set; } = true;
 
         public string ActiveDeviceName { get; set; }
+
+        public Dictionary<string, object> KnownDevices { get; set; }
 
         #region Serialization
 

@@ -125,6 +125,7 @@ namespace TwinklyWPF.Controls
                 return;
 
             await Device.Load();
+            await Device.UpdateAuthModels(true);
         }
 
         private async void LoginButton_Click(object sender, RoutedEventArgs e)

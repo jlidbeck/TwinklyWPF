@@ -29,7 +29,7 @@ namespace TwinklyWPF
             {
                 if (Gestalt == null)
                     return twinklyapi.data.IPAddress.ToString();
-                return $"{Gestalt.device_name} [{Gestalt.number_of_led}] ({CurrentMovie?.sync?.mode})";
+                return $"{Gestalt.device_name} [{Gestalt.number_of_led}x{Gestalt.led_profile}]";
             }
         }
 

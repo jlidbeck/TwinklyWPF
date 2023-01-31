@@ -152,6 +152,15 @@ namespace TwinklyWPF
                     }
                 }
 
+                // load all device data
+                foreach(var device in Devices)
+                {
+                    // gestalts..
+                    await device.Load();
+                    // authentication, description and state
+                    await device.UpdateAuthModels(true);
+                }
+
                 if (_arguments.Contains("RT") || App.Current.Settings.AutoStart)
                 {
                     // do not await, since StartRealtimeTest can't execute until it has the semaphore
@@ -175,11 +184,34 @@ namespace TwinklyWPF
             {
                 _apiSemaphore.Release();
             }
+
+            SaveDeviceList();
+        }
+
+        public void SaveDeviceList()
+        {
+            if (App.Current.Settings.KnownDevices == null)
+                App.Current.Settings.KnownDevices = new Dictionary<string, object>();
+
+
+            foreach (var device in Devices)
+            {
+                var deviceDescriptor = new Dictionary<string, string>();
+                deviceDescriptor["Name"] = device.Name;
+                deviceDescriptor["IPAddress"] = device.twinklyapi.data.IPAddressString;
+                deviceDescriptor["device_name"] = device.Gestalt?.device_name;
+                deviceDescriptor["led_profile"] = device.Gestalt?.led_profile;
+                deviceDescriptor["led_type"] = device.Gestalt?.led_type.ToString();
+                deviceDescriptor["number_of_led"] = device.Gestalt?.number_of_led.ToString();
+                deviceDescriptor["Last Seen"] = DateTime.Now.ToString();
+
+                App.Current.Settings.KnownDevices[device.Name] = deviceDescriptor;
+            }
         }
 
         #endregion
 
-#region Device management
+        #region Device management
 
         private async Task Discover()
         {
@@ -189,7 +221,6 @@ namespace TwinklyWPF
             // store current selection
             var selectedDevice = ActiveDevice;
 
-            //ActiveDevice?.Unload();
             ActiveDevice = null;
             Devices.Clear();
             OnPropertyChanged("Devices");
@@ -208,7 +239,9 @@ namespace TwinklyWPF
             if (TwinklyDetected)
             {
                 // always set ActiveDevice, even if keeping same value.. need to update the API
+                // try to keep the same device selected
                 ActiveDevice = Devices.FirstOrDefault((device) => device.Equals(selectedDevice));
+                // .. or the device from the user settings
                 if (ActiveDevice == null)
                     ActiveDevice = Devices.FirstOrDefault((device) => device.Name == App.Current.Settings.ActiveDeviceName);
                 if (ActiveDevice == null)
