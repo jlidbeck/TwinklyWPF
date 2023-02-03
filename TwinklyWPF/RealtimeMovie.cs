@@ -17,7 +17,7 @@ namespace TwinklyWPF
 {
     public class RealtimeMovieSettings : INotifyPropertyChanged
     {
-        public int ColorMode = 8;
+        public int ColorMode = 4;
 
         // interactivity timeout
         bool _idleTimeoutEnabled = true;
@@ -430,11 +430,24 @@ namespace TwinklyWPF
         {
             Debug.Assert(coordinates.Length >= startOffset + 600);
 
-            int zone = 0;
-            var xyz = new XYZ { x = 0, y = 3.9, z = 0.0 };
-            const double s = 0.1;   // default spacing
+            double left = 0.0, right = 10.0, top = 0.0;
 
-            for (int j = 0, zi = 0; j < 600; ++j, ++zi)
+            var xyz = new XYZ { x = left, y = top, z = 0.0 };
+            double s = (right-left)/24.0;   // default spacing
+
+            for (int j = 0; j < 600; ++j)
+            {
+                if (j % 48 < 23)
+                    xyz.x += s; // 0..22 go right
+                else if (j % 24 == 23)
+                    xyz.y += s; // 23, 47 go down
+                else
+                    xyz.x -= s; // 24..46 go left
+
+                coordinates[j + startOffset] = xyz;
+            }
+            /*
+                for (int j = 0, zi = 0; j < 600; ++j, ++zi)
             {
                 switch (j)
                 {
@@ -494,7 +507,7 @@ namespace TwinklyWPF
                         xyz.y -= s;
                         break;
                 }
-            }
+            }*/
         }
 
         //  Initializes devices and allocates framedata to match layout
@@ -589,7 +602,7 @@ namespace TwinklyWPF
 
             // change one of the palette colors to the played tone color
             int colorIndex = evt.NoteEvent.NoteNumber % GoodPalette.Length;
-            _currentPalette[_nextColorToChange].SetTarget(GoodPalette[colorIndex], 0.1);
+            if (colorIndex < 0) colorIndex += GoodPalette.Length;            _currentPalette[_nextColorToChange].SetTarget(GoodPalette[colorIndex], 0.1);
             _nextColorToChange = (_nextColorToChange + 1) % _currentPalette.Count;
 
             // add note to circular buffer.
@@ -597,8 +610,8 @@ namespace TwinklyWPF
             _lastNotes[_lastNotesIndex] = new SpatialEvent { 
                 t = CurrentTime, 
                 noteEvent = evt.NoteEvent, 
-                x =       9.0*(_random.NextDouble()-0.5), 
-                y = 1.0 + 2.0*(_random.NextDouble()-0.5)
+                x = -20.0*(_random.NextDouble()), 
+                y = 5//5.0*(_random.NextDouble())
             };
             _lastNotesIndex = (_lastNotesIndex + 1) % _lastNotes.Length;
         }
@@ -657,7 +670,8 @@ namespace TwinklyWPF
                 _nextColorToChange = colorIndex;
 
             _nextColorToChange %= _currentPalette.Count;
-            var color = ColorMorph.HsvToRgb(_random.NextDouble(), 1.0, 1.0);
+            //var color = ColorMorph.HsvToRgb(_random.NextDouble(), 1.0, 1.0);
+            var color = GoodPalette[_random.Next() % GoodPalette.Length];
             _currentPalette[_nextColorToChange].SetTarget(color, _settings.ColorMorphTime);
             _nextColorToChange++;
 
@@ -974,7 +988,7 @@ namespace TwinklyWPF
                             {
                                 Piano.Knobs[4] = 0.1;
                                 Piano.Knobs[5] = 0.5;
-                                Piano.Knobs[6] = 0.2;
+                                Piano.Knobs[6] = 0.1;
                             }
                         }
 
@@ -991,7 +1005,19 @@ namespace TwinklyWPF
                             double x = Layout.coordinates[j].x + 2.0 * Layout.coordinates[j].y;
                             //x %= _currentPalette.Length;
 
+                            if (!(_currentPalette?.Count > 0))
+                                return;
+
                             int coloridx = (((int)(x*k+t* crawlSpeed+noise)) % _currentPalette.Count);
+                            if (coloridx < 0)
+                                coloridx += _currentPalette.Count;
+
+                            if (coloridx >= _currentPalette.Count)
+                                return; //???
+
+                            if (_currentPalette[coloridx] == null)
+                                return;
+
                             var color = _currentPalette[coloridx].GetColor();
                             var r = (byte)(Math.Clamp(255.5 * color[0], 0, 255));
                             var g = (byte)(Math.Clamp(255.5 * color[1], 0, 255));
