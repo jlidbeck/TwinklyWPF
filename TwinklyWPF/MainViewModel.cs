@@ -186,8 +186,10 @@ namespace TwinklyWPF
             }
 
             SaveDeviceList();
+            App.Current.SaveSettings();
         }
 
+        //  Adds all current devices to {KnownDevices} list in user settings
         public void SaveDeviceList()
         {
             if (App.Current.Settings.KnownDevices == null)
