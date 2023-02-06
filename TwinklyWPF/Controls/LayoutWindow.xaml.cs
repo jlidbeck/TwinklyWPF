@@ -162,10 +162,8 @@ namespace TwinklyWPF
 
         private async void GetButton_Click(object sender, RoutedEventArgs e)
         {
-            GetLayoutResult result = await MainViewModel.ActiveDevice?.twinklyapi.GetLayout();
-
-            LayoutResult = result;
-            Coordinates = (XYZ[])result.coordinates.Clone();
+            LayoutResult = await MainViewModel.ActiveDevice?.twinklyapi.GetLayout();
+            Coordinates = (XYZ[])LayoutResult.coordinates.Clone();
             Redraw();
         }
 

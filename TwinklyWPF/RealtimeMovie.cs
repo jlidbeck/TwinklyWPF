@@ -430,11 +430,27 @@ namespace TwinklyWPF
         {
             Debug.Assert(coordinates.Length >= startOffset + 600);
 
-            double left = 0.0, right = 10.0, top = 0.0;
+            // this works!
+            //double left = 0.0, right = 23.0, top = 0.0;
+            //double s = (right - left) / 23.0;   // default spacing
+            //double bottom = top + s * 24.0;     // keep aspect ratio
+            //double ctrX = (left + right) / 2.0, ctrY = (top + bottom) / 2.0;
+            //
+            // but let's try this: s-based, centered at (0,0)
+            double s = 0.1;
+            double ctrX = 0.0, ctrY = 0.0;
 
+            // 24x25 grid
+            // 2 300 strands go up and down from the center, so it's split in the middle of row 12
+            // 299 298 297 ... 276
+            // 252 253 254 ... 275
+            // ...
+            //  11  10   9 ... 3 2 1 0 300 301 302 303 ... 311
+            // 335 334 333 ...                     314 313 312
+            // 336 337 338 ...
+
+            /* this works for half only
             var xyz = new XYZ { x = left, y = top, z = 0.0 };
-            double s = (right-left)/24.0;   // default spacing
-
             for (int j = 0; j < 600; ++j)
             {
                 if (j % 48 < 23)
@@ -443,8 +459,15 @@ namespace TwinklyWPF
                     xyz.y += s; // 23, 47 go down
                 else
                     xyz.x -= s; // 24..46 go left
-
-                coordinates[j + startOffset] = xyz;
+            }
+            */
+                // rotational symmetry for first and second strings
+            for (int j = 0; j < 300; ++j)
+            {
+                double xoff = s * 25.0 * (-0.5 + Waveform.Triangle(j - 35.5, 48.0));
+                double yoff = s * ((j + 12) / 24);
+                coordinates[j + startOffset] = new XYZ { x = ctrX - xoff, y = ctrY + yoff };
+                coordinates[j + startOffset + 300] = new XYZ { x = ctrX + xoff, y = ctrY - yoff };
             }
             /*
                 for (int j = 0, zi = 0; j < 600; ++j, ++zi)
@@ -602,7 +625,8 @@ namespace TwinklyWPF
 
             // change one of the palette colors to the played tone color
             int colorIndex = evt.NoteEvent.NoteNumber % GoodPalette.Length;
-            if (colorIndex < 0) colorIndex += GoodPalette.Length;            _currentPalette[_nextColorToChange].SetTarget(GoodPalette[colorIndex], 0.1);
+            if (colorIndex < 0) colorIndex += GoodPalette.Length;            
+            _currentPalette[_nextColorToChange % _currentPalette.Count].SetTarget(GoodPalette[colorIndex], 0.1);
             _nextColorToChange = (_nextColorToChange + 1) % _currentPalette.Count;
 
             // add note to circular buffer.
@@ -610,8 +634,8 @@ namespace TwinklyWPF
             _lastNotes[_lastNotesIndex] = new SpatialEvent { 
                 t = CurrentTime, 
                 noteEvent = evt.NoteEvent, 
-                x = -20.0*(_random.NextDouble()), 
-                y = 5//5.0*(_random.NextDouble())
+                x = -2.0 + 4.0 * (_random.NextDouble()), 
+                y = -0.2 + 0.4 * (_random.NextDouble())
             };
             _lastNotesIndex = (_lastNotesIndex + 1) % _lastNotes.Length;
         }
@@ -843,8 +867,8 @@ namespace TwinklyWPF
                         {
                             if (Layout.coordinates[j].z == 3 || Layout.coordinates[j].z == 11) { fi += 3; continue; }
 
-                            double x = Layout.coordinates[j].x - 20.5;
-                            double y = Layout.coordinates[j].y -  7.0;
+                            double x = Layout.coordinates[j].x;
+                            double y = Layout.coordinates[j].y;
 
                             double r=0, g=0, b=0;
 
@@ -966,6 +990,7 @@ namespace TwinklyWPF
                             double x = Layout.coordinates[j].x + 2.0 * Layout.coordinates[j].y;
 
                             int coloridx = (int)((offset + x) / 8.0 * GoodPalette.Length);
+                            if (coloridx < 0) coloridx += GoodPalette.Length;
                             var color = GoodPalette[coloridx % GoodPalette.Length];
                             var r = (byte)(Math.Clamp(255.5 * color[0], 0, 255));
                             var g = (byte)(Math.Clamp(255.5 * color[1], 0, 255));
