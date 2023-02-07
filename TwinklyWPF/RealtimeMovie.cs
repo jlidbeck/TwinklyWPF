@@ -17,7 +17,7 @@ namespace TwinklyWPF
 {
     public class RealtimeMovieSettings : INotifyPropertyChanged
     {
-        public int ColorMode = 4;
+        public int ColorMode = 9;
 
         // interactivity timeout
         bool _idleTimeoutEnabled = true;
@@ -124,7 +124,9 @@ namespace TwinklyWPF
             "B gradients",
             "TestPattern",
             "Palette Test Pattern",
-            "Oldschool Quantum"
+            "Oldschool Quantum",
+            "Ambients",
+            "Life"
         };
 
         public string ColorModeName
@@ -182,6 +184,10 @@ namespace TwinklyWPF
         Animation.WalkerGroup _walkerGroup;
 
         Animation.SinePlot _sinePlot;
+
+        double[] _noise;
+
+        int[] _life, _life2;
 
         public RealtimeMovie()
         {
@@ -800,7 +806,7 @@ namespace TwinklyWPF
                             noise *= noiseLevel;
                             if (Layout.coordinates[j].z == 3 || Layout.coordinates[j].z == 11) { fi += 3; continue; }
 
-                            double x = Layout.coordinates[j].x + 2.0 * Layout.coordinates[j].y;
+                            double x = Layout.coordinates[j].x + Layout.coordinates[j].y;
                             //x %= _currentPalette.Length;
 
                             if (!(_currentPalette?.Count > 0))
@@ -827,6 +833,113 @@ namespace TwinklyWPF
                     }
                     return;
 
+                case 9: // ambients / conics
+                    {
+                        if (_currentPalette.Count != 4)
+                        {
+                            RandomizePalette(4);
+                            Piano.Knobs[4] = 0.5;
+                            Piano.Knobs[5] = 1.0;
+                            Piano.Knobs[6] = 0.0;
+                            Piano.Knobs[7] = 0.5;
+                        }
+                        if(Piano.IdleTime > _settings.IdleTimeout)
+                        {
+                            Piano.Knobs[0] = (0.25 + 0.25 * Math.Cos(t * 2.7)) + 0.21 * 0.21 * Math.Cos(t * 3.9);
+                            Piano.Knobs[1] = 0.5;
+                            Piano.Knobs[4] = (0.5 + 0.5 * Math.Cos(t * 0.35));
+                            Piano.Knobs[5] = (0.5 + 0.5 * Math.Cos(t * 0.31));
+                            Piano.Knobs[6] = (0.5 + 0.5 * Math.Cos(t * 0.32));
+                            Piano.Knobs[7] = (0.5 + 0.5 * Math.Cos(t * 0.34));
+                        }
+                        if (_noise?.Length != Layout.coordinates.Length)
+                        {
+                            _noise = new double[Layout.coordinates.Length];
+                            for (int i = 0; i < _noise.Length; ++i)
+                                _noise[i] = _random.NextDouble();
+                        }
+
+                        for (int j = 0; j < Layout.coordinates.Length; ++j)
+                        {
+                            if (Layout.coordinates[j].z == 3 || Layout.coordinates[j].z == 11) { fi += 3; continue; }
+
+                            // map domain to approx. -1.5..1.5
+                            double x = Layout.coordinates[j].x * 1.5;
+                            double y = Layout.coordinates[j].y * 1.5;
+                            //double wash = (y - _layoutBounds.Top) / (_layoutBounds.Bottom);
+                            double f = (Piano.Knobs[4] - 0.5) * x * x * 2
+                                     + (Piano.Knobs[5] - 0.5) * y * y * 2
+                                     + (Piano.Knobs[6] - 0.5) * 4
+                                     + (Piano.Knobs[7] - 0.5) * y * 4;
+                            double hardness = Piano.Knobs[1] * 20.0 + 0.1;
+                            double wash = 0.5 + 0.5 * Math.Tanh(hardness * f);
+                            // scale noise range to 0..5, where 0.2 of the colors will be blended
+                            double ab = 5.0 * _noise[j] - 4.0 * Piano.Knobs[0];  // 0.2 of colors will be blended; 0.3 will be A, 0.5 will be B
+
+                            var color0 = _currentPalette[0].GetColor();
+                            var color1 = _currentPalette[1].GetColor();
+                            var color2 = _currentPalette[2].GetColor();
+                            var color3 = _currentPalette[3].GetColor();
+                            double[] colorU = ColorMorph.Mix(color0, color1, ab);
+                            double[] colorV = ColorMorph.Mix(color2, color3, ab);
+                            double[] color = ColorMorph.Mix(colorU, colorV, wash);
+
+                            var r = (byte)(Math.Clamp(255.5 * color[0], 0, 255));
+                            var g = (byte)(Math.Clamp(255.5 * color[1], 0, 255));
+                            var b = (byte)(Math.Clamp(255.5 * color[2], 0, 255));
+                            _frameData[fi++] = r;
+                            _frameData[fi++] = g;
+                            _frameData[fi++] = b;
+                        }
+                    }
+                    return;
+
+                case 10:    // life!
+                    {
+                        const int alive = 40;
+                        if (_animationNeedsInit || _life?.Length != Layout.coordinates.Length)
+                        {
+                            _life = new int[Layout.coordinates.Length];
+                            _life2 = new int[Layout.coordinates.Length];
+                            for (int i = 0; i < _life.Length; ++i)
+                                _life[i] = (_random.Next() % (alive*2));
+                            _animationNeedsInit = false;
+                        }
+
+                        var livingColor = _currentPalette[0].GetColor();
+                        var thrivingColor = _currentPalette[1].GetColor();
+                        var dyingColor = _currentPalette[2].GetColor();
+
+                        const int w = 24;
+                        for (int j = 0; j < Layout.coordinates.Length; ++j)
+                        {
+                            int sum = (_life[(j + 600 - w - 1)  % 600] >= alive ? 1 : 0)
+                                    + (_life[(j + 600 - w)      % 600] >= alive ? 1 : 0)
+                                    + (_life[(j + 600 - w + 1)  % 600] >= alive ? 1 : 0)
+                                    + (_life[(j + 600 - 1)      % 600] >= alive ? 1 : 0)
+                                    + (_life[(j + 600 + 1)      % 600] >= alive ? 1 : 0)
+                                    + (_life[(j + 600 + w - 1)  % 600] >= alive ? 1 : 0)
+                                    + (_life[(j + 600 + w)      % 600] >= alive ? 1 : 0)
+                                    + (_life[(j + 600 + w + 1)  % 600] >= alive ? 1 : 0);
+                            if (_life[j] >= alive)
+                                _life2[j] = (sum == 2 || sum == 3) ? Math.Min(2*alive, _life[j] + 1) : alive-1;
+                            else
+                                _life2[j] = (sum == 3) ? alive : Math.Max(0, _life[j] - 1);
+
+                            var color = (_life2[j] >= alive)
+                                ? ColorMorph.Mix(livingColor, thrivingColor, (double)(_life2[j] - alive) / alive)
+                                : ColorMorph.Mix(Black, dyingColor, (double)_life2[j] / alive);
+                            var r = (byte)(Math.Clamp(255.5 * color[0], 0, 255));
+                            var g = (byte)(Math.Clamp(255.5 * color[1], 0, 255));
+                            var b = (byte)(Math.Clamp(255.5 * color[2], 0, 255));
+                            _frameData[fi++] = r;
+                            _frameData[fi++] = g;
+                            _frameData[fi++] = b;
+                        }
+
+                        _life2.CopyTo(_life, 0);
+                    }
+                    return;
             }
 
             // reasonable, but singularity gets crazy
