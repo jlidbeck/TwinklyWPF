@@ -304,7 +304,6 @@ namespace TwinklyWPF
                 : "Stopped";
             StartStopButton.Content = MainViewModel.RTMovie?.Running == true ? "■ Stop" : "► Start";
             MovieTimeText.Text = String.Format("{0:0.00}", MainViewModel.RTMovie.CurrentTime);
-            MovieColorModeText.Text = MainViewModel.RTMovie.ColorModeName;
             var palette = MainViewModel.RTMovie.CurrentPalette;
             MoviePalette.Background = new SolidColorBrush(palette[0].InTransition ? Color.FromRgb(55, 55, 55) : Color.FromRgb(0, 0, 0));
 
@@ -388,7 +387,12 @@ namespace TwinklyWPF
                 await MainViewModel.RTMovie.Start();
         }
 
-        private void MovieColorModeText_MouseDown(object sender, System.Windows.Input.MouseButtonEventArgs e)
+        private void PrevColorMode_MouseDown(object sender, System.Windows.Input.MouseButtonEventArgs e)
+        {
+            MainViewModel.RTMovie?.NextColorMode(-1);
+        }
+
+        private void NextColorMode_MouseDown(object sender, System.Windows.Input.MouseButtonEventArgs e)
         {
             MainViewModel.RTMovie?.NextColorMode();
         }

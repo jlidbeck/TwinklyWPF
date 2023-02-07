@@ -46,6 +46,11 @@
             <Setter Property="Foreground" Value="DarkSlateGray" />
             <Setter Property="FontWeight" Value="Bold" />
         </Style>
+        <Style TargetType="ComboBox">
+            <Setter Property="Background" Value="LightGray" />
+            <Setter Property="Foreground" Value="DarkSlateGray" />
+            <Setter Property="FontWeight" Value="Bold" />
+        </Style>
         <Style TargetType="CheckBox">
             <Setter Property="Padding" Value="8 2" />
             <Setter Property="Margin" Value="0 3 0 0" />
@@ -120,7 +125,12 @@
                       ToolTip="Preview mode: animates frames, but does not send to devices"
                       Content="Preview" />
             <TextBlock x:Name="MovieRunningText" Text="NA" Foreground="White" />
-            <TextBlock x:Name="MovieColorModeText" Text="NA" MouseDown="MovieColorModeText_MouseDown" />
+            <TextBlock x:Name="PrevColorMode" Text="&lt;&lt;" MouseDown="PrevColorMode_MouseDown" />
+            <ComboBox Name="MovieColorMode" 
+                      ItemsSource="{Binding RTMovie.ColorModes}" 
+                      SelectedItem="{Binding RTMovie.ColorModeName}"
+                      MinWidth="160" />
+            <TextBlock x:Name="NextColorMode" Text=">>" MouseDown="NextColorMode_MouseDown" />
             <TextBlock x:Name="MoviePalette" Background="Black" Padding="2" >
                 <Run Name="MoviePalette0" Text=" ■ " MouseDown="MoviePalette_MouseDown" />
                 <Run Name="MoviePalette1" Text=" ■ " MouseDown="MoviePalette_MouseDown" />

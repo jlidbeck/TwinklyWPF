@@ -101,10 +101,21 @@ namespace TwinklyWPF
         public RealtimeMovieSettings Settings
         {
             get => _settings;
-            set { _settings = value; OnPropertyChanged(); }
+            set { 
+                _settings = value; 
+                OnPropertyChanged();
+                OnPropertyChanged("ColorModes");
+                OnPropertyChanged("ColorModeName");
+            }
         }
 
-        string[] ColorModes = new string[] { 
+        bool _animationNeedsInit = true;
+
+        public List<string> ColorModes
+        { 
+            get;
+            set;
+        } = new List<string> { 
             "Old Chroma",
             "Trinity",
             "Chromatic Aberration",
@@ -116,12 +127,25 @@ namespace TwinklyWPF
             "Oldschool Quantum"
         };
 
-        public string ColorModeName => ColorModes[_settings.ColorMode];
-
-        public void NextColorMode()
+        public string ColorModeName
         {
-            _settings.ColorMode = (_settings.ColorMode + 1) % ColorModes.Length;
-            //ColorModeName = $"ColorMode: {_settings.ColorMode}";
+            get => ColorModes[_settings.ColorMode];
+            set
+            {
+                int idx = ColorModes.IndexOf(value);
+                if(idx>=0)
+                {
+                    _settings.ColorMode = idx;
+                    _animationNeedsInit = true;
+                    OnPropertyChanged();
+                }
+            }
+        }
+
+        public void NextColorMode(int step=1)
+        {
+            _settings.ColorMode = (_settings.ColorMode + step + ColorModes.Count) % ColorModes.Count;
+            _animationNeedsInit = true;
             LastInteractionTime = CurrentTime;
             OnPropertyChanged("ColorModeName");
         }
