@@ -420,7 +420,7 @@ namespace TwinklyWPF
             var t = CurrentTime - LastInteractionTime;
             if (t > 3)
             {
-                Piano_PianoIdleEvent(this, new PianoIdleEventArgs { LastNoteTime = LastInteractionTime, CurrentTime = CurrentTime });
+                Piano_PianoIdleEvent(this, new PianoIdleEventArgs { LastInteractionTime = LastInteractionTime, CurrentTime = CurrentTime });
             }
         }
 
@@ -535,7 +535,7 @@ namespace TwinklyWPF
                             double[] color = _sinePlot.GetColorAt(x, y);
 
                             // if a note has recently been played...
-                            if (/*j < 60 &&*/ Piano.CurrentTime - Piano.LastNoteTime < _settings.IdleTimeout)
+                            if (/*j < 60 &&*/ Piano.CurrentTime - Piano.LastInteractionTime < _settings.IdleTimeout)
                             {
                                 const double step = 0.3;
                                 double v = 0;
@@ -645,7 +645,7 @@ namespace TwinklyWPF
 
                             double r=0, g=0, b=0;
 
-                            if (Piano.CurrentTime - Piano.LastNoteTime > _settings.IdleTimeout)
+                            if (Piano.CurrentTime - Piano.LastInteractionTime > _settings.IdleTimeout)
                             {
                                 // no interactivity for 30 seconds
 

@@ -47,9 +47,9 @@ namespace TwinklyWPF
         public event EventHandler PianoIdleEvent;
         public class PianoIdleEventArgs : EventArgs
         {
-            public double LastNoteTime;
+            public double LastInteractionTime;
             public double CurrentTime;
-            public double IdleTime => CurrentTime - LastNoteTime;
+            public double IdleTime => CurrentTime - LastInteractionTime;
         }
 
         public override string ToString()
@@ -70,8 +70,8 @@ namespace TwinklyWPF
         }
 
         public double CurrentTime => stopwatch.ElapsedMilliseconds * 0.001;
-        public double LastNoteTime = double.NegativeInfinity;
-        public double IdleTime => CurrentTime - LastNoteTime;
+        public double LastInteractionTime = double.NegativeInfinity;
+        public double IdleTime => CurrentTime - LastInteractionTime;
 
         public double BassBump
         {
@@ -139,7 +139,7 @@ namespace TwinklyWPF
             //buttonMonitor.Text = "Stop";
             //comboBoxMidiInDevices.Enabled = false;
 
-            //LastNoteTime = CurrentTime;
+            //LastInteractionTime = CurrentTime;
             idleTimer = new Timer() { Enabled = true, AutoReset = true, Interval = 500 };
             idleTimer.Elapsed += OnIdleTimerElapsed;
             idleTimer.Start();
@@ -149,11 +149,11 @@ namespace TwinklyWPF
 
         private void OnIdleTimerElapsed(object sender, ElapsedEventArgs e)
         {
-            var t = CurrentTime - LastNoteTime;
+            var t = CurrentTime - LastInteractionTime;
             if (t > 3)
             {
                 if (PianoIdleEvent != null)
-                    PianoIdleEvent(this, new PianoIdleEventArgs { LastNoteTime = LastNoteTime, CurrentTime = CurrentTime });
+                    PianoIdleEvent(this, new PianoIdleEventArgs { LastInteractionTime = LastInteractionTime, CurrentTime = CurrentTime });
             }
         }
 
@@ -194,11 +194,19 @@ namespace TwinklyWPF
                         // 14-17: pots  (mapping to Knobs[0-3])
                         // 3-6: sliders (mapping to Knobs[4-7])
                         if (k >= 14 && k <= 17)
+                        {
                             Knobs[k - 14] = evt.ControllerValue / 127.0;
+                            LastInteractionTime = CurrentTime;
+                        }
                         else if (k >= 3 && k <= 6)
+                        {
                             Knobs[k + 1] = evt.ControllerValue / 127.0;
+                            LastInteractionTime = CurrentTime;
+                        }
                         else
+                        {
                             App.Log($"Controller: {evt.Controller} = {evt.ControllerValue}");
+                        }
                     }
                     break;
 
@@ -269,7 +277,7 @@ namespace TwinklyWPF
             if (PianoKeyDownEvent != null)
                 PianoKeyDownEvent(this, new PianoKeyDownEventArgs(evt));
 
-            LastNoteTime = t;
+            LastInteractionTime = t;
         }
 
         void HandleMidiNoteOff(NoteEvent evt)
@@ -287,7 +295,7 @@ namespace TwinklyWPF
                 --chromaCount[c].noteCount;
             if (chromaCount[c].noteCount == 0)
                 chromaCount[c].releaseTime = t;
-            LastNoteTime = t;
+            LastInteractionTime = t;
         }
 
         #endregion
