@@ -473,11 +473,6 @@ namespace TwinklyWPF
 
                 case 3: // slow panning ribbons
                     {
-                        var colors = new double[3][];
-                        colors[0] = _currentPalette[0].GetColor();
-                        colors[1] = _currentPalette[1].GetColor();
-                        colors[2] = _currentPalette[2].GetColor();
-
                         double[] angles = new double[4] { 
                             t * Piano.Knobs[4],//0.1, 
                             t * Piano.Knobs[5],//-0.13, 
@@ -491,6 +486,11 @@ namespace TwinklyWPF
                             coss[k] = Math.Cos(angles[k]);
                             sins[k] = Math.Sin(angles[k]);
                         }
+
+                        var colors = new double[3][];
+                        colors[0] = _currentPalette[0].GetColor();
+                        colors[1] = _currentPalette[1].GetColor();
+                        colors[2] = _currentPalette[2].GetColor();
 
                         for (int j = 0; j < Layout.coordinates.Length; ++j)
                         {
@@ -506,9 +506,9 @@ namespace TwinklyWPF
 
                             const double wavelength = 10;
 
-                            double u = Waveform.SpacedTriangle(x+y + t * 0.3, wavelength, 4*(1-Piano.Knobs[0]));
-                            double v = Waveform.SpacedTriangle(x+y - t * 0.6, wavelength, 4*(1-Piano.Knobs[1]));
-                            double w = Waveform.SpacedTriangle(x+y + t * 0.7, wavelength, 4*(1-Piano.Knobs[2]));
+                            double u = Waveform.SpacedTriangle(x + Math.Sin(y+t*0.4) + t * 0.3, wavelength, 4*(1-Piano.Knobs[0]));
+                            double v = Waveform.SpacedTriangle(x + Math.Sin(y+t*0.8) - t * 0.6, wavelength, 4*(1-Piano.Knobs[1]));
+                            double w = Waveform.SpacedTriangle(x + Math.Sin(y+t*1.4) + t * 0.7, wavelength, 4*(1-Piano.Knobs[2]));
 
                             _frameData[fi++] = (byte)(Math.Clamp(255.5 * (v*colors[0][0] + w*colors[1][0] + u*colors[2][0]), 0, 255));
                             _frameData[fi++] = (byte)(Math.Clamp(255.5 * (v*colors[0][1] + w*colors[1][1] + u*colors[2][1]), 0, 255));
@@ -526,6 +526,11 @@ namespace TwinklyWPF
 
                 case 4: // chroma key ripples
                     {
+                        var colors = new double[3][];
+                        colors[0] = _currentPalette[0].GetColor();
+                        colors[1] = _currentPalette[1].GetColor();
+                        colors[2] = _currentPalette[2].GetColor();
+
                         for (int j = 0; j < Layout.coordinates.Length; ++j)
                         {
                             if (Layout.coordinates[j].z == 3 || Layout.coordinates[j].z == 11) { fi += 3; continue; }
@@ -539,10 +544,6 @@ namespace TwinklyWPF
                             {
                                 // no interactivity for 30 seconds
 
-                                var colors = new double[3][];
-                                colors[0] = _currentPalette[0].GetColor();
-                                colors[1] = _currentPalette[1].GetColor();
-                                colors[2] = _currentPalette[2].GetColor();
 
                                 const double f = 6 * Math.PI / 300.0;
                                 double v = 1.5 * Math.Sin(f * (x - y) + t) * Math.Sin(f * (x + y) + t);
@@ -680,6 +681,10 @@ namespace TwinklyWPF
                             }
                         }
 
+                        var colors = _currentPalette
+                            .Select((colorMorph) => { return colorMorph.GetColor(); })
+                            .ToArray();
+
                         double k = 3.0 * Piano.Knobs[4];    // 0.3 colors per meter?
                         double noiseLevel = 2.0 * Piano.Knobs[5];
                         double crawlSpeed = 5.0 * Piano.Knobs[6];
@@ -696,17 +701,11 @@ namespace TwinklyWPF
                             if (!(_currentPalette?.Count > 0))
                                 return;
 
-                            int coloridx = (((int)(x*k+t* crawlSpeed+noise)) % _currentPalette.Count);
+                            int coloridx = (((int)(x*k+t* crawlSpeed+noise)) % colors.Length);
                             if (coloridx < 0)
-                                coloridx += _currentPalette.Count;
+                                coloridx += colors.Length;
 
-                            if (coloridx >= _currentPalette.Count)
-                                return; //???
-
-                            if (_currentPalette[coloridx] == null)
-                                return;
-
-                            var color = _currentPalette[coloridx].GetColor();
+                            var color = colors[coloridx];
                             var r = (byte)(Math.Clamp(255.5 * color[0], 0, 255));
                             var g = (byte)(Math.Clamp(255.5 * color[1], 0, 255));
                             var b = (byte)(Math.Clamp(255.5 * color[2], 0, 255));
@@ -743,6 +742,14 @@ namespace TwinklyWPF
                                 _noise[i] = _random.NextDouble();
                         }
 
+                        var color0 = _currentPalette[0].GetColor();
+                        var color1 = _currentPalette[1].GetColor();
+                        var color2 = _currentPalette[2].GetColor();
+                        var color3 = _currentPalette[3].GetColor();
+                        var colors = _currentPalette
+                            .Select((colorMorph) => { return colorMorph.GetColor(); })
+                            .ToArray();
+
                         for (int j = 0; j < Layout.coordinates.Length; ++j)
                         {
                             if (Layout.coordinates[j].z == 3 || Layout.coordinates[j].z == 11) { fi += 3; continue; }
@@ -760,12 +767,8 @@ namespace TwinklyWPF
                             // scale noise range to 0..5, where 0.2 of the colors will be blended
                             double ab = 5.0 * _noise[j] - 4.0 * Piano.Knobs[0];  // 0.2 of colors will be blended; 0.3 will be A, 0.5 will be B
 
-                            var color0 = _currentPalette[0].GetColor();
-                            var color1 = _currentPalette[1].GetColor();
-                            var color2 = _currentPalette[2].GetColor();
-                            var color3 = _currentPalette[3].GetColor();
-                            double[] colorU = ColorMorph.Mix(color0, color1, ab);
-                            double[] colorV = ColorMorph.Mix(color2, color3, ab);
+                            double[] colorU = ColorMorph.Mix(colors[0], colors[1], ab);
+                            double[] colorV = ColorMorph.Mix(colors[2], colors[3], ab);
                             double[] color = ColorMorph.Mix(colorU, colorV, wash);
 
                             var r = (byte)(Math.Clamp(255.5 * color[0], 0, 255));
