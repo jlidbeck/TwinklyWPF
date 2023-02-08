@@ -76,7 +76,7 @@
                     ToolTip="Scan all Twinkly and MIDI devices"
                     Click="Rescan_Click" />
             <ComboBox ItemsSource="{Binding Devices}"
-                      DisplayMemberPath="Name"
+                      DisplayMemberPath="FriendlyName"
                       SelectedItem="{Binding ActiveDevice}"
                       Width="200" 
                       Margin="5 0"/>

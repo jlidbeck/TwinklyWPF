@@ -61,10 +61,9 @@ namespace TwinklyWPF
             {
                 Debug.Assert(value == null || Devices.Contains(value));
                 _activeDevice = value;
-                //ActiveDevice?.Reload();
                 if (_activeDevice != null)
                 {
-                    App.Current.Settings.ActiveDeviceName = ActiveDevice.Name;
+                    App.Current.Settings.ActiveDeviceName = ActiveDevice.UniqueName;
                 }
                 OnPropertyChanged();
             }
@@ -158,8 +157,9 @@ namespace TwinklyWPF
                     // gestalts..
                     await device.Load();
                     // authentication, description and state
-                    await device.UpdateAuthModels(true);
+                    //await device.UpdateAuthModels(true);
                 }
+                OnPropertyChanged("Devices");
 
                 if (_arguments.Contains("RT") || App.Current.Settings.AutoStart)
                 {
@@ -198,17 +198,24 @@ namespace TwinklyWPF
 
             foreach (var device in Devices)
             {
-                var deviceDescriptor = new Dictionary<string, string>();
-                deviceDescriptor["Name"] = device.Name;
-                deviceDescriptor["IPAddress"] = device.twinklyapi.data.IPAddressString;
-                deviceDescriptor["device_name"] = device.Gestalt?.device_name;
-                deviceDescriptor["led_profile"] = device.Gestalt?.led_profile;
-                deviceDescriptor["led_type"] = device.Gestalt?.led_type.ToString();
-                deviceDescriptor["number_of_led"] = device.Gestalt?.number_of_led.ToString();
-                deviceDescriptor["Last Seen"] = DateTime.Now.ToString();
+                if (device.Gestalt == null)
+                {
+                    Console.WriteLine($"ERROR: Device gestalt unknown");    // probably a coding error
+                }
 
-                App.Current.Settings.KnownDevices[device.Name] = deviceDescriptor;
+                var deviceDescriptor = new Dictionary<string, string>();
+                deviceDescriptor["Name"]          = device.FriendlyName;
+                deviceDescriptor["IPAddress"]     = device.twinklyapi.data.IPAddressString;
+                deviceDescriptor["device_name"]   = device.Gestalt?.device_name;
+                deviceDescriptor["led_profile"]   = device.Gestalt?.led_profile;
+                deviceDescriptor["led_type"]      = device.Gestalt?.led_type.ToString();
+                deviceDescriptor["number_of_led"] = device.Gestalt?.number_of_led.ToString();
+                deviceDescriptor["Last Seen"]     = DateTime.Now.ToString();
+
+                App.Current.Settings.KnownDevices[device.UniqueName] = deviceDescriptor;
             }
+
+            App.Current.Settings.ActiveDeviceName = ActiveDevice.UniqueName;
         }
 
         #endregion
@@ -244,8 +251,11 @@ namespace TwinklyWPF
                 // try to keep the same device selected
                 ActiveDevice = Devices.FirstOrDefault((device) => device.Equals(selectedDevice));
                 // .. or the device from the user settings
-                if (ActiveDevice == null)
-                    ActiveDevice = Devices.FirstOrDefault((device) => device.Name == App.Current.Settings.ActiveDeviceName);
+                if (ActiveDevice == null && !string.IsNullOrEmpty( App.Current.Settings.ActiveDeviceName))
+                    ActiveDevice = Devices.FirstOrDefault(
+                        (device) => App.Current.Settings.ActiveDeviceName == device.FriendlyName
+                                 || App.Current.Settings.ActiveDeviceName == device.twinklyapi.data.IPAddress.ToString()
+                                 || App.Current.Settings.ActiveDeviceName == device.Gestalt?.device_name);
                 if (ActiveDevice == null)
                     ActiveDevice = Devices.FirstOrDefault();
 
@@ -426,7 +436,9 @@ namespace TwinklyWPF
             List<Device> devices = new List<Device>();
             foreach (Device device in Devices)
             {
-                if (App.Current.Settings.RTMovieDevices == null || App.Current.Settings.RTMovieDevices.Contains(device.Name))
+                if (App.Current.Settings.RTMovieDevices == null
+                    || App.Current.Settings.RTMovieDevices.Contains(device.FriendlyName)
+                    || App.Current.Settings.RTMovieDevices.Contains(device.Gestalt?.device_name))
                     devices.Add(device);
             }
 

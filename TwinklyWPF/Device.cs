@@ -23,13 +23,25 @@ namespace TwinklyWPF
 
         #region Gestalt shortcuts
 
-        public string Name
+        public string FriendlyName
         {
             get
             {
                 if (Gestalt == null)
                     return twinklyapi.data.IPAddress.ToString();
                 return $"{Gestalt.device_name} [{Gestalt.number_of_led}x{Gestalt.led_profile}]";
+            }
+        }
+
+        //  should always be the device name. but if accessed before gestalt has been retrieved,
+        //  all we have is the IP address
+        public string UniqueName
+        {
+            get
+            {
+                if (Gestalt == null)
+                    return twinklyapi.data.IPAddress.ToString();
+                return Gestalt.device_name;
             }
         }
 
@@ -49,7 +61,7 @@ namespace TwinklyWPF
 
         public override string ToString()
         {
-            return Name;
+            return FriendlyName;
         }
 
         public override bool Equals(object obj)
@@ -93,7 +105,8 @@ namespace TwinklyWPF
                 _gestalt = value;
                 OnPropertyChanged();
                 OnPropertyChanged("Uptime");
-                OnPropertyChanged("Name");
+                OnPropertyChanged("FriendlyName");
+                OnPropertyChanged("UniqueName");
             }
         }
 
