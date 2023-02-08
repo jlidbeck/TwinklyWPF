@@ -12,6 +12,7 @@ using System.Windows;
 using Twinkly_xled.JSONModels;
 using TwinklyWPF.Utilities;
 using static TwinklyWPF.Piano;
+using static TwinklyWPF.Utilities.Layouts;
 
 namespace TwinklyWPF
 {
@@ -188,128 +189,10 @@ namespace TwinklyWPF
         double[] _noise;
 
         int[] _life, _life2;
+        int[] _lifeGridIndex;
 
         public RealtimeMovie()
         {
-        }
-
-        void InitializeDefaultLayout(XYZ[] coordinates, int startOffset, int n)
-        {
-            const double s = 0.3;   // default spacing
-            double startx = (startOffset % 600 + 10) * s;
-            var xyz = new XYZ { x = startx, y = 2.0, z = 0.0 };
-            for (int j = 0; j < n; ++j)
-            {
-                coordinates[j + startOffset] = xyz;
-                xyz.x += s;
-            }
-        }
-
-        void InitializeHouseLayout(XYZ[] coordinates, int startOffset)
-        {
-            Debug.Assert(coordinates.Length >= startOffset + 600);
-
-            // this works!
-            //double left = 0.0, right = 23.0, top = 0.0;
-            //double s = (right - left) / 23.0;   // default spacing
-            //double bottom = top + s * 24.0;     // keep aspect ratio
-            //double ctrX = (left + right) / 2.0, ctrY = (top + bottom) / 2.0;
-            //
-            // but let's try this: s-based, centered at (0,0)
-            double s = 0.1;
-            double ctrX = 0.0, ctrY = 0.0;
-
-            // 24x25 grid
-            // 2 300 strands go up and down from the center, so it's split in the middle of row 12
-            // 299 298 297 ... 276
-            // 252 253 254 ... 275
-            // ...
-            //  11  10   9 ... 3 2 1 0 300 301 302 303 ... 311
-            // 335 334 333 ...                     314 313 312
-            // 336 337 338 ...
-
-            /* this works for half only
-            var xyz = new XYZ { x = left, y = top, z = 0.0 };
-            for (int j = 0; j < 600; ++j)
-            {
-                if (j % 48 < 23)
-                    xyz.x += s; // 0..22 go right
-                else if (j % 24 == 23)
-                    xyz.y += s; // 23, 47 go down
-                else
-                    xyz.x -= s; // 24..46 go left
-            }
-            */
-                // rotational symmetry for first and second strings
-            for (int j = 0; j < 300; ++j)
-            {
-                double xoff = s * 25.0 * (-0.5 + Waveform.Triangle(j - 35.5, 48.0));
-                double yoff = s * ((j + 12) / 24);
-                coordinates[j + startOffset] = new XYZ { x = ctrX - xoff, y = ctrY + yoff };
-                coordinates[j + startOffset + 300] = new XYZ { x = ctrX + xoff, y = ctrY - yoff };
-            }
-            /*
-                for (int j = 0, zi = 0; j < 600; ++j, ++zi)
-            {
-                switch (j)
-                {
-                    case 90: ++zone; xyz.z = zone; zi = 0; break;  // 1: short run
-                    case 136: ++zone; xyz.z = zone; zi = 0; break;  // 2: main
-                    case 187: ++zone; xyz.z = zone; zi = 0; break;  // 3: dead
-                    case 198: ++zone; xyz.z = zone; zi = 0; break;  // 4: doorframe L down
-                    case 224: ++zone; xyz.z = zone; zi = 0; break;  // 5: doorframe L up
-                    case 248: ++zone; xyz.z = zone; zi = 0; break;  // 6: doorframe top
-                    case 271: ++zone; xyz.z = zone; zi = 0; break;  // 7: doorframe R down
-                    case 300: ++zone; xyz.z = zone; zi = 0; xyz = new XYZ { x = 0.5 * s, y = 3.9 - 0.5 * s, z = 5.0 }; break; // string 2
-                    case 395: ++zone; xyz.z = zone; zi = 0; break;  // 9: short run
-                    case 443: ++zone; xyz.z = zone; zi = 0; break;  // 10: main
-                    case 557: ++zone; xyz.z = zone; zi = 0; break;  // 11: leftover/downspout
-                    case 571: ++zone; xyz.z = zone; zi = 0; break;  // 12: downspout
-                }
-
-                coordinates[j + startOffset] = xyz;
-
-                switch (zone)
-                {
-                    case 0: // back main #1
-                    case 1:
-                    case 2:
-                        xyz.x += s;
-                        break;
-                    case 3: // link to doorframe (always off)
-                        xyz.x += 0.8 * s;
-                        xyz.y -= 0.5 * s;
-                        break;
-                    case 4: // doorframe L down
-                        xyz.y -= s;
-                        break;
-                    case 5: // doorframe L up
-                        xyz.y += s;
-                        break;
-                    case 6: // doorframe top
-                        xyz.x += s;
-                        break;
-                    case 7: // doorframe R down
-                        xyz.y -= s;
-                        break;
-                    case 8: // strand #2 back main
-                        xyz.x += s * 90 / 95;
-                        break;
-                    case 9:
-                        xyz.x += s * 46 / 48;
-                        break;
-                    case 10:
-                        xyz.x += s;
-                        break;
-                    case 11: // hanging end (always off)
-                        xyz.x -= 0.8 * s;
-                        xyz.y -= 0.1 * s;
-                        break;
-                    case 12: // downspout
-                        xyz.y -= s;
-                        break;
-                }
-            }*/
         }
 
         //  Initializes devices and allocates framedata to match layout
@@ -362,9 +245,10 @@ namespace TwinklyWPF
             foreach (var device in Devices)
             {
                 if (device.Gestalt.number_of_led == 600)
-                    InitializeHouseLayout(houseLayout.coordinates, offset);
+                    //Layouts.InitializeHouseLayout(houseLayout.coordinates, offset);
+                    Layouts.Initialize600GridLayout(houseLayout.coordinates, offset);
                 else
-                    InitializeDefaultLayout(houseLayout.coordinates, offset, device.Gestalt.number_of_led);
+                    Layouts.InitializeDefaultLayout(houseLayout.coordinates, offset, device.Gestalt.number_of_led);
                 offset += device.Gestalt.number_of_led;
             }
 
@@ -901,6 +785,8 @@ namespace TwinklyWPF
                         {
                             _life = new int[Layout.coordinates.Length];
                             _life2 = new int[Layout.coordinates.Length];
+                            PointI[] junk;
+                            Layouts.Initialize600GridLayoutIndex(out junk, out _lifeGridIndex);
                             for (int i = 0; i < _life.Length; ++i)
                                 _life[i] = (_random.Next() % (alive*2));
                             _animationNeedsInit = false;
@@ -911,16 +797,16 @@ namespace TwinklyWPF
                         var dyingColor = _currentPalette[2].GetColor();
 
                         const int w = 24;
-                        for (int j = 0; j < Layout.coordinates.Length; ++j)
+                        for (int j = 0; j < _life.Length; ++j)
                         {
-                            int sum = (_life[(j + 600 - w - 1)  % 600] >= alive ? 1 : 0)
-                                    + (_life[(j + 600 - w)      % 600] >= alive ? 1 : 0)
-                                    + (_life[(j + 600 - w + 1)  % 600] >= alive ? 1 : 0)
-                                    + (_life[(j + 600 - 1)      % 600] >= alive ? 1 : 0)
-                                    + (_life[(j + 600 + 1)      % 600] >= alive ? 1 : 0)
-                                    + (_life[(j + 600 + w - 1)  % 600] >= alive ? 1 : 0)
-                                    + (_life[(j + 600 + w)      % 600] >= alive ? 1 : 0)
-                                    + (_life[(j + 600 + w + 1)  % 600] >= alive ? 1 : 0);
+                            int sum = (_life[(j + 600 - w - 1) % 600] >= alive ? 1 : 0)
+                                    + (_life[(j + 600 - w)     % 600] >= alive ? 1 : 0)
+                                    + (_life[(j + 600 - w + 1) % 600] >= alive ? 1 : 0)
+                                    + (_life[(j + 600 - 1)     % 600] >= alive ? 1 : 0)
+                                    + (_life[(j + 600 + 1)     % 600] >= alive ? 1 : 0)
+                                    + (_life[(j + 600 + w - 1) % 600] >= alive ? 1 : 0)
+                                    + (_life[(j + 600 + w)     % 600] >= alive ? 1 : 0)
+                                    + (_life[(j + 600 + w + 1) % 600] >= alive ? 1 : 0);
                             if (_life[j] >= alive)
                                 _life2[j] = (sum == 2 || sum == 3) ? Math.Min(2*alive, _life[j] + 1) : alive-1;
                             else
@@ -932,9 +818,10 @@ namespace TwinklyWPF
                             var r = (byte)(Math.Clamp(255.5 * color[0], 0, 255));
                             var g = (byte)(Math.Clamp(255.5 * color[1], 0, 255));
                             var b = (byte)(Math.Clamp(255.5 * color[2], 0, 255));
-                            _frameData[fi++] = r;
-                            _frameData[fi++] = g;
-                            _frameData[fi++] = b;
+                            int fri = 3 * _lifeGridIndex[j];
+                            _frameData[fri  ] = r;
+                            _frameData[fri+1] = g;
+                            _frameData[fri+2] = b;
                         }
 
                         _life2.CopyTo(_life, 0);
