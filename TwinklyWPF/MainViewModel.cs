@@ -138,6 +138,9 @@ namespace TwinklyWPF
 
             try
             {
+                // save current selection to re-select it if possible after the discovery
+                var selectedDevice = ActiveDevice;
+
                 if (true)
                 {
                     await Discover();
@@ -159,6 +162,16 @@ namespace TwinklyWPF
                     // authentication, description and state
                     //await device.UpdateAuthModels(true);
                 }
+
+                // always set ActiveDevice, even if keeping same value.. need to update the API
+                // try to keep the same device selected
+                ActiveDevice = FindDevice(selectedDevice?.UniqueName);
+                // .. or the device from the user settings
+                if (ActiveDevice == null && !string.IsNullOrEmpty(App.Current.Settings.ActiveDeviceName))
+                    ActiveDevice = FindDevice(App.Current.Settings.ActiveDeviceName);
+                if (ActiveDevice == null)
+                    ActiveDevice = Devices.FirstOrDefault();
+
                 OnPropertyChanged("Devices");
 
                 if (_arguments.Contains("RT") || App.Current.Settings.AutoStart)
@@ -227,39 +240,28 @@ namespace TwinklyWPF
             // make sure we're locked
             Debug.Assert(_apiSemaphore.CurrentCount == 0);
 
-            // store current selection
-            var selectedDevice = ActiveDevice;
+            Message = "Searching for devices...";
 
             ActiveDevice = null;
             Devices.Clear();
             OnPropertyChanged("Devices");
             OnPropertyChanged("TwinklyDetected");
 
-            Message = "Discovering...";
-
             var addresses = await Task.Run(() =>
             {
                 return DataAccess.Discover();
             });
+
+            Message = $"Adding {addresses.Count} devices...";
+
             foreach (var ip in addresses)
                 Devices.Add(new Device(IPAddress.Parse(ip)));
             OnPropertyChanged("TwinklyDetected");
 
             if (TwinklyDetected)
             {
-                // always set ActiveDevice, even if keeping same value.. need to update the API
-                // try to keep the same device selected
-                ActiveDevice = Devices.FirstOrDefault((device) => device.Equals(selectedDevice));
-                // .. or the device from the user settings
-                if (ActiveDevice == null && !string.IsNullOrEmpty( App.Current.Settings.ActiveDeviceName))
-                    ActiveDevice = Devices.FirstOrDefault(
-                        (device) => App.Current.Settings.ActiveDeviceName == device.FriendlyName
-                                 || App.Current.Settings.ActiveDeviceName == device.twinklyapi.data.IPAddress.ToString()
-                                 || App.Current.Settings.ActiveDeviceName == device.Gestalt?.device_name);
-                if (ActiveDevice == null)
-                    ActiveDevice = Devices.FirstOrDefault();
 
-                Message = $"Found {Devices?.Count()} devices.";
+                Message = $"Found {Devices.Count()} devices.";
             }
             //else if (twinklyapi.Status == 0)
             //{
@@ -310,6 +312,14 @@ namespace TwinklyWPF
         private Device FindDevice(IPAddress ipAddress)
         {
             return Devices.FirstOrDefault((device) => device.twinklyapi.data.IPAddress.Equals(ipAddress));
+        }
+
+        private Device FindDevice(string uniqueName)
+        {
+            return Devices.FirstOrDefault(
+                (device) => uniqueName == device.UniqueName
+                         || uniqueName == device.twinklyapi.data.IPAddress.ToString()
+                         || uniqueName == device.Gestalt?.device_name);
         }
 
         //todo
