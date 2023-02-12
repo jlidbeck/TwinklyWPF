@@ -216,16 +216,15 @@ namespace TwinklyWPF
                     Console.WriteLine($"ERROR: Device gestalt unknown");    // probably a coding error
                 }
 
-                var deviceDescriptor = new Dictionary<string, string>();
-                deviceDescriptor["Name"]          = device.FriendlyName;
-                deviceDescriptor["IPAddress"]     = device.twinklyapi.data.IPAddressString;
-                deviceDescriptor["device_name"]   = device.Gestalt?.device_name;
-                deviceDescriptor["led_profile"]   = device.Gestalt?.led_profile;
-                deviceDescriptor["led_type"]      = device.Gestalt?.led_type.ToString();
-                deviceDescriptor["number_of_led"] = device.Gestalt?.number_of_led.ToString();
-                deviceDescriptor["Last Seen"]     = DateTime.Now.ToString();
+                var metadata = App.Current.Settings.GetDeviceMetadata(device.UniqueName);
 
-                App.Current.Settings.KnownDevices[device.UniqueName] = deviceDescriptor;
+                metadata["Name"]          = device.FriendlyName;
+                metadata["IPAddress"]     = device.twinklyapi.data.IPAddressString;
+                metadata["device_name"]   = device.Gestalt?.device_name;
+                metadata["led_profile"]   = device.Gestalt?.led_profile;
+                metadata["led_type"]      = device.Gestalt?.led_type.ToString();
+                metadata["number_of_led"] = device.Gestalt?.number_of_led.ToString();
+                metadata["Last Seen"]     = DateTime.Now.ToString();
             }
 
             App.Current.Settings.ActiveDeviceName = ActiveDevice.UniqueName;
