@@ -506,7 +506,7 @@ namespace TwinklyWPF
         /// <summary>
         /// Command to call the API to change the mode
         /// </summary>
-        public async Task ChangeMode(string mode)
+        public async Task ChangeMode(string mode, bool update = true)
         {
             if (mode == CurrentMode?.mode)
                 return;
@@ -538,8 +538,7 @@ namespace TwinklyWPF
                     throw new ArgumentException($"Invalid mode: '{mode}'");
             }
 
-            // refresh gui
-            if (result.IsOK)
+            if (result.IsOK && update)
                 CurrentMode = await twinklyapi.GetOperationMode();
         }
 

@@ -202,6 +202,26 @@ namespace TwinklyWPF
             App.Current.SaveSettings();
         }
 
+        //  Invoked just before app exits
+        public async Task Shutdown()
+        {
+            SaveDeviceList();
+
+            var defaultMode = App.Current.Settings.SetModeOnExit;
+            foreach (var device in Devices)
+            {
+                var mode = App.Current.Settings.GetDeviceMetadataEntry(device.UniqueName, "SetModeOnExit");
+                if (string.IsNullOrEmpty(mode))
+                {
+                    mode = defaultMode;
+                }
+                if (!string.IsNullOrEmpty(mode))
+                {
+                    await device.ChangeMode(mode, false);
+                }
+            }
+        }
+
         //  Adds all current devices to {KnownDevices} list in user settings
         public void SaveDeviceList()
         {
@@ -225,6 +245,7 @@ namespace TwinklyWPF
                 metadata["led_type"]      = device.Gestalt?.led_type.ToString();
                 metadata["number_of_led"] = device.Gestalt?.number_of_led.ToString();
                 metadata["Last Seen"]     = DateTime.Now.ToString();
+                //metadata["SetModeOnExit"] = "";
             }
 
             App.Current.Settings.ActiveDeviceName = ActiveDevice.UniqueName;

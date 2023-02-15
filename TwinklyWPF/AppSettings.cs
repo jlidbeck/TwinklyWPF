@@ -74,5 +74,15 @@ namespace TwinklyWPF
             KnownDevices[uniqueName] = emptyMetadata;
             return emptyMetadata;
         }
+
+
+        public string GetDeviceMetadataEntry(string uniqueName, string key)
+        {
+            var metadata = GetDeviceMetadata(uniqueName);
+            if (metadata.ContainsKey(key))
+                return metadata[key];
+            return null;
+        }
+
     }
 }

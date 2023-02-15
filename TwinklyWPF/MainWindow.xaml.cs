@@ -209,12 +209,7 @@ namespace TwinklyWPF
                 Console.WriteLine($"Failed to save window placement settings: {ex.Message}");
             }
 
-            MainViewModel.SaveDeviceList();
-
-            if (!string.IsNullOrEmpty(App.Current.Settings.SetModeOnExit))
-            {
-                await MainViewModel.ActiveDevice?.ChangeMode(App.Current.Settings.SetModeOnExit);
-            }
+            await MainViewModel.Shutdown();
         }
     }
 }
