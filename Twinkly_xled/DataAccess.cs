@@ -15,11 +15,8 @@ namespace Twinkly_xled
         public HttpClient HttpClient { get; private set; }
 
         public bool Error { get; private set; } = false;
-        //public HttpStatusCode HttpStatus { get; private set; } = HttpStatusCode.OK;
-        public HttpResponseMessage HttpResponseMessage;
-        public HttpStatusCode HttpStatus => HttpResponseMessage != null 
-                                            ? HttpResponseMessage.StatusCode 
-                                            : HttpStatusCode.InternalServerError;
+        public string ErrorMessage { get; private set; }
+        public HttpStatusCode HttpStatus { get; private set; } = HttpStatusCode.OK;
 
         private IPAddress tw_IP { get; set; }
         public IPAddress IPAddress
@@ -33,7 +30,8 @@ namespace Twinkly_xled
                 else
                     HttpClient = null;
                 Error = false;
-                HttpResponseMessage = null;
+                //HttpResponseMessage = null;
+                HttpStatus = HttpStatusCode.OK;
                 ExpiresAt = new DateTime();
             }
         }
@@ -125,14 +123,23 @@ namespace Twinkly_xled
         {
             const int PORT_NUMBER = 7777;
 
-            using (var client = new UdpClient())
+            try
             {
+                using (var client = new UdpClient())
+                {
 
-                // send
-                client.Send(buffer, buffer.Length, new IPEndPoint(IPAddress, PORT_NUMBER));
+                    // send
+                    client.Send(buffer, buffer.Length, new IPEndPoint(IPAddress, PORT_NUMBER));
 
-                // Hope it made it 
+                    // Hope it made it 
 
+                }
+            }
+            catch (SocketException err)
+            {
+                // this can happen if the queue is full or a buffer is too small
+                Error = true;
+                ErrorMessage = err.Message;
             }
         }
 
@@ -144,10 +151,11 @@ namespace Twinkly_xled
         public async Task<string> Get(string url)
         {
             Error = false;
-            HttpResponseMessage = null;
+            //HttpResponseMessage = null;
+            HttpStatus = HttpStatusCode.OK;
             try
             {
-                HttpResponseMessage = await HttpClient.GetAsync(url);
+                var HttpResponseMessage = await HttpClient.GetAsync(url);
                 //HttpStatus = HttpResponseMessage.StatusCode;
                 if (HttpResponseMessage.IsSuccessStatusCode)
                 {
@@ -156,14 +164,26 @@ namespace Twinkly_xled
                 else
                 {
                     Error = true;
-                    return HttpResponseMessage.StatusCode.ToString();
+                    HttpStatus = HttpResponseMessage.StatusCode;
+                    ErrorMessage = HttpResponseMessage.StatusCode.ToString();
+                    return ErrorMessage;
                 }
+            }
+            catch (HttpRequestException ex)
+            {
+                Error = true;
+
+                // actual timeouts have statuscode==null.. why?
+                HttpStatus = ex.StatusCode ?? HttpStatusCode.InternalServerError;
+                ErrorMessage = $"ERROR {ex.Message}";
+                return ErrorMessage;
             }
             catch (Exception ex)
             {
                 //HttpStatus = HttpStatusCode.InternalServerError;
                 Error = true;
-                return $"ERROR {ex.Message}";
+                ErrorMessage = $"ERROR {ex.Message}";
+                return ErrorMessage;
             }
         }
 
@@ -174,10 +194,11 @@ namespace Twinkly_xled
         public async Task<string> Post(string url, string content)
         {
             Error = false;
-            HttpResponseMessage = null;
+            //HttpResponseMessage = null;
+            HttpStatus = HttpStatusCode.OK;
             try
             {
-                HttpResponseMessage = await HttpClient.PostAsync(url, new StringContent(content));
+                var HttpResponseMessage = await HttpClient.PostAsync(url, new StringContent(content));
                 //HttpStatus = result.StatusCode;
                 if (HttpResponseMessage.StatusCode == HttpStatusCode.OK)
                 {
