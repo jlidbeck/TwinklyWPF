@@ -9,7 +9,9 @@
     Title="Twinkly WPF"
     Width="620"
     Height="500"
-    mc:Ignorable="d">
+    mc:Ignorable="d"
+    KeyDown="Window_KeyDown"
+    KeyUp="Window_KeyUp">
     <Window.Resources>
         <BooleanToVisibilityConverter x:Key="BoolToVis" />
 

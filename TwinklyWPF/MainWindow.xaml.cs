@@ -3,6 +3,7 @@ using System.Text.Json;
 using System.Timers;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Input;
 
 namespace TwinklyWPF
 {
@@ -159,6 +160,30 @@ namespace TwinklyWPF
                 o, 
                 new JsonSerializerOptions(JsonSerializerDefaults.General) { WriteIndented = true });
             MessageBox.Show(json, ((Button)e.Source).Name);
+        }
+
+        private void Window_KeyDown(object sender, System.Windows.Input.KeyEventArgs e)
+        {
+            if (MainViewModel.RealtimeMovieRunning)
+            {
+                MainViewModel.RTMovie.Inputs = (
+                    (Keyboard.IsKeyDown(Key.LeftCtrl ) ? 1 : 0) |
+                    (Keyboard.IsKeyDown(Key.LeftShift) ? 2 : 0) |
+                    (Keyboard.IsKeyDown(Key.LeftAlt  ) ? 4 : 0)
+                    );
+            }
+        }
+
+        private void Window_KeyUp(object sender, System.Windows.Input.KeyEventArgs e)
+        {
+            if (MainViewModel.RealtimeMovieRunning)
+            {
+                MainViewModel.RTMovie.Inputs = (
+                    (Keyboard.IsKeyDown(Key.LeftCtrl ) ? 1 : 0) |
+                    (Keyboard.IsKeyDown(Key.LeftShift) ? 2 : 0) |
+                    (Keyboard.IsKeyDown(Key.LeftAlt  ) ? 4 : 0)
+                    );
+            }
         }
     }
 }
