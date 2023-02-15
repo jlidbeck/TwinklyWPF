@@ -790,6 +790,10 @@ namespace TwinklyWPF
                             _life2 = new int[Layout.coordinates.Length];
                             PointI[] junk;
                             Layouts.Initialize600GridLayoutIndex(out junk, out _lifeGridIndex);
+                            // this algorithm is hardcoded to run on a 600 grid.
+                            // for now, if there are more lights, duplicate the colors
+                            while (_lifeGridIndex.Length < Layout.coordinates.Length)
+                                _lifeGridIndex = _lifeGridIndex.Concat(_lifeGridIndex).ToArray();
                             for (int i = 0; i < _life.Length; ++i)
                                 _life[i] = (_random.Next() % (alive*2));
                             _animationNeedsInit = false;
