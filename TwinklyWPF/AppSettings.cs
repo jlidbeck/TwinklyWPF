@@ -13,6 +13,8 @@ namespace TwinklyWPF
         public WINDOWPLACEMENT MainWindowPlacement { get; set; }
 
         public bool AutoStart { get; set; } = true;
+        
+        public string SetModeOnExit { get; set; } = "off";
 
         public string ActiveDeviceName { get; set; }
 

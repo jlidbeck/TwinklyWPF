@@ -196,7 +196,7 @@ namespace TwinklyWPF
 
         }
 
-        private void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e)
+        private async void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e)
         {
             try
             {
@@ -210,6 +210,11 @@ namespace TwinklyWPF
             }
 
             MainViewModel.SaveDeviceList();
+
+            if (!string.IsNullOrEmpty(App.Current.Settings.SetModeOnExit))
+            {
+                await MainViewModel.ActiveDevice?.ChangeMode(App.Current.Settings.SetModeOnExit);
+            }
         }
     }
 }
