@@ -1,4 +1,5 @@
-﻿using System.Text.Json;
+﻿using System;
+using System.Text.Json;
 using System.Timers;
 using System.Windows;
 using System.Windows.Controls;
@@ -36,10 +37,10 @@ namespace TwinklyWPF
 
         private async void AddIpAddress_Click(object sender, RoutedEventArgs e)
         {
-            //await MainViewModel.FakeLocate();
+            await MainViewModel.FakeLocate();
         }
-        /*
-        private bool m_DevicesTextInput = false;
+        
+        private bool _devicesComboTextInputChanged = false;
 
         private void Devices_TextInput(object sender, TextChangedEventArgs e)
         {
@@ -47,30 +48,30 @@ namespace TwinklyWPF
             {
                 //var ipAddress = IPAddress.Parse(((ComboBox)sender).Text);
                 //MainViewModel.twinklyapi.Devices.Add(new Twinkly_xled.Device(ipAddress));
-                m_DevicesTextInput = true;
+                _devicesComboTextInputChanged = true;
             }
-            catch (Exception err)
+            catch (Exception _)
             {
                 return;
             }
         }
 
-        private void Devices_LostFocus(object sender, RoutedEventArgs e)
+        private async void Devices_LostFocus(object sender, RoutedEventArgs e)
         {
             try
             {
-                if (m_DevicesTextInput)
+                if (_devicesComboTextInputChanged)
                 {
-                    var ipAddress = IPAddress.Parse(((ComboBox)sender).Text);
-                    MainViewModel.AddDevice(ipAddress);
+                    var ipAddress = System.Net.IPAddress.Parse(((ComboBox)sender).Text);
+                    await MainViewModel.AddDevice(ipAddress);
                 }
             }
-            catch (Exception err)
+            catch (Exception _)
             {
             }
 
-            m_DevicesTextInput = false;
-        }*/
+            _devicesComboTextInputChanged = false;
+        }
 
         #endregion
 

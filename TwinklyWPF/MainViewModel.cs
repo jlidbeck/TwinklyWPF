@@ -55,29 +55,33 @@ namespace TwinklyWPF
         //  Devices found by Discover
         public ObservableCollection<Device> Devices { get; } = new ObservableCollection<Device>();
 
-        Device m_activeDevice;
+        Device _activeDevice;
         public Device ActiveDevice
         {
-            get => m_activeDevice;
+            get => _activeDevice;
             set
             {
                 Debug.Assert(value == null || Devices.Contains(value));
-                m_activeDevice = value;
+                _activeDevice = value;
                 //ActiveDevice?.Reload();
                 OnPropertyChanged();
             }
         }
 
-        private string message = "";
+        private string _message = "";
         public string Message
         {
-            get { return message; }
+            get { return _message; }
             set
             {
-                message = value;
+                _message = value;
                 OnPropertyChanged();
             }
         }
+
+        #region Initialization
+
+        private IReadOnlyList<string> _arguments;
 
         public MainViewModel(IReadOnlyList<string> arguments)
         {
@@ -123,6 +127,8 @@ namespace TwinklyWPF
                 _apiSemaphore.Release();
             }
         }
+
+        #endregion
 
         private async Task Discover()
         {
@@ -297,7 +303,6 @@ namespace TwinklyWPF
         #region Realtime test
 
         public RealtimeMovie RTMovie { get; private set; }
-
 
         public bool RealtimeMovieRunning
         {

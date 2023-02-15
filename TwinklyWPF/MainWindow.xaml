@@ -79,7 +79,7 @@
             <ComboBox ItemsSource="{Binding Devices}"
                       DisplayMemberPath="Name"
                       SelectedItem="{Binding ActiveDevice}"
-                      MinWidth="120" 
+                      Width="200" 
                       Margin="5 0"/>
             <Button x:Name="AddIpAddress" 
                     Content="Add..." 
@@ -344,11 +344,11 @@
                 <TextBlock
                     Margin="2"
                     Foreground="DarkOrange"
-                    Text="{Binding Brightness.mode}" />
+                    Text="{Binding ActiveDevice.Brightness.mode}" />
                 <TextBlock
                     Margin="2"
                     Foreground="Yellow"
-                    Text="{Binding Brightness.value, StringFormat={}{0}%}" />
+                    Text="{Binding ActiveDevice.Brightness.value, StringFormat={}{0}%}" />
             </StackPanel>
 
             <StackPanel
@@ -364,7 +364,7 @@
                 <TextBlock
                     Margin="2,2,0,2"
                     Foreground="LightYellow"
-                    Text="{Binding MQTTConfig.broker_host}" />
+                    Text="{Binding ActiveDevice.MQTTConfig.broker_host}" />
                 <TextBlock
                     Margin="0,2,0,2"
                     Foreground="LightYellow"
@@ -372,15 +372,15 @@
                 <TextBlock
                     Margin="0,2,2,2"
                     Foreground="LightYellow"
-                    Text="{Binding MQTTConfig.broker_port}" />
+                    Text="{Binding ActiveDevice.MQTTConfig.broker_port}" />
                 <TextBlock
                     Margin="2"
                     Foreground="LightYellow"
-                    Text="{Binding MQTTConfig.client_id}" />
+                    Text="{Binding ActiveDevice.MQTTConfig.client_id}" />
                 <TextBlock
                     Margin="2"
                     Foreground="LightYellow"
-                    Text="{Binding MQTTConfig.user}" />
+                    Text="{Binding ActiveDevice.MQTTConfig.user}" />
                 <TextBlock
                     Margin="10,2,0,2"
                     Foreground="LightYellow"
@@ -388,7 +388,7 @@
                 <TextBlock
                     Margin="2"
                     Foreground="LightYellow"
-                    Text="{Binding MQTTConfig.keep_alive_interval}" />
+                    Text="{Binding ActiveDevice.MQTTConfig.keep_alive_interval}" />
             </StackPanel>
         </Grid>
 
@@ -492,7 +492,7 @@
                 Foreground="Orange"
                 Text="Brightness:" />
             <Slider x:Name="BrightSlider"
-                    Value="{Binding SliderBrightness}"
+                    Value="{Binding ActiveDevice.SliderBrightness}"
                     Minimum="0"
                     Maximum="100"
                     LargeChange="20"
@@ -607,7 +607,7 @@
                     <!--<Trigger Property="ActiveDevice.CurrentMode.mode" />-->
                 </ToggleButton>
                 <TextBlock FontWeight="Bold" VerticalAlignment="Center" Padding="8 0"
-                           IsEnabled="{Binding RealtimeTestRunning}">
+                           IsEnabled="{Binding RTMovie.Running}">
                     <Run Text="FPS:" Foreground="Orange" />
                     <Run Text="{Binding FPS, StringFormat=N3, Mode=OneWay}" Foreground="GreenYellow" />
                 </TextBlock>
