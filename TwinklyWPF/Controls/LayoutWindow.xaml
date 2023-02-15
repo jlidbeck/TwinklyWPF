@@ -89,7 +89,15 @@
             <Run Text=" Bounds:" />
             <Run Text="{Binding ElementName=ThisWindow, Path=LayoutBoundsText, Mode=OneWay}" Foreground="White"/>
         </TextBlock>
+        <ComboBox ItemsSource="{Binding RTMovie.Devices}"
+                  HorizontalAlignment="Right"
+                  DisplayMemberPath="FriendlyName"
+                  SelectedItem="{Binding ActiveDevice}"
+                  ToolTip="Devices running current animation"
+                  Width="200" 
+                  Margin="5 0" />
         <TextBox Grid.Row="1" Text="{Binding ElementName=ThisWindow, Path=LayoutText, Mode=OneWay}" 
+                 HorizontalAlignment="Stretch"
                  FontFamily="Consolas"
                  IsReadOnly="True"
                  Background="Black"
