@@ -40,7 +40,7 @@ namespace TwinklyWPF
         private System.Timers.Timer _refreshGuiTimer;
 
         //  Ensure that periodic updates and sync operations don't interfere with each other
-        private readonly System.Threading.SemaphoreSlim m_apiSemaphore = new System.Threading.SemaphoreSlim(1, 1);
+        private readonly System.Threading.SemaphoreSlim _apiSemaphore = new System.Threading.SemaphoreSlim(1, 1);
 
         // Set by view so our colour are calculated from the same source
         public GradientStopCollection GradientStops { get; set; }
@@ -81,7 +81,11 @@ namespace TwinklyWPF
 
         public MainViewModel(IReadOnlyList<string> arguments)
         {
-            ModeCommand = new RelayCommand<string>(async (x) => await ActiveDevice?.ChangeMode(x));
+            ModeCommand = new RelayCommand<string>(async (x) =>
+            {
+                StopRealtimeTest();
+                await ActiveDevice?.ChangeMode(x);
+            });
 
             UpdateTimerCommand = new RelayCommand(async () => await ActiveDevice.ChangeTimer());
 
@@ -104,25 +108,26 @@ namespace TwinklyWPF
 
         async public Task Initialize()
         {
-            await m_apiSemaphore.WaitAsync();
+            await _apiSemaphore.WaitAsync();
 
             try
             {
                 await Discover();   // TODO: move?
 
                 // only load if the API detected the Twinkly at startup
-                await ActiveDevice?.Load();
+                if (ActiveDevice != null)
+                    await ActiveDevice.Load();
             }
             finally
             {
-                m_apiSemaphore.Release();
+                _apiSemaphore.Release();
             }
         }
 
         private async Task Discover()
         {
             // make sure we're locked
-            Debug.Assert(m_apiSemaphore.CurrentCount == 0);
+            Debug.Assert(_apiSemaphore.CurrentCount == 0);
 
             // store current selection
             var selectedDevice = ActiveDevice;
@@ -156,17 +161,17 @@ namespace TwinklyWPF
             //{
             //    Message = "Twinkly Not Found !";
             //}
-            //else
-            //{
-            //    Message = $"Locate failed. Status={twinklyapi.Status}";
-            //}
+            else
+            {
+                Message = $"Locate failed. Status=?";
+            }
         }
 
         // TODO
-        /*
+        
         public async Task FakeLocate()
         {
-            await m_apiSemaphore.WaitAsync();
+            await _apiSemaphore.WaitAsync();
 
             try
             {
@@ -183,59 +188,83 @@ namespace TwinklyWPF
 
                 OnPropertyChanged("TwinklyDetected");
 
-                await Load();
+                //await Load();
             }
             finally
             {
-                m_apiSemaphore.Release();
+                _apiSemaphore.Release();
             }
         }
 
-        //todo
-        /*public void AddDevice(IPAddress ipAddress)
+        private Device FindDevice(IPAddress ipAddress)
         {
-            if (Devices.Contains(ipAddress))
-                return;
+            return Devices.FirstOrDefault((device) => device.twinklyapi.data.IPAddress.Equals(ipAddress));
+        }
 
-            Devices.Add(ipAddress);
+        //todo
+        public async Task<Device> AddDevice(IPAddress ipAddress)
+        {
+            // make sure not duplicate
+            if (FindDevice(ipAddress) != null)
+                return null;
 
-            await m_apiSemaphore.WaitAsync();
+            await _apiSemaphore.WaitAsync();
 
             try
             {
+                var device = new Device(ipAddress);
+                Devices.Add(device);
 
                 Message = $"Loading {ipAddress}...";
 
-                twinklyapi.data.IPAddress = ipAddress;
-                OnPropertyChanged("twinklyapi");
+                //twinklyapi.data.IPAddress = ipAddress;
+                //OnPropertyChanged("twinklyapi");
 
-                twinklyapi.Devices.Add(ipAddress);
+                //twinklyapi.Devices.Add(ipAddress);
                 // this is a cheat
-                TwinklyDetected = true;
-                await Load();
+                //TwinklyDetected = true;
+                OnPropertyChanged("TwinklyDetected");
+
+                // always set ActiveDevice, even if keeping same value.. need to update the API
+                if (ActiveDevice == null)
+                    ActiveDevice = device;
+
+                //await Load();
 
                 //// notify that twinklyapi.Devices has changed
                 //OnPropertyChanged();
-                OnPropertyChanged("twinklyapi");
+                //OnPropertyChanged("twinklyapi");
 
-                Message = $"Loaded {ipAddress}.";
+                Message = $"Added {ipAddress}.";
 
+                return device;
             }
             finally
             {
-                m_apiSemaphore.Release();
+                _apiSemaphore.Release();
             }
-        }*/
+        }
+
+        public double FPS
+        {
+            get => RTMovie?.FPS ?? 0;
+        }
+
 
         public async void RefreshGui(object sender, System.Timers.ElapsedEventArgs e)
         {
-            if (m_apiSemaphore.CurrentCount == 0)
+            if (_apiSemaphore.CurrentCount == 0)
                 return; // boring task anyway
 
-            if (RealtimeTestRunning)
+            if (RealtimeMovieRunning)
+            {
+                // realtime test--don't hog the API with updates.
+                // Do update the FPS field
+                OnPropertyChanged("FPS");
                 return;
+            }
 
-            await m_apiSemaphore.WaitAsync();
+            await _apiSemaphore.WaitAsync();
 
             try
             {
@@ -254,145 +283,58 @@ namespace TwinklyWPF
                 OnPropertyChanged("ActiveDevice");
                 OnPropertyChanged("Devices");
             }
+            catch(Exception err)
+            {
+                Message = $"Refresh failed: {err.Message}";
+            }
             finally
             {
-                m_apiSemaphore.Release();
+                _apiSemaphore.Release();
             }
         }
 
 
         #region Realtime test
 
-        System.Timers.Timer m_frameTimer;
-        Stopwatch m_stopwatch;
-        int m_frameCounter;
-        private byte[] frameData;
-        Random random = new Random();
+        public RealtimeMovie RTMovie { get; private set; }
 
-        public bool RealtimeTestRunning
+
+        public bool RealtimeMovieRunning
         {
-            get => m_frameTimer != null;
+            get => RTMovie?.Running == true;
             set
             {
                 if (value)
-                    StartRealtimeTest().Wait();
+                    RTMovie.Start().Wait();
                 else
-                    StopRealtimeTest();
+                    RTMovie.Stop();
                 OnPropertyChanged();
             }
         }
 
         public void StopRealtimeTest()
         {
-            if (m_stopwatch?.ElapsedMilliseconds > 0)
-                Debug.WriteLine($"FPS: {FPS}   Frames: {m_frameCounter} {m_stopwatch.ElapsedMilliseconds * 0.001}");
-
-            m_frameTimer?.Stop();
-            m_frameTimer = null;
-        }
-
-        public double FPS
-        {
-            get
+            if (RTMovie?.FPS > 0)
             {
-                if (m_stopwatch == null)
-                    return 0;
-                return m_frameCounter / (0.001 * m_stopwatch.ElapsedMilliseconds);
+                OnPropertyChanged("FPS");
+                Debug.WriteLine($"FPS: {RTMovie.FPS}   Frames: {RTMovie.FrameCounter}");
             }
+
+            RTMovie?.Stop();
         }
 
         public async Task StartRealtimeTest()
         {
-            Message = $"Setting up {Devices.Count()} devices...";
-
-            await m_apiSemaphore.WaitAsync();
-
-            if (RealtimeTestRunning)
+            if (RealtimeMovieRunning)
                 return;
 
-            try
-            {
-                // make sure we are authorized and have gestalt for all devices
-                foreach (var device in Devices)
-                {
-                    await device.Load();
-                    await device.UpdateAuthModels();
-                    await device.ChangeMode("rt");
-                }
+            Message = $"Setting up {Devices.Count()} devices...";
 
-                int frameSize = 0;
-                foreach (var device in Devices)
-                {
-                    frameSize += device.Gestalt.bytes_per_led * device.Gestalt.number_of_led;
-                }
-                frameData = new byte[frameSize];
+            RTMovie = new RealtimeMovie() { ApiSemaphore = _apiSemaphore, Devices = Devices };
 
-                m_frameTimer = new System.Timers.Timer { AutoReset = true, Interval = 10 };
-                m_frameTimer.Elapsed += OnFrameTimerElapsed;
-                m_frameTimer.Start();
-                m_stopwatch = new Stopwatch();
-                m_stopwatch.Start();
-                m_frameCounter = 0;
+            await RTMovie.Start();
 
-                random.NextBytes(frameData);
-            }
-            finally
-            {
-                m_apiSemaphore.Release();
-            }
-        }
-
-        private async void OnFrameTimerElapsed(object sender, System.Timers.ElapsedEventArgs e)
-        {
-            //random.NextBytes(frameData);
-
-            double t = m_stopwatch.ElapsedMilliseconds * 0.001;
-
-            for (int i = 0; i < frameData.Length; ++i)
-            {
-                //int v = frameData[i];
-                //frameData[i] = (byte)(((v&1)==1)
-                //    ? (frameData[i] > 1 ? frameData[i] - 2 : 0) 
-                //    : (frameData[i] < 254 ? frameData[i] + 2 : 255));
-
-                double n = (i / 3);
-                frameData[  i] = (byte)(Math.Max(0.0, s*255.9 * Math.Sin(t        + n * 0.05)));
-                frameData[++i] = (byte)(Math.Max(0.0, s*255.9 * Math.Sin(t * 0.97 + n * 0.05)));
-                frameData[++i] = (byte)(Math.Max(0.0, s*255.9 * Math.Sin(t * 0.94 + n * 0.05)));
-
-                //frameData[  i] = (byte)(((i + t) % 10.0)*(255.0/ 9.0));
-                //frameData[++i] = (byte)(((i + t) % 12.0)*(255.0/11.0));
-                //frameData[++i] = (byte)(((i + t) % 16.0)*(255.0/15.0));
-            }
-
-            await m_apiSemaphore.WaitAsync();
-
-            try
-            {
-                int offset = 0;
-                foreach (var device in Devices)
-                {
-                    // devices can only receive 900 bytes of data at a time.
-                    // It seems like the strings[] array defines the expected frame ranges.
-                    byte fragment = 0;
-                    foreach (var s in device.LedConfig.strings)
-                    {
-                        var n = 3 * s.length;
-                        device.twinklyapi.SendFrame(frameData, offset, n, fragment++);
-                        offset += n;
-                    }
-                }
-                Debug.Assert(offset == frameData.Length);
-
-                m_frameCounter++;
-
-                if (m_frameCounter % 100 == 0)
-                    OnPropertyChanged("FPS");
-            }
-            finally
-            {
-                m_apiSemaphore.Release();
-            }
+            Message = "Starting RT";
         }
 
         #endregion
@@ -463,7 +405,7 @@ namespace TwinklyWPF
             }
         }
 
-        private GestaltResult gestalt = new GestaltResult();
+        private GestaltResult gestalt;
         public GestaltResult Gestalt
         {
             get { return gestalt; }
@@ -489,14 +431,14 @@ namespace TwinklyWPF
 
         // Schedule Twinkly On and off
 
-        private Timer timer = new Timer() { time_on = -1, time_off = -1 };
+        private Timer _timer;
         public Timer Timer
         {
-            get { return timer; }
+            get { return _timer; }
             set
             {
                 Debug.Assert(value != null);
-                timer = value;
+                _timer = value;
                 OnPropertyChanged();
                 OnPropertyChanged("TimerNow");
                 if (string.IsNullOrWhiteSpace(ScheduleOffText))
@@ -508,7 +450,12 @@ namespace TwinklyWPF
 
         public DateTime TimerNow
         {
-            get { return new DateTime(DateTime.Today.Year, DateTime.Today.Month, DateTime.Today.Day).AddSeconds(timer.time_now); }
+            get 
+            {
+                if (_timer == null)
+                    return DateTime.Today;
+                return new DateTime(DateTime.Today.Year, DateTime.Today.Month, DateTime.Today.Day).AddSeconds(_timer.time_now); 
+            }
         }
 
         private string scheduleontext;
@@ -535,15 +482,15 @@ namespace TwinklyWPF
 
 
 
-        private Mode m_CurrentMode = new Mode() { mode = "unknown" };
+        private Mode _currentMode;
         public Mode CurrentMode
         {
-            get { return m_CurrentMode; }
+            get { return _currentMode; }
             private set
             {
-                if (value?.mode != m_CurrentMode?.mode)
+                if (value?.mode != _currentMode?.mode)
                 {
-                    m_CurrentMode = value;
+                    _currentMode = value;
                     OnPropertyChanged();
                     OnPropertyChanged("CurrentMode_Movie");
                     OnPropertyChanged("CurrentMode_Off");
@@ -555,11 +502,11 @@ namespace TwinklyWPF
             }
         }
 
-        public bool CurrentMode_Off { get { return m_CurrentMode?.mode == "off"; } }
-        public bool CurrentMode_Color { get { return m_CurrentMode?.mode == "color"; } }
-        public bool CurrentMode_Movie { get { return m_CurrentMode?.mode == "movie"; } }
-        public bool CurrentMode_Demo { get { return m_CurrentMode?.mode == "demo"; } }
-        public bool CurrentMode_Realtime { get { return m_CurrentMode?.mode == "rt"; } }
+        public bool CurrentMode_Off { get { return _currentMode?.mode == "off"; } }
+        public bool CurrentMode_Color { get { return _currentMode?.mode == "color"; } }
+        public bool CurrentMode_Movie { get { return _currentMode?.mode == "movie"; } }
+        public bool CurrentMode_Demo { get { return _currentMode?.mode == "demo"; } }
+        public bool CurrentMode_Realtime { get { return _currentMode?.mode == "rt"; } }
 
 
         private MergedEffectsResult effects;
@@ -584,13 +531,13 @@ namespace TwinklyWPF
             }
         }
 
-        private LedConfigResult ledconfg = new LedConfigResult();
+        private LedConfigResult _ledConfig;
         public LedConfigResult LedConfig
         {
-            get { return ledconfg; }
+            get { return _ledConfig; }
             set
             {
-                ledconfg = value;
+                _ledConfig = value;
                 OnPropertyChanged();
             }
         }
@@ -615,16 +562,16 @@ namespace TwinklyWPF
                 Debug.Assert(value != null);
                 brightness = value;
                 OnPropertyChanged();
-                OnPropertyChanged("SliderBrightness");
+                OnPropertyChanged("ActiveDevice.SliderBrightness");
             }
         }
 
         public int SliderBrightness
         {
-            get { return Brightness.value; }
+            get { return Brightness?.value ?? 100; }
             set
             {
-                if (value != Brightness.value)
+                if (value != Brightness?.value)
                 {
                     updateBrightness((byte)value).Wait(100);
                 }
@@ -734,16 +681,16 @@ namespace TwinklyWPF
 
         public bool ReloadNeeded { get; private set; } = true;
 
-        public void Reload()
+        internal void Reload()
         {
             Unload();
             OnPropertyChanged("twinklyapi");
         }
 
         //  Clear all view model fields to reset display
-        internal void Unload()
+        internal async void Unload()
         {
-            //await m_apiSemaphore.WaitAsync();
+            //await _apiSemaphore.WaitAsync();
 
             try
             {
@@ -765,7 +712,7 @@ namespace TwinklyWPF
             //}
             finally
             {
-                //m_apiSemaphore.Release();
+                //_apiSemaphore.Release();
             }
         }
 
@@ -773,7 +720,7 @@ namespace TwinklyWPF
         //  and authenticates
         internal async Task Load()
         {
-            //Debug.Assert(m_apiSemaphore.CurrentCount == 0);
+            //Debug.Assert(_apiSemaphore.CurrentCount == 0);
 
             //Debug.Assert(TwinklyDetected);
 
@@ -823,7 +770,7 @@ namespace TwinklyWPF
 
         internal async Task UpdateAuthModels()
         {
-            //Debug.Assert(m_apiSemaphore.CurrentCount == 0);
+            //Debug.Assert(_apiSemaphore.CurrentCount == 0);
 
             try
             {
@@ -883,7 +830,7 @@ namespace TwinklyWPF
             }
 
             // refresh gui
-            if (result.code == 1000)
+            if (result.IsOK)
                 CurrentMode = await twinklyapi.GetOperationMode();
         }
 
@@ -912,7 +859,7 @@ namespace TwinklyWPF
                 VerifyResult result = await twinklyapi.SetTimer(DateTime.Now, on, off);
 
                 // refresh gui
-                if (result.code == 1000)
+                if (result.IsOK)
                 {
                     ScheduleOnText = null;
                     ScheduleOffText = null;
