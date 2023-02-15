@@ -78,6 +78,7 @@ namespace Twinkly_xled
             }
             else
             {
+                Status = (int)data.HttpStatus;
                 return new GestaltResult() { code = (int)data.HttpStatus };
             }
         }
@@ -375,9 +376,9 @@ namespace Twinkly_xled
                 if (!data.Error)
                 {
                     Status = (int)data.HttpStatus;
-                    var mode = JsonSerializer.Deserialize<GetLayoutResult>(json);
+                    var result = JsonSerializer.Deserialize<GetLayoutResult>(json);
 
-                    return mode;
+                    return result;
                 }
                 else
                 {

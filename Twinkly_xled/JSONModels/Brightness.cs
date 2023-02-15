@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Text.Json.Serialization;
 
 namespace Twinkly_xled.JSONModels
 {
@@ -12,6 +8,9 @@ namespace Twinkly_xled.JSONModels
         public int value { get; set; } // brightness level in range of 0..100 NOT 255
 
         // public string type { get; set; } // always “A”
+
+        [JsonIgnore]
+        public bool enabled => mode == "enabled";
     }
 
     public class BrightnessResult : Brightness

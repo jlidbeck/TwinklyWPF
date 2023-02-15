@@ -26,7 +26,7 @@ namespace Twinkly_xled.JSONModels
         [Obsolete]
         public int base_leds_number { get; set; }
         public int number_of_led { get; set; }
-        public string led_profile { get; set; }
+        public string led_profile { get; set; } // e.g. "RGB"
         public int frame_rate { get; set; }
         public float measured_frame_rate { get; set; }
         public int movie_capacity { get; set; } // describes the number of frames the device can handle
@@ -36,7 +36,7 @@ namespace Twinkly_xled.JSONModels
 
         public override string ToString()
         {
-            return $"{device_name} [{number_of_led}]";
+            return $"{device_name} [{number_of_led}×{led_profile}]";
         }
     }
 }
