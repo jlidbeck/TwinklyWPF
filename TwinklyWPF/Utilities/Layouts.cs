@@ -95,29 +95,30 @@ namespace TwinklyWPF.Utilities
         }
 
         // 600 grid layout: 24x25 grid
-        // 2 300 strands go up and down from the center, so it's split in the middle of row 12
-        // 299 298 297 ... 276
-        // 252 253 254 ... 275
-        // ...
-        //  11  10   9 ... 3 2 1 0 300 301 302 303 ... 311
-        // 335 334 333 ...                     314 313 312
-        // 336 337 338 ...
+        // 2 300-light strings go up and down from the center, so it's split in the middle of row 12.
+        // [0..300) start at center and have decreasing Y (downward)
+        // [300..600) start at center have increasing Y (upward)
+        // rows alternate right-to-left, left-to-right
+        // Top row:     599 598 597 ...                                 ... 576
+        // Middle row:  311 310 309 ... 302 301 300   0   1   2 ...   9  10  11
+        // Bottom row:  276 277 278 ...                         ... 297 298 299
         //
+        // Grid is centered at (0,0) spatially. Grid spacing is 0.1 units.
+        // Increasing Y goes upward, to match proprietary detected layouts.
         public static void Initialize600GridLayout(XYZ[] coordinates, int startOffset)
         {
             Debug.Assert(coordinates.Length >= startOffset + 600);
 
-            // but let's try this: s-based, centered at (0,0)
-            double s = 0.1;
+            double s = 0.1; // grid spacing
             double ctrX = 0.0, ctrY = 0.0;
 
-            // rotational symmetry for first and second strings
+            // position both strings using rotational symmetry
             for (int j = 0; j < 300; ++j)
             {
                 double xoff = s * 25.0 * (-0.5 + Waveform.Triangle(j - 35.5, 48.0));
                 double yoff = s * ((j + 12) / 24);
-                coordinates[j + startOffset] = new XYZ { x = ctrX - xoff, y = ctrY + yoff };
-                coordinates[j + startOffset + 300] = new XYZ { x = ctrX + xoff, y = ctrY - yoff };
+                coordinates[j + startOffset      ] = new XYZ { x = ctrX - xoff, y = ctrY - yoff };
+                coordinates[j + startOffset + 300] = new XYZ { x = ctrX + xoff, y = ctrY + yoff };
             }
         }
 
