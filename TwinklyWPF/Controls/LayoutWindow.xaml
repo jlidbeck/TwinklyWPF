@@ -105,15 +105,12 @@
                  VerticalScrollBarVisibility="Auto" />
         <GridSplitter Grid.Row="2" Height="5" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Focusable="False" />
         <ScrollViewer Grid.Row="3" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto">
-            <Canvas Grid.Row="3" x:Name="theCanvas" Background="Black"
-                MouseWheel="Canvas_MouseWheel"
-                SizeChanged="Canvas_SizeChanged"
-                ClipToBounds="True">
-                <Canvas.RenderTransform>
-                    <TransformGroup>
-                        <MatrixTransform x:Name="mt"/>
-                    </TransformGroup>
-                </Canvas.RenderTransform>
+            <Canvas Grid.Row="3" x:Name="theCanvas" 
+                    HorizontalAlignment="Stretch"
+                    VerticalAlignment="Stretch"
+                    MouseWheel="Canvas_MouseWheel"
+                    SizeChanged="Canvas_SizeChanged"
+                    ClipToBounds="False">
             </Canvas>
         </ScrollViewer>
         <StackPanel Orientation="Horizontal" Grid.Row="4" Margin="8 4">

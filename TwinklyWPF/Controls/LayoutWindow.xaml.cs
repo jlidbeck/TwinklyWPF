@@ -239,18 +239,15 @@ namespace TwinklyWPF
             var msg = $"Points: {Coordinates?.Length}";
             foreach (var pt in Coordinates)
                 msg += $"\n{pt.x}, {pt.y}, {pt.z}";
-            LayoutText = msg;
+            LayoutText = msg;// $"Actual size: {ActualWidth} x {ActualHeight}";
 
             // update text
             GetLayoutBounds();
 
             Rect bounds = Rect.Empty;
+
             theCanvas.Children.Clear();
-            for (int i = -2; i <= 2; ++i)
-            {
-                theCanvas.Children.Add(new Line { Stroke = Brushes.DarkCyan, StrokeThickness = 1, X1 = i, Y1 = -1000, X2 = i, Y2 = 1000 });
-                theCanvas.Children.Add(new Line { Stroke = Brushes.DarkCyan, StrokeThickness = 1, X1 = -1000, Y1 = i, X2 = 1000, Y2 = i });
-            }
+            //theCanvas.SnapsToDevicePixels = false;
             foreach (var point in Coordinates)
             {
                 var dot = new Ellipse { Width = 2, Height = 2, Stroke = null, Fill = Brushes.YellowGreen };
@@ -260,10 +257,28 @@ namespace TwinklyWPF
                 Canvas.SetTop(dot, _scale * point.y);
                 bounds.Union(new Point(_scale * point.x, _scale * point.y));
             }
-            bounds.Inflate(bounds.Width * 0.1, bounds.Width * 0.1);
+            var box = theCanvas.RenderTransform.TransformBounds(bounds);
+            bounds.Inflate(bounds.Width * 0.05, bounds.Width * 0.05);
 
-            theCanvas.Width = bounds.Right;
-            theCanvas.Height = bounds.Bottom;
+            var background = new System.Windows.Shapes.Rectangle { Width=bounds.Width, Height=bounds.Height, Fill=Brushes.Black };
+            theCanvas.Children.Insert(0, background);
+            Canvas.SetLeft(background, bounds.X);
+            Canvas.SetTop(background, bounds.Y);
+
+            int i = 0;
+
+            var line = new Line { Stroke = Brushes.DarkSlateBlue, StrokeThickness = 0.8, SnapsToDevicePixels = false };
+            line.X1 = line.X2 = 0.5 + i; line.Y1 = bounds.Top; line.Y2 = bounds.Bottom;
+            theCanvas.Children.Add(line);
+                
+            line = new Line { Stroke = Brushes.DarkSlateBlue, StrokeThickness = 1.0, SnapsToDevicePixels = false };
+            line.Y1 = line.Y2 = 0.5 + i; line.X1 = bounds.Left; line.X2 = bounds.Right;
+            theCanvas.Children.Add(line);
+
+            //theCanvas.RenderTransform = new TranslateTransform(-bounds.Left, -bounds.Top);
+            theCanvas.RenderTransform = new MatrixTransform(1, 0, 0, -1, -bounds.Left, -bounds.Top);
+            theCanvas.Width = bounds.Width;
+            theCanvas.Height = bounds.Height;
 
             //double h = theCanvas.ActualHeight;
             //double w = theCanvas.ActualWidth;
@@ -271,7 +286,7 @@ namespace TwinklyWPF
             // flip vertically.
             // can't do much else with this transform matrix, since it affects the entire
             // canvas relative to its parent
-            mt.Matrix = new Matrix(1, 0, 0, -1, 0, (bounds.Bottom > 0? bounds.Bottom : 300));
+            //mt.Matrix = new Matrix(1, 0, 0, -1, 0, (bounds.Bottom > 0? bounds.Bottom : 300));
         }
 
         private static void OnUpdateTimerElapsed(object sender, EventArgs e)
