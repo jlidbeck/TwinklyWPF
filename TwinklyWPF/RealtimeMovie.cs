@@ -824,16 +824,13 @@ namespace TwinklyWPF
                 case 10:    // life!
                     {
                         const int alive = 40;
-                        if (_animationNeedsInit || _life?.Length != Layout.coordinates.Length)
+                        if (_animationNeedsInit || _life?.Length != 600)
                         {
-                            _life = new int[Layout.coordinates.Length];
-                            _life2 = new int[Layout.coordinates.Length];
+                            _life = new int[600];
+                            _life2 = new int[600];
                             PointI[] junk;
                             Layouts.Initialize600GridLayoutIndex(out junk, out _lifeGridIndex);
                             // this algorithm is hardcoded to run on a 600 grid.
-                            // for now, if there are more lights, duplicate the colors
-                            while (_lifeGridIndex.Length < Layout.coordinates.Length)
-                                _lifeGridIndex = _lifeGridIndex.Concat(_lifeGridIndex).ToArray();
                             for (int i = 0; i < _life.Length; ++i)
                                 _life[i] = (_random.Next() % (alive*2));
                             _animationNeedsInit = false;
@@ -869,6 +866,14 @@ namespace TwinklyWPF
                             _frameData[fri  ] = r;
                             _frameData[fri+1] = g;
                             _frameData[fri+2] = b;
+                        }
+
+                        for (int j = _life.Length; j < Layout.coordinates.Length; ++j)
+                        {
+                            int fri = 3 * j;
+                            _frameData[fri    ] = _frameData[(fri    ) % 1800];
+                            _frameData[fri + 1] = _frameData[(fri + 1) % 1800];
+                            _frameData[fri + 2] = _frameData[(fri + 2) % 1800];
                         }
 
                         _life2.CopyTo(_life, 0);
