@@ -228,7 +228,8 @@ namespace TwinklyWPF
                 //metadata["SetModeOnExit"] = "";
             }
 
-            App.Current.Settings.ActiveDeviceName = ActiveDevice.UniqueName;
+            if(ActiveDevice != null)
+                App.Current.Settings.ActiveDeviceName = ActiveDevice.UniqueName;
         }
 
         #endregion
