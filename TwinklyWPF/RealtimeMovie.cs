@@ -211,11 +211,14 @@ namespace TwinklyWPF
                     if (device.Gestalt == null)
                         await device.Load();
 
-                    if (device.LedConfig == null)
+                    await device.Login();
+
+                    // get device details only if needed--this step can take a while (200-400 ms)
+                    if(device.LedConfig == null)
                         await device.UpdateAuthModels(true);
 
-                    if (!device.CurrentMode_Realtime)
-                        await device.ChangeMode("rt");
+                    // always set mode because device will automatically switch out of RT mode when idle
+                    await device.ChangeMode("rt");
                 }
             }
             finally
