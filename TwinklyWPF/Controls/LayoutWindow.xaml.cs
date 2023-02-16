@@ -381,10 +381,10 @@ namespace TwinklyWPF
 
         private async void StartStopButton_Click(object sender, RoutedEventArgs e)
         {
-            if (MainViewModel.RTMovie?.Running == true)
-                MainViewModel.RTMovie.Stop();
-            else if (MainViewModel.RTMovie?.Running == false)
-                await MainViewModel.RTMovie.Start();
+            if (MainViewModel.RealtimeMovieRunning)
+                MainViewModel.StopRealtimeTest();
+            else
+                await MainViewModel.StartRealtimeTest();
         }
 
         private void PrevColorMode_MouseDown(object sender, System.Windows.Input.MouseButtonEventArgs e)

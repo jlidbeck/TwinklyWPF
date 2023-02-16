@@ -49,6 +49,19 @@ namespace TwinklyWPF
             await MainViewModel.ActiveDevice?.ChangeMode(x);
         }
 
+        private async void StartStopButton_Click(object sender, RoutedEventArgs e)
+        {
+            if (MainViewModel.RealtimeMovieRunning)
+            {
+                MainViewModel.StopRealtimeTest();
+            }
+            else
+            {
+                await MainViewModel.StartRealtimeTest();
+                Layout_Click(null, null);
+            }
+        }
+
         #region Device locate
 
         private async void Rescan_Click(object sender, RoutedEventArgs e)

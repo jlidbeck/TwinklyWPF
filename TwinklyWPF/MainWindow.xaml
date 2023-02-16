@@ -111,10 +111,16 @@
             </Grid.RowDefinitions>
 
             <StackPanel Orientation="Horizontal" Grid.Row="0" Grid.ColumnSpan="2">
-                <ToggleButton x:Name="RealtimeTest" 
-                              Content="Realtime Test" 
-                              Command="{Binding RealtimeTestCommand}"
-                              CommandParameter="{Binding IsChecked, RelativeSource={RelativeSource Self}}"/>
+                <Grid>
+                    <Button x:Name="StartButton" 
+                            Content="► Start"
+                            Click="StartStopButton_Click" />
+                    <Button x:Name="StopButton" 
+                            Content="■ Stop"
+                            Click="StartStopButton_Click" 
+                            Visibility="{Binding RealtimeMovieRunning, Converter={StaticResource BoolToVis}}"
+                            IsEnabled="{Binding RealtimeMovieRunning}" />
+                </Grid>
                 <TextBlock Text="{Binding RTMovie.ColorModeName, Mode=OneWay}" Foreground="GreenYellow" MinWidth="50" />
                 <TextBlock FontWeight="Bold" VerticalAlignment="Center" Padding="8 0" IsEnabled="{Binding RTMovie.Running}">
                     <Run Text="FPS:" Foreground="Orange" />

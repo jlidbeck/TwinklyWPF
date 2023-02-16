@@ -4,12 +4,11 @@ using System.ComponentModel;
 using System.Net;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
-using Twinkly_xled;
 using System;
 using System.Diagnostics;
 using System.Linq;
 using System.Windows.Media;
-using GalaSoft.MvvmLight.Command;
+using Twinkly_xled;
 
 namespace TwinklyWPF
 {
@@ -20,10 +19,6 @@ namespace TwinklyWPF
 
     public class MainViewModel : INotifyPropertyChanged//, IDataErrorInfo
     {
-        //public RelayCommand<string> ModeCommand { get; private set; }
-        //public RelayCommand UpdateTimerCommand { get; private set; }
-        public RelayCommand<bool> RealtimeTestCommand { get; private set; }
-
         #region INotifyPropertyChanged
 
         public event PropertyChangedEventHandler PropertyChanged;
@@ -86,21 +81,6 @@ namespace TwinklyWPF
 
         public MainViewModel(IReadOnlyList<string> arguments)
         {
-
-            //UpdateTimerCommand = new RelayCommand(async () => await ActiveDevice.ChangeTimer());
-
-            RealtimeTestCommand = new RelayCommand<bool>(
-                async (isChecked) => {
-                    if (isChecked == true)
-                        await StartRealtimeTest();
-                    else
-                        StopRealtimeTest();
-                },
-                (isChecked) => {
-                    return true;    // todo: figure out how to trigger: ActiveDevice?.CurrentMode=="rt";
-                });
-
-
             _arguments = arguments;
 
             _refreshGuiTimer = new System.Timers.Timer(1000) { AutoReset = true };
@@ -454,12 +434,13 @@ namespace TwinklyWPF
             }
 
             RTMovie?.Stop();
+            OnPropertyChanged("RealtimeMovieRunning");
         }
 
-        public Task StartRealtimeTest()
+        public async Task StartRealtimeTest()
         {
             if (RealtimeMovieRunning)
-                return Task.CompletedTask;
+                return;
 
             Message = $"Setting up {Devices.Count()} devices...";
 
@@ -475,7 +456,7 @@ namespace TwinklyWPF
             if(devices.Count == 0)
             {
                 Message = $"Unable to find any devices for RTMovie. 0 of {Devices.Count} devices matched RTMovieDevices setting.";
-                return Task.CompletedTask;
+                return;
             }
 
             RTMovie = new RealtimeMovie()
@@ -487,7 +468,9 @@ namespace TwinklyWPF
 
             App.Log("Starting RT");
             Message = "Starting RT";
-            return RTMovie.Start();
+            await RTMovie.Start();
+
+            OnPropertyChanged("RealtimeMovieRunning");
         }
 
         #endregion
