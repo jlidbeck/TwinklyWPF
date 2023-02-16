@@ -304,6 +304,8 @@ namespace TwinklyWPF
         int _lastNotesIndex = 0;
 
         private int _nextColorToChange = 0; // should be treated as static in this function
+        int _randomBlackProbability = 0;
+
         private void HandlePianoKeyDownEvent(object s, EventArgs evt_)
         {
             if (!Running)
@@ -382,9 +384,19 @@ namespace TwinklyWPF
                 _nextColorToChange = colorIndex;
 
             _nextColorToChange %= _currentPalette.Count;
-            //var color = ColorMorph.HsvToRgb(_random.NextDouble(), 1.0, 1.0);
-            var color = GoodPalette[_random.Next() % GoodPalette.Length];
+
+            double[] color;
+            if (_randomBlackProbability > 0 && _random.Next() % 10000 < _randomBlackProbability)
+            {
+                color = Black;
+            }
+            else
+            {
+                //var color = ColorMorph.HsvToRgb(_random.NextDouble(), 1.0, 1.0);
+                color = GoodPalette[_random.Next() % GoodPalette.Length];
+            }
             _currentPalette[_nextColorToChange].SetTarget(color, _settings.ColorMorphTime);
+
             _nextColorToChange++;
 
             LastInteractionTime = CurrentTime;
@@ -583,14 +595,14 @@ namespace TwinklyWPF
                                         var age = t - evt.t;
                                         if (age >= 0)
                                         {
-                                            const double velocity = 5.0;    // units/second
+                                            const double velocity = 1.5;    // units/second
                                             var dx = evt.x - x;
                                             var dy = evt.y - y;
                                             var dist = Math.Sqrt(dx * dx + dy * dy);
                                             var w = age * velocity - dist;
                                             if (w > 0)
                                             {
-                                                var decay = 5.0 * Waveform.expgrowth(evt.noteEvent.Velocity / 127.0, age, -1);
+                                                var decay = 15.0 * Waveform.expgrowth(evt.noteEvent.Velocity / 127.0, age, -1);
                                                 var v = decay * Waveform.SpacedTriangle(w * 2, 6.0, 2.0);
                                                 var color = GoodPalette[evt.noteEvent.NoteNumber % GoodPalette.Length];
                                                 r += v * color[0];
@@ -743,6 +755,12 @@ namespace TwinklyWPF
 
                 case 9: // ambients / conics
                     {
+                        if(_animationNeedsInit)
+                        {
+                            _randomBlackProbability = 1000;
+                            _animationNeedsInit = false;
+                        }
+
                         if (_currentPalette.Count != 4)
                         {
                             RandomizePalette(4);
@@ -767,10 +785,6 @@ namespace TwinklyWPF
                                 _noise[i] = _random.NextDouble();
                         }
 
-                        var color0 = _currentPalette[0].GetColor();
-                        var color1 = _currentPalette[1].GetColor();
-                        var color2 = _currentPalette[2].GetColor();
-                        var color3 = _currentPalette[3].GetColor();
                         var colors = _currentPalette
                             .Select((colorMorph) => { return colorMorph.GetColor(); })
                             .ToArray();
@@ -787,10 +801,10 @@ namespace TwinklyWPF
                                      + (Piano.Knobs[5] - 0.5) * y * y * 2
                                      + (Piano.Knobs[6] - 0.5) * 4
                                      + (Piano.Knobs[7] - 0.5) * y * 4;
-                            double hardness = Piano.Knobs[1] * 20.0 + 0.1;
+                            double hardness = Piano.Knobs[1] * 10.0 + 0.1;
                             double wash = 0.5 + 0.5 * Math.Tanh(hardness * f);
                             // scale noise range to 0..5, where 0.2 of the colors will be blended
-                            double ab = 5.0 * _noise[j] - 4.0 * Piano.Knobs[0];  // 0.2 of colors will be blended; 0.3 will be A, 0.5 will be B
+                            double ab = 5.0 * _noise[j] - 1.0 - 5.0 * Piano.Knobs[0];  // if knob is between .25 and .75, all colors will be blended
 
                             double[] colorU = ColorMorph.Mix(colors[0], colors[1], ab);
                             double[] colorV = ColorMorph.Mix(colors[2], colors[3], ab);
