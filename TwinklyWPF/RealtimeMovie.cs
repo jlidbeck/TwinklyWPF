@@ -241,21 +241,43 @@ namespace TwinklyWPF
 
             //_random.NextBytes(_frameData);
 
-            Layout houseLayout = new Layout { aspectXY=0, aspectXZ=0, source="2d", synthesized=true };
-            houseLayout.coordinates = new XYZ[n];
+            Layout layout = new Layout { aspectXY=0, aspectXZ=0, source="2d", synthesized=true };
+            layout.coordinates = new XYZ[n];
 
             int offset = 0;
             foreach (var device in Devices)
             {
-                if (device.Gestalt.number_of_led == 600)
-                    //Layouts.InitializeHouseLayout(houseLayout.coordinates, offset);
-                    Layouts.Initialize600GridLayout(houseLayout.coordinates, offset);
-                else
-                    Layouts.InitializeDefaultLayout(houseLayout.coordinates, offset, device.Gestalt.number_of_led);
+                var deviceMetadata = App.Current.Settings.GetDeviceMetadata(device.UniqueName);
+                var map = deviceMetadata.GetValueOrDefault("MappingName");
+                if (map == null)
+                {
+                    if (device.Gestalt.number_of_led == 600)
+                    {
+                        map = "Grid600";
+                        //map = "House";
+                        deviceMetadata["MappingName"] = map;
+                    }
+                }
+
+                switch (map)
+                {
+                    case "Grid600":
+                        Layouts.Initialize600GridLayout(layout.coordinates, offset);
+                        break;
+
+                    case "House":
+                        Layouts.InitializeHouseLayout(layout.coordinates, offset);
+                        break;
+
+                    default:
+                        Layouts.InitializeDefaultLayout(layout.coordinates, offset, device.Gestalt.number_of_led);
+                        break;
+                }
+
                 offset += device.Gestalt.number_of_led;
             }
 
-            this.Layout = houseLayout;
+            this.Layout = layout;
         }
 
         private void OnLayoutChanged()
