@@ -15,7 +15,15 @@ namespace TwinklyWPF
 
         public AppSettings Settings { get; private set; } = new AppSettings();
 
+        // replace base class functions with more specific types
+
         new public static App Current => (App)Application.Current;
+
+        new public MainWindow MainWindow
+        {
+            get { return (MainWindow)(base.MainWindow); }
+            set { Application.Current.MainWindow = value; }
+        }
 
         protected override void OnStartup(StartupEventArgs e)
         {

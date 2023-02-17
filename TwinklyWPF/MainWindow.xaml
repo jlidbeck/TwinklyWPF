@@ -16,30 +16,6 @@
     Closing="Window_Closing">
     <Window.Resources>
         <BooleanToVisibilityConverter x:Key="BoolToVis" />
-
-        <!--  ValidatingControl Style  -->
-        <Style x:Key="ValidatingControl" TargetType="{x:Type FrameworkElement}">
-            <Style.Triggers>
-                <Trigger Property="Validation.HasError" Value="True">
-                    <Setter Property="ToolTip" Value="{Binding (Validation.Errors)[0].ErrorContent, RelativeSource={x:Static RelativeSource.Self}}" />
-                </Trigger>
-            </Style.Triggers>
-        </Style>
-
-        <Style TargetType="{x:Type ToolTip}">
-            <Setter Property="Background" Value="DarkRed" />
-            <Setter Property="Foreground" Value="Yellow" />
-            <Setter Property="FontSize" Value="14" />
-            <Setter Property="FontWeight" Value="Bold" />
-        </Style>
-
-        <Style TargetType="{x:Type Button}">
-            <Setter Property="Padding" Value="8 2" />
-        </Style>
-        <Style TargetType="{x:Type ToggleButton}">
-            <Setter Property="Padding" Value="8 2" />
-            <Setter Property="Background" Value="LimeGreen" />
-        </Style>
     </Window.Resources>
 
     <Grid Background="Black" Loaded="Grid_Loaded">
@@ -121,11 +97,9 @@
                             Visibility="{Binding RealtimeMovieRunning, Converter={StaticResource BoolToVis}}"
                             IsEnabled="{Binding RealtimeMovieRunning}" />
                 </Grid>
-                <TextBlock Text="{Binding RTMovie.ColorModeName, Mode=OneWay}" Foreground="GreenYellow" MinWidth="50" />
-                <TextBlock FontWeight="Bold" VerticalAlignment="Center" Padding="8 0" IsEnabled="{Binding RTMovie.Running}">
-                    <Run Text="FPS:" Foreground="Orange" />
-                    <Run Text=" "/><Run Text="{Binding FPS, Mode=OneWay, StringFormat=N3}" Foreground="GreenYellow" />
-                </TextBlock>
+                <TextBlock Text="{Binding RTMovie.ColorModeName, Mode=OneWay}" MinWidth="50" />
+                <Label Content="FPS:"  />
+                <TextBlock Text="{Binding FPS, Mode=OneWay, StringFormat=N3}" Style="{StaticResource ResourceKey=TextBlockValue}" />
                 <Button Content="Layout" ToolTip="ActiveDevice: led/layout/full"
                         Click="Layout_Click" />
                 <Button x:Name="MovieConfig" Content="MovieConfig" ToolTip="Get and set MovieConfig for active device"
@@ -137,10 +111,6 @@
                               Content="MIDI" 
                               IsChecked="{Binding RTMovie.Piano.IsMonitoring, Mode=OneWay}" 
                               Click="MIDIEnabled_Click" />
-                <TextBlock FontWeight="Bold" VerticalAlignment="Center" Padding="8 0" >
-                    <Run Text="Mode:" Foreground="Orange" />
-                    <Run Text="{Binding RTMovie.Piano, Mode=OneWay}" Foreground="GreenYellow" />
-                </TextBlock>
             </StackPanel>
 
         </Grid>

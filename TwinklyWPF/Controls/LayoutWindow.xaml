@@ -15,58 +15,6 @@
         Background="#222222">
     <Window.Resources>
         <BooleanToVisibilityConverter x:Key="BoolToVis" />
-
-        <!--  ValidatingControl Style  -->
-        <Style x:Key="ValidatingControl" TargetType="{x:Type FrameworkElement}">
-            <Style.Triggers>
-                <Trigger Property="Validation.HasError" Value="True">
-                    <Setter Property="ToolTip" Value="{Binding Path=(Validation.Errors)[0].ErrorContent, RelativeSource={x:Static RelativeSource.Self}}" />
-                </Trigger>
-            </Style.Triggers>
-        </Style>
-
-        <Style TargetType="{x:Type ToolTip}">
-            <Setter Property="Background" Value="DarkRed" />
-            <Setter Property="Foreground" Value="Yellow" />
-            <Setter Property="FontSize" Value="14" />
-            <Setter Property="FontWeight" Value="Bold" />
-        </Style>
-
-        <Style TargetType="TextBlock">
-            <Setter Property="Padding" Value="8 2" />
-            <Setter Property="Foreground" Value="GreenYellow" />
-            <Setter Property="FontWeight" Value="Bold" />
-        </Style>
-        <Style TargetType="TextBox">
-            <Setter Property="Padding" Value="8 2" />
-            <Setter Property="Margin" Value="0 0 0 3" />
-            <Setter Property="HorizontalAlignment" Value="Center" />
-            <Setter Property="MinWidth" Value="30" />
-            <Setter Property="Background" Value="LightGray" />
-            <Setter Property="Foreground" Value="DarkSlateGray" />
-            <Setter Property="FontWeight" Value="Bold" />
-        </Style>
-        <Style TargetType="ComboBox">
-            <Setter Property="Background" Value="LightGray" />
-            <Setter Property="Foreground" Value="DarkSlateGray" />
-            <Setter Property="FontWeight" Value="Bold" />
-        </Style>
-        <Style TargetType="CheckBox">
-            <Setter Property="Padding" Value="8 2" />
-            <Setter Property="Margin" Value="0 3 0 0" />
-            <Setter Property="Background" Value="LightGray" />
-            <Setter Property="Foreground" Value="GreenYellow" />
-            <Setter Property="FontWeight" Value="Bold" />
-        </Style>
-        <Style TargetType="Button">
-            <Setter Property="MinWidth" Value="60" />
-            <Setter Property="Padding" Value="8 4" />
-            <Setter Property="Margin" Value="4 0" />
-            <Setter Property="Background" Value="Black" />
-            <Setter Property="Foreground" Value="Orange" />
-            <Setter Property="FontWeight" Value="Bold" />
-        </Style>
-
     </Window.Resources>
     
     <Grid>
@@ -114,7 +62,7 @@
             </Canvas>
         </ScrollViewer>
         <StackPanel Orientation="Horizontal" Grid.Row="4" Margin="8 4">
-            <TextBlock Text="Layout:" />
+            <Label Content="Layout:" />
             <Button Content="Get" Click="GetButton_Click"  />
             <Button Content="Set" Click="SetButton_Click"  />
             <Button Content="Load..." Click="LoadButton_Click"  />
@@ -129,13 +77,13 @@
                       IsEnabled="{Binding RTMovie.Running}" 
                       ToolTip="Preview mode: animates frames, but does not send to devices"
                       Content="Preview" />
-            <TextBlock x:Name="MovieRunningText" Text="NA" Foreground="White" />
-            <TextBlock x:Name="PrevColorMode" Text="&lt;&lt;" MouseDown="PrevColorMode_MouseDown" />
+            <TextBlock x:Name="MovieRunningText" Text="NA" Style="{StaticResource ResourceKey=TextBlockValue}" />
+            <Button x:Name="PrevColorMode" Content="&lt;&lt;" MouseDown="PrevColorMode_MouseDown" MinWidth="16" Padding="4" BorderThickness="0" />
             <ComboBox Name="MovieColorMode" 
                       ItemsSource="{Binding RTMovie.ColorModes}" 
                       SelectedItem="{Binding RTMovie.ColorModeName}"
                       MinWidth="160" />
-            <TextBlock x:Name="NextColorMode" Text=">>" MouseDown="NextColorMode_MouseDown" />
+            <Button x:Name="NextColorMode" Content=">>" MouseDown="NextColorMode_MouseDown" MinWidth="16" Padding="4" BorderThickness="0" />
             <TextBlock x:Name="MoviePalette" Background="Black" Padding="2" >
                 <Run Name="MoviePalette0" Text=" ■ " MouseDown="MoviePalette_MouseDown" />
                 <Run Name="MoviePalette1" Text=" ■ " MouseDown="MoviePalette_MouseDown" />
@@ -145,26 +93,25 @@
             </TextBlock>
             <CheckBox Content="Autochange" 
                       IsChecked="{Binding RTMovie.Settings.IdleTimeoutEnabled}" />
-            <TextBlock Text="Autochange (s):" />
+            <Label Content="Autochange (s):" />
             <TextBox Name="AutoChangeInterval" 
+                     Style="{StaticResource ResourceKey=TextBoxInput}"
                      Text="{Binding RTMovie.Settings.IdleTimeout}"
                      IsEnabled="{Binding RTMovie.Settings.IdleTimeoutEnabled}" />
         </StackPanel>
         <StackPanel Orientation="Horizontal" Grid.Row="6" Margin="8 4 8 8">
-            <TextBlock FontWeight="Bold" VerticalAlignment="Center" Padding="8 0" IsEnabled="{Binding RTMovie.Running}">
-                <Run Text="T:" />
-                <Run Text=" "/>
+            <Label Content="T:" />
+            <TextBlock Style="{StaticResource ResourceKey=TextBlockLabel}" FontWeight="Bold" VerticalAlignment="Center" Padding="8 0" IsEnabled="{Binding RTMovie.Running}">
                 <Run Name="MovieTimeText" Text="NA" Foreground="White" />
-                <Run Text="FPS:" />
-                <Run Text=" "/>
-                <Run Text="{Binding FPS, Mode=OneWay, StringFormat=N3}" Foreground="White" />
             </TextBlock>
-            <TextBlock Text="Idle:" />
-            <TextBlock x:Name="IdleEventTimeText" Width="40" Foreground="White" />
-            <TextBlock Text="PC:" />
-            <TextBlock x:Name="IdleTimeText" Width="40" Foreground="White" />
-            <TextBlock Text="MIDI:" />
-            <TextBlock x:Name="PianoIdleTimeText" Width="40" Foreground="White" />
+            <Label Content="FPS:"  />
+            <TextBlock Text="{Binding FPS, Mode=OneWay, StringFormat=N3}" Style="{StaticResource ResourceKey=TextBlockValue}" />
+            <Label Content="Idle:" />
+            <TextBlock x:Name="IdleEventTimeText" Style="{StaticResource ResourceKey=TextBlockValue}" />
+            <Label Content="PC:" />
+            <TextBlock x:Name="IdleTimeText" Style="{StaticResource ResourceKey=TextBlockValue}" />
+            <Label Content="MIDI:" />
+            <TextBlock x:Name="PianoIdleTimeText" Style="{StaticResource ResourceKey=TextBlockValue}" />
         </StackPanel>
     </Grid>
 </Window>

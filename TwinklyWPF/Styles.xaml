@@ -1,0 +1,77 @@
+﻿<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <Color A="#FF" R="#FF" G="#22" B="#11" x:Key="MyRed"/>
+    <Color A="#FF" R="#00" G="#FF" B="#21" x:Key="MyGreen"/>
+    <Color A="#FF" R="#00" G="#22" B="#FF" x:Key="MyBlue" />
+
+    <SolidColorBrush x:Key="MyGreenBrush" Color="{StaticResource MyGreen}"/>
+    <SolidColorBrush x:Key="MyRedBrush" Color="{StaticResource MyRed}"/>
+    <SolidColorBrush x:Key="MyBlueBrush" Color="{StaticResource MyBlue}"/>
+
+    <!--  ValidatingControl Style  -->
+    <Style x:Key="ValidatingControl" TargetType="{x:Type FrameworkElement}">
+        <Style.Triggers>
+            <Trigger Property="Validation.HasError" Value="True">
+                <Setter Property="ToolTip" Value="{Binding Path=(Validation.Errors)[0].ErrorContent, RelativeSource={x:Static RelativeSource.Self}}" />
+            </Trigger>
+        </Style.Triggers>
+    </Style>
+
+    <Style TargetType="{x:Type ToolTip}">
+        <Setter Property="Background" Value="LightYellow" />
+        <Setter Property="Foreground" Value="DarkBlue" />
+        <Setter Property="FontSize" Value="14" />
+        <Setter Property="FontWeight" Value="Bold" />
+    </Style>
+
+    <Style TargetType="TextBlock" x:Key="TextBlockValue">
+        <Setter Property="MinWidth" Value="40" />
+        <Setter Property="Padding" Value="8 2" />
+        <Setter Property="Foreground" Value="White" />
+        <Setter Property="FontWeight" Value="Bold" />
+    </Style>
+    <Style TargetType="TextBlock" x:Key="TextBlockLabel">
+        <Setter Property="Padding" Value="8 2" />
+        <Setter Property="Foreground" Value="GreenYellow" />
+        <Setter Property="FontWeight" Value="Bold" />
+    </Style>
+    <Style TargetType="Label">
+        <Setter Property="Padding" Value="8 2" />
+        <Setter Property="Foreground" Value="GreenYellow" />
+        <Setter Property="FontWeight" Value="Bold" />
+    </Style>
+    <Style TargetType="TextBox" x:Key="TextBoxInput">
+        <Setter Property="Padding" Value="8 2" />
+        <Setter Property="Margin" Value="0 0 0 3" />
+        <Setter Property="HorizontalAlignment" Value="Center" />
+        <Setter Property="MinWidth" Value="30" />
+        <Setter Property="Background" Value="LightGray" />
+        <Setter Property="Foreground" Value="DarkSlateGray" />
+        <Setter Property="FontWeight" Value="Bold" />
+    </Style>
+    <Style TargetType="ComboBox">
+        <Setter Property="Background" Value="LightGray" />
+        <Setter Property="Foreground" Value="DarkSlateGray" />
+        <Setter Property="FontWeight" Value="Bold" />
+    </Style>
+    <Style TargetType="CheckBox">
+        <Setter Property="Padding" Value="8 2" />
+        <Setter Property="Margin" Value="0 3 0 0" />
+        <Setter Property="Background" Value="LightGray" />
+        <Setter Property="Foreground" Value="GreenYellow" />
+        <Setter Property="FontWeight" Value="Bold" />
+    </Style>
+    <Style TargetType="Button">
+        <Setter Property="MinWidth" Value="70" />
+        <Setter Property="Padding" Value="8 3" />
+        <Setter Property="Margin" Value="4 0" />
+        <Setter Property="Background" Value="Black" />
+        <Setter Property="Foreground" Value="Orange" />
+        <Setter Property="FontWeight" Value="Bold" />
+    </Style>
+    <Style TargetType="{x:Type ToggleButton}">
+        <Setter Property="Padding" Value="8 2" />
+        <Setter Property="Background" Value="DarkGreen" />
+    </Style>
+
+</ResourceDictionary>
