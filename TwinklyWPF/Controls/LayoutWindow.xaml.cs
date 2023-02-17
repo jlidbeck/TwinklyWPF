@@ -247,7 +247,6 @@ namespace TwinklyWPF
             Rect bounds = Rect.Empty;
 
             theCanvas.Children.Clear();
-            //theCanvas.SnapsToDevicePixels = false;
             foreach (var point in Coordinates)
             {
                 var dot = new Ellipse { Width = 2, Height = 2, Stroke = null, Fill = Brushes.YellowGreen };
@@ -257,36 +256,28 @@ namespace TwinklyWPF
                 Canvas.SetTop(dot, _scale * point.y);
                 bounds.Union(new Point(_scale * point.x, _scale * point.y));
             }
-            var box = theCanvas.RenderTransform.TransformBounds(bounds);
-            bounds.Inflate(bounds.Width * 0.05, bounds.Width * 0.05);
 
-            var background = new System.Windows.Shapes.Rectangle { Width=bounds.Width, Height=bounds.Height, Fill=Brushes.Black };
+            // Create a background rectangle and place it at lowest Z-order
+            bounds.Inflate(bounds.Width * 0.05, bounds.Width * 0.05);
+            var background = new Rectangle { Width=bounds.Width, Height=bounds.Height, Fill=Brushes.Black };
             theCanvas.Children.Insert(0, background);
             Canvas.SetLeft(background, bounds.X);
             Canvas.SetTop(background, bounds.Y);
 
+            // Create axis lines and place them just above background
             int i = 0;
 
             var line = new Line { Stroke = Brushes.DarkSlateBlue, StrokeThickness = 0.8, SnapsToDevicePixels = false };
             line.X1 = line.X2 = 0.5 + i; line.Y1 = bounds.Top; line.Y2 = bounds.Bottom;
-            theCanvas.Children.Add(line);
+            theCanvas.Children.Insert(1, line);
                 
             line = new Line { Stroke = Brushes.DarkSlateBlue, StrokeThickness = 1.0, SnapsToDevicePixels = false };
             line.Y1 = line.Y2 = 0.5 + i; line.X1 = bounds.Left; line.X2 = bounds.Right;
-            theCanvas.Children.Add(line);
+            theCanvas.Children.Insert(2, line);
 
-            //theCanvas.RenderTransform = new TranslateTransform(-bounds.Left, -bounds.Top);
             theCanvas.RenderTransform = new MatrixTransform(1, 0, 0, -1, -bounds.Left, -bounds.Top);
             theCanvas.Width = bounds.Width;
             theCanvas.Height = bounds.Height;
-
-            //double h = theCanvas.ActualHeight;
-            //double w = theCanvas.ActualWidth;
-
-            // flip vertically.
-            // can't do much else with this transform matrix, since it affects the entire
-            // canvas relative to its parent
-            //mt.Matrix = new Matrix(1, 0, 0, -1, 0, (bounds.Bottom > 0? bounds.Bottom : 300));
         }
 
         private static void OnUpdateTimerElapsed(object sender, EventArgs e)
@@ -319,20 +310,22 @@ namespace TwinklyWPF
                 : "Stopped";
             StartStopButton.Content = MainViewModel.RTMovie?.Running == true ? "■ Stop" : "► Start";
             MovieTimeText.Text = String.Format("{0:0.00}", MainViewModel.RTMovie.CurrentTime);
-            var palette = MainViewModel.RTMovie.CurrentPalette;
-            MoviePalette.Background = new SolidColorBrush(palette[0].InTransition ? Color.FromRgb(55, 55, 55) : Color.FromRgb(0, 0, 0));
 
-            var paletteControls = new Run[] { MoviePalette0, MoviePalette1, MoviePalette2, MoviePalette3, MoviePalette4 };
-            int j = 0;
-            for(; j<palette.Count; j++)
+            var palette = MainViewModel.RTMovie.CurrentPalette;
+            if (palette?.Count > 0)
             {
-                paletteControls[j].Background = ColorToBrush(palette[j].GetColor());
-                paletteControls[j].Foreground = ColorToBrush(palette[j].TargetColor);
-            }
-            for(; j<paletteControls.Length; j++)
-            {
-                paletteControls[j].Background = new SolidColorBrush(Color.FromRgb(0,0,0));
-                paletteControls[j].Foreground = new SolidColorBrush(Color.FromRgb(0,0,0));
+                var paletteControls = new Run[] { MoviePalette0, MoviePalette1, MoviePalette2, MoviePalette3, MoviePalette4 };
+                int j = 0;
+                for (; j < palette.Count && j < paletteControls.Length; j++)
+                {
+                    paletteControls[j].Background = ColorToBrush(palette[j].GetColor());
+                    paletteControls[j].Foreground = ColorToBrush(palette[j].TargetColor);
+                }
+                for (; j < paletteControls.Length; j++)
+                {
+                    paletteControls[j].Background = new SolidColorBrush(Color.FromRgb(0, 0, 0));
+                    paletteControls[j].Foreground = new SolidColorBrush(Color.FromRgb(0, 0, 0));
+                }
             }
 
             IdleEventTimeText.Text = $"{MainViewModel.RTMovie.IdleEventTime:0.0}";
@@ -369,9 +362,9 @@ namespace TwinklyWPF
         private void Canvas_MouseWheel(object sender, System.Windows.Input.MouseWheelEventArgs e)
         {
             if (e.Delta < 0)
-                --_scale;
+                _scale = Math.Max(1, (_scale * 4) / 5);     // *=4/5
             else
-                ++_scale;
+                _scale = _scale + Math.Max(1, _scale / 4);  // *=5/4
             Redraw();
         }
 
@@ -391,7 +384,11 @@ namespace TwinklyWPF
 
         public static SolidColorBrush ColorToBrush(double[] rgb)
         {
-            return new SolidColorBrush(Color.FromScRgb(1, (float)rgb[0], (float)rgb[1], (float)rgb[2]));
+            return new SolidColorBrush(Color.FromRgb(
+                (byte)(Math.Clamp(rgb[0] * 255.0, 0, 255)), 
+                (byte)(Math.Clamp(rgb[1] * 255.0, 0, 255)), 
+                (byte)(Math.Clamp(rgb[2] * 255.0, 0, 255))
+                ));
         }
 
         private async void StartStopButton_Click(object sender, RoutedEventArgs e)

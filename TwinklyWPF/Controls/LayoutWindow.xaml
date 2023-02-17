@@ -84,7 +84,7 @@
                       SelectedItem="{Binding RTMovie.ColorModeName}"
                       MinWidth="160" />
             <Button x:Name="NextColorMode" Content=">>" MouseDown="NextColorMode_MouseDown" MinWidth="16" Padding="4" BorderThickness="0" />
-            <TextBlock x:Name="MoviePalette" Background="Black" Padding="2" >
+            <TextBlock x:Name="MoviePalette" Background="Black" Padding="3 5 3 0" >
                 <Run Name="MoviePalette0" Text=" ■ " MouseDown="MoviePalette_MouseDown" />
                 <Run Name="MoviePalette1" Text=" ■ " MouseDown="MoviePalette_MouseDown" />
                 <Run Name="MoviePalette2" Text=" ■ " MouseDown="MoviePalette_MouseDown" />
