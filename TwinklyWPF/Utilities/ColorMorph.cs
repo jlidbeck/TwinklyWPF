@@ -106,6 +106,47 @@ namespace TwinklyWPF.Utilities
             return colors;
         }
 
+        public static double[] MixSaturated(double[] startColor, double[] targetColor, double t)
+        {
+            // interpolate colors
+            var startHSV = new double[3];
+            var targetHSV = new double[3];
+            ColorHelper.RgbToHsv(startColor, ref startHSV);
+            ColorHelper.RgbToHsv(targetColor, ref targetHSV);
+            double huedist = (startHSV[0] - targetHSV[0]);
+            if (huedist > 0.5)
+                targetHSV[0] += 1.0;
+            else if (huedist < -0.5)
+                startHSV[0] += 1.0;
+
+            var rgb = new double[3];
+            ColorHelper.HsvToRgb(
+                t * targetHSV[0] + (1 - t) * startHSV[0],
+                t * targetHSV[1] + (1 - t) * startHSV[1],
+                t * targetHSV[2] + (1 - t) * startHSV[2],
+                ref rgb);
+
+            return rgb;
+        }
+
+        public static double[] HsvLirp(double[] startHSV, double[] targetHSV, double t)
+        {
+            double huedist = (startHSV[0] - targetHSV[0]);
+            if (huedist > 0.5)
+                targetHSV[0] += 1.0;
+            else if (huedist < -0.5)
+                startHSV[0] += 1.0;
+
+            var hsv = new double[3]
+            {
+                t * targetHSV[0] + (1 - t) * startHSV[0],
+                t * targetHSV[1] + (1 - t) * startHSV[1],
+                t * targetHSV[2] + (1 - t) * startHSV[2]
+            };
+
+            return hsv;
+        }
+
         public static string ColorToString(double[] rgb)
         {
             return (rgb?.Length == 3)

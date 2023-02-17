@@ -7,7 +7,7 @@
 // </summary>
 // --------------------------------------------------------------------------------------------------------------------
 
-namespace HelixToolkit.Wpf
+namespace TwinklyWPF.Utilities
 {
     using System;
     using System.Globalization;
@@ -155,6 +155,56 @@ namespace HelixToolkit.Wpf
             hsv[1] = s;
             hsv[2] = v / 255.0;
             return hsv;
+        }
+
+        public static double[] RgbToHsv(double[] rgb)
+        {
+            var hsv = new double[3];
+            RgbToHsv(rgb, ref hsv);
+            return hsv;
+        }
+
+        public static void RgbToHsv(double[] rgb, ref double[] hsv)
+        {
+            double r = rgb[0];
+            double g = rgb[1];
+            double b = rgb[2];
+
+            double h = 0, s = 0;
+
+            double min = Math.Min(Math.Min(r, g), b);
+            double v = Math.Max(Math.Max(r, g), b);
+            double delta = v - min;
+
+            if (v > 0)
+            {
+                s = delta / v;
+            }
+
+            if (s > 0)
+            {
+                if (r == v)
+                {
+                    h = (g - b) / delta;
+                }
+                else if (g == v)
+                {
+                    h = 2 + (b - r) / delta;
+                }
+                else if (b == v)
+                {
+                    h = 4 + (r - g) / delta;
+                }
+
+                if (h < 0.0)
+                {
+                    h = h + 6;
+                }
+            }
+
+            hsv[0] = h / 6.0;
+            hsv[1] = s;
+            hsv[2] = v;
         }
 
         /// <summary>
@@ -432,6 +482,68 @@ namespace HelixToolkit.Wpf
             }
 
             return Color.FromRgb((byte)(r * 255), (byte)(g * 255), (byte)(b * 255));
+        }
+
+        public static double[] HsvToRgb(double[] hsv)
+        {
+            var rgb = new double[3];
+            HsvToRgb(hsv[0], hsv[1], hsv[2], ref rgb);
+            return rgb;
+        }
+
+        //  Cleaned up the above, with changes:
+        //  - hue can take any real value
+        //  - rgb must be an existing array of size 3
+        public static void HsvToRgb(double hue, double sat, double val, ref double[] rgb)
+        {
+            if (sat == 0)
+            {
+                // Gray scale
+                Array.Fill(rgb, val, 0, 3);
+            }
+            else
+            {
+                hue -= Math.Floor(hue); // hue mod 1
+                hue *= 6.0;
+                int i = (int)Math.Floor(hue);
+                double f = hue - i;
+                double aa = val * (1 - sat);
+                double bb = val * (1 - (sat * f));
+                double cc = val * (1 - (sat * (1 - f)));
+                switch (i)
+                {
+                    case 0:
+                        rgb[0] = val;
+                        rgb[1] = cc;
+                        rgb[2] = aa;
+                        break;
+                    case 1:
+                        rgb[0] = bb;
+                        rgb[1] = val;
+                        rgb[2] = aa;
+                        break;
+                    case 2:
+                        rgb[0] = aa;
+                        rgb[1] = val;
+                        rgb[2] = cc;
+                        break;
+                    case 3:
+                        rgb[0] = aa;
+                        rgb[1] = bb;
+                        rgb[2] = val;
+                        break;
+                    case 4:
+                        rgb[0] = cc;
+                        rgb[1] = aa;
+                        rgb[2] = val;
+                        break;
+                    case 5:
+                        rgb[0] = val;
+                        rgb[1] = aa;
+                        rgb[2] = bb;
+                        break;
+                }
+            }
         }
 
         /// <summary>
