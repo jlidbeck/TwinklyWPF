@@ -69,6 +69,7 @@ namespace TwinklyWPF
             set
             {
                 _layout = value;
+                OnPropertyChanged();
                 OnLayoutChanged();
             }
         }

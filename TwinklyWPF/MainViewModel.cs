@@ -154,8 +154,10 @@ namespace TwinklyWPF
 
                 OnPropertyChanged("Devices");
 
-                if (_arguments.Contains("RT") || App.Current.Settings.AutoStart)
+                if (_arguments.Contains("AutoStart") || App.Current.Settings.AutoStart)
                 {
+                    App.Current.MainWindow.ShowLayoutWindow();
+
                     // do not await, since StartRealtimeTest can't execute until it has the semaphore
                     Task _ = StartRealtimeTest();
                 }
@@ -422,7 +424,16 @@ namespace TwinklyWPF
 
         #region Realtime test
 
-        public RealtimeMovie RTMovie { get; private set; }
+        RealtimeMovie _animation;
+        public RealtimeMovie RTMovie
+        {
+            get => _animation;
+            private set
+            {
+                _animation = value;
+                OnPropertyChanged();
+            }
+        }
 
         public bool RealtimeMovieRunning => (RTMovie?.Running == true);
 
@@ -470,6 +481,7 @@ namespace TwinklyWPF
             App.Log("Starting RT");
             Message = "Starting RT";
             await RTMovie.Start();
+            Message = "RT Animation Started";
 
             OnPropertyChanged("RealtimeMovieRunning");
         }

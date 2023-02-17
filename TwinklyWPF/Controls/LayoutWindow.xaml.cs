@@ -68,16 +68,17 @@ namespace TwinklyWPF
         // polling UI update timer
         private DispatcherTimer _updateTimer;
 
+        #region Initialization
+
         public LayoutWindow()
         {
             InitializeComponent();
-
         }
 
         private void Window_Loaded(object sender, RoutedEventArgs e)
         {
-            OnPropertyChanged("Coordinates");
-            //Redraw();
+            Coordinates = MainViewModel.RTMovie?.Layout?.coordinates;
+
             _updateTimer = new DispatcherTimer(
                 new TimeSpan(0, 0, 0, 0, 20),   // ms
                 DispatcherPriority.Render,
@@ -86,17 +87,23 @@ namespace TwinklyWPF
             _updateTimer.Tag = this;
             _updateTimer.Start();
 
+            MainViewModel.PropertyChanged += MainViewModel_PropertyChanged;
         }
 
-
-        private void Window_IsVisibleChanged(object sender, DependencyPropertyChangedEventArgs e)
+        private void MainViewModel_PropertyChanged(object sender, PropertyChangedEventArgs e)
         {
-            if(IsVisible)
+            // What we're listening for is any change affecting RTMovie.Layout,
+            // so we know to update our coordinates and redraw the canvas
+            if (e.PropertyName == "RTMovie" || e.PropertyName == "RealtimeMovieRunning")
             {
-                OnPropertyChanged("Coordinates");
-                //Redraw();
+                if (MainViewModel.RTMovie?.Layout?.coordinates != null)
+                {
+                    Coordinates = MainViewModel.RTMovie?.Layout?.coordinates;
+                }
             }
         }
+
+        #endregion
 
         #region INotifyPropertyChanged boilerplate
 
@@ -109,7 +116,7 @@ namespace TwinklyWPF
             switch(name)
             {
                 case "Coordinates":
-                Redraw();
+                    Redraw();
                 break;
             }
         }

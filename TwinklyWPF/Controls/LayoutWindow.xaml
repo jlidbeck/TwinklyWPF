@@ -9,7 +9,6 @@
         Title="Layout" Height="600" Width="800" 
         WindowStartupLocation="CenterOwner"
         Loaded="Window_Loaded"
-        IsVisibleChanged="Window_IsVisibleChanged"
         KeyDown="Window_KeyDown"
         ShowInTaskbar="False"
         Background="#222222">
