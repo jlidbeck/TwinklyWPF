@@ -25,9 +25,12 @@ namespace TwinklyWPF
             set { Application.Current.MainWindow = value; }
         }
 
+        MainViewModel MainViewModel;
         protected override void OnStartup(StartupEventArgs e)
         {
             base.OnStartup(e);
+
+            MainViewModel = new MainViewModel(e.Args);
 
             try
             {
@@ -51,13 +54,14 @@ namespace TwinklyWPF
                 Console.WriteLine($"Error occurred reading settings from {_UserSettingsPath}: using defaults");
             }
 
-            MainWindow = new MainWindow() { DataContext = new MainViewModel(e.Args) };
+            MainWindow = new MainWindow() { DataContext = MainViewModel };
             MainWindow.Show();
         }
 
         public static void Log(string v)
         {
             Console.WriteLine(v);
+            App.Current.MainViewModel.AddMessage(v);
         }
 
         protected override void OnExit(ExitEventArgs e)

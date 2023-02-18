@@ -25,6 +25,7 @@
             <RowDefinition Height="auto" />
             <RowDefinition Height="auto" />
             <RowDefinition Height="auto" />
+            <RowDefinition Height="*" />
             <RowDefinition Height="auto" />
         </Grid.RowDefinitions>
         <TextBlock
@@ -33,19 +34,18 @@
             FontSize="25"
             Foreground="Fuchsia"
             Text="Chromatic Aberrations" />
-        <TextBlock
-            Grid.Row="0"
-            Grid.RowSpan="2"
+        <ComboBox
+            Grid.Row="6"
             Margin="2,0,2,2"
             FontSize="15"
-            Foreground="WhiteSmoke"
-            Text="{Binding Message}"
-            ToolTip="Message"
-            TextWrapping="Wrap" />
+            ItemsSource="{Binding Messages}"
+            SelectedItem="{Binding Message, Mode=OneWay}"
+            IsReadOnly="True"
+            ToolTip="Message" />
         <StackPanel Orientation="Horizontal"
                     Grid.Row="1" Grid.Column="1"
                     Margin="5 0"
-                    HorizontalAlignment="Right">
+                    HorizontalAlignment="Left">
             <Button x:Name="Rescan"
                     Content="Rescan"
                     MinWidth="50"

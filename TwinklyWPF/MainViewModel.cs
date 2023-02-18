@@ -64,15 +64,28 @@ namespace TwinklyWPF
             }
         }
 
-        private string _message = "";
+        private ObservableCollection<string> _messages = new ObservableCollection<string>();
+
+        public ObservableCollection<string> Messages
+        {
+            get => _messages;
+        }
+
         public string Message
         {
-            get { return _message; }
-            set
+            get { return _messages.LastOrDefault(); }
+            protected set
             {
-                _message = value;
-                OnPropertyChanged();
+                // Alternatively, use App.Log
+                AddMessage(value);
+                OnPropertyChanged("Message");
             }
+        }
+
+        public void AddMessage(string v)
+        {
+            _messages.Add(v);
+            OnPropertyChanged("Message");
         }
 
         #region Initialization
