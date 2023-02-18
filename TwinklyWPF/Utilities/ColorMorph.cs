@@ -9,6 +9,7 @@ namespace TwinklyWPF.Utilities
         double[] _startColor= new double[3];
         double[] _targetColor = null;
         Stopwatch _stopwatch = new Stopwatch();
+        Func<double[], double[], double, double[]> _interpolationFunction = MixSaturated;
 
         public double TransitionTimeMS { get; private set; } = 1800;      // ms
 
@@ -65,25 +66,19 @@ namespace TwinklyWPF.Utilities
         {
             double palTime = _stopwatch.ElapsedMilliseconds / TransitionTimeMS;
 
-            if (_targetColor?.Length == _startColor.Length)
+            if (_targetColor != null)
             {
                 // in transition
                 if (palTime >= 1.0)
                 {
-                    // color animation complete
+                    // color animation has completed
                     _stopwatch.Stop();
                     _startColor = _targetColor;
                     _targetColor = null;
                 }
                 else
                 {
-                    // interpolate colors
-                    var colors = new double[3];
-                    for (int j = 0; j < 3; ++j)
-                    {
-                        colors[j] = palTime * _targetColor[j] + (1 - palTime) * _startColor[j];
-                    }
-                    return colors;
+                    return _interpolationFunction(_startColor, _targetColor, palTime);
                 }
             }
 
@@ -94,7 +89,9 @@ namespace TwinklyWPF.Utilities
         //  If not in transition returns current color.
         public double[] TargetColor => InTransition ? _targetColor : _startColor;
 
+        #region RGB Interpolation functions
 
+        //  RGB linear interpolation
         public static double[] Mix(double[] startColor, double[] targetColor, double t)
         {
             // interpolate colors
@@ -106,6 +103,7 @@ namespace TwinklyWPF.Utilities
             return colors;
         }
 
+        // HSV linear interpolation
         public static double[] MixSaturated(double[] startColor, double[] targetColor, double t)
         {
             // interpolate colors
@@ -129,6 +127,24 @@ namespace TwinklyWPF.Utilities
             return rgb;
         }
 
+        public static double[] MixSparkle(double[] startColor, double[] targetColor, double t)
+        {
+            var colors = new double[3];
+            if (Math.Sin(100.0 / (1.01 - t)) < -0.5)
+                return new double[3] { 1, 1, 1 };
+
+            // RGB lirp
+            for (int j = 0; j < 3; ++j)
+            {
+                colors[j] = t * targetColor[j] + (1 - t) * startColor[j];
+            }
+            return colors;
+        }
+
+        #endregion
+
+        #region HSV functions
+
         public static double[] HsvLirp(double[] startHSV, double[] targetHSV, double t)
         {
             double huedist = (startHSV[0] - targetHSV[0]);
@@ -137,21 +153,12 @@ namespace TwinklyWPF.Utilities
             else if (huedist < -0.5)
                 startHSV[0] += 1.0;
 
-            var hsv = new double[3]
+            return new double[3]
             {
                 t * targetHSV[0] + (1 - t) * startHSV[0],
                 t * targetHSV[1] + (1 - t) * startHSV[1],
                 t * targetHSV[2] + (1 - t) * startHSV[2]
             };
-
-            return hsv;
-        }
-
-        public static string ColorToString(double[] rgb)
-        {
-            return (rgb?.Length == 3)
-                ? String.Format("{0:0.00} {0:0.00} {0:0.00}", rgb[0], rgb[1], rgb[2])
-                : "null";
         }
 
         //  hue: 
@@ -215,6 +222,15 @@ namespace TwinklyWPF.Utilities
 
             return new double[3] { r, g, b };
         }
+
+        #endregion
+        public static string ColorToString(double[] rgb)
+        {
+            return (rgb?.Length == 3)
+                ? String.Format("{0:0.00} {0:0.00} {0:0.00}", rgb[0], rgb[1], rgb[2])
+                : "null";
+        }
+
 
     }
 }
