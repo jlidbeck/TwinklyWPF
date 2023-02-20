@@ -859,22 +859,10 @@ namespace TwinklyWPF
                             var color = (_life2[j] >= alive)
                                 ? ColorMorph.Mix(livingColor, thrivingColor, (double)(_life2[j] - alive) / alive)
                                 : ColorMorph.Mix(Black, dyingColor, (double)_life2[j] / alive);
-                            var r = (byte)(Math.Clamp(255.5 * color[0], 0, 255));
-                            var g = (byte)(Math.Clamp(255.5 * color[1], 0, 255));
-                            var b = (byte)(Math.Clamp(255.5 * color[2], 0, 255));
-                            int fri = 3 * _lifeGridIndex[j];
-                            _frameData[fri  ] = r;
-                            _frameData[fri+1] = g;
-                            _frameData[fri+2] = b;
+                            SetFrameDataRGB(3 * _lifeGridIndex[j], color);
                         }
 
-                        for (int j = _life.Length; j < Layout.coordinates.Length; ++j)
-                        {
-                            int fri = 3 * j;
-                            _frameData[fri    ] = _frameData[(fri    ) % 1800];
-                            _frameData[fri + 1] = _frameData[(fri + 1) % 1800];
-                            _frameData[fri + 2] = _frameData[(fri + 2) % 1800];
-                        }
+                        CopyFillFrameData(3 * _life.Length);
 
                         _life2.CopyTo(_life, 0);
                     }
@@ -941,6 +929,29 @@ namespace TwinklyWPF
                 _frameData[fi++] = (byte)(Math.Clamp(255.9 * c[2], 0, 255));
             }
 
+        }
+
+        int SetFrameDataRGB(int offset, double[] color)
+        {
+            _frameData[offset++] = (byte)(Math.Clamp(255.5 * color[0], 0, 255));
+            _frameData[offset++] = (byte)(Math.Clamp(255.5 * color[1], 0, 255));
+            _frameData[offset++] = (byte)(Math.Clamp(255.5 * color[2], 0, 255));
+            return offset;
+        }
+
+        //  Fills the remainder of framedata by copying [0..offset) repeatedly
+        void CopyFillFrameData(int offset)
+        {
+            int length = offset;
+            while(offset + length <= _frameData.Length)
+            {
+                Array.Copy(_frameData, 0, _frameData, offset, length);
+                offset += length;
+            }
+            if (offset < _frameData.Length)
+            {
+                Array.Copy(_frameData, 0, _frameData, offset, _frameData.Length - offset);
+            }
         }
 
         #region INotifyPropertyChanged
