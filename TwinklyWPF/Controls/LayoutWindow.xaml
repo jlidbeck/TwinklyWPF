@@ -77,12 +77,12 @@
                       ToolTip="Preview mode: animates frames, but does not send to devices"
                       Content="Preview" />
             <TextBlock x:Name="MovieRunningText" Text="NA" Style="{StaticResource ResourceKey=TextBlockValue}" />
-            <Button x:Name="PrevColorMode" Content="&lt;&lt;" MouseDown="PrevColorMode_MouseDown" MinWidth="16" Padding="4" BorderThickness="0" />
+            <Button x:Name="PrevColorMode" Content="&lt;&lt;" Click="PrevColorMode_MouseDown" MinWidth="16" Padding="4" BorderThickness="0" />
             <ComboBox Name="MovieColorMode" 
                       ItemsSource="{Binding RTMovie.ColorModes}" 
                       SelectedItem="{Binding RTMovie.ColorModeName}"
                       MinWidth="160" />
-            <Button x:Name="NextColorMode" Content=">>" MouseDown="NextColorMode_MouseDown" MinWidth="16" Padding="4" BorderThickness="0" />
+            <Button x:Name="NextColorMode" Content=">>" Click="NextColorMode_MouseDown" MinWidth="16" Padding="4" BorderThickness="0" />
             <TextBlock x:Name="MoviePalette" Background="Black" Padding="3 5 3 0" >
                 <Run Name="MoviePalette0" Text=" ■ " MouseDown="MoviePalette_MouseDown" />
                 <Run Name="MoviePalette1" Text=" ■ " MouseDown="MoviePalette_MouseDown" />
