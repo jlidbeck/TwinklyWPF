@@ -18,7 +18,7 @@ namespace TwinklyWPF
 {
     public class RealtimeMovieSettings : INotifyPropertyChanged
     {
-        public int ColorMode = 9;
+        public int ColorMode = 7;
 
         // interactivity timeout
         bool _idleTimeoutEnabled = true;
@@ -709,17 +709,59 @@ namespace TwinklyWPF
 
                 case 7: // palette test / color calibration pattern
                     {
-                        double offset = (t % 10.0) / 10.0 * 8.0;
+                        if (_animationNeedsInit)
+                        {
+                            _currentPalette.Clear();
+                            foreach(var rgb in GoodPalette)
+                                _currentPalette.Add(new ColorMorph(rgb));
+
+                            colors = _currentPalette
+                                .Select((colorMorph) => { return colorMorph.GetColor(); })
+                                .ToArray();
+
+                            Piano.Knobs[0] = 0.0;   // offset
+                            Piano.Knobs[1] = 0.5;   // speed
+                            Piano.Knobs[4] = 0.5;   // stripe width
+                            Piano.Knobs[6] = 0.7;   // blend width
+                            Piano.Knobs[7] = 0.0;   // blend algorithm
+
+                            _animationNeedsInit = false;
+                        }
+
+                        double width = 0.1 + 10.0 * Piano.Knobs[4]; // color band width, in spatial coordinates
+                        double offset = t * Piano.Knobs[1] + (width * colors.Length * Piano.Knobs[0]);
+                        double blendWidth = Piano.Knobs[6];
                         for (int j = 0; j < Layout.coordinates.Length; ++j)
                         {
                             if (Layout.coordinates[j].z == 3 || Layout.coordinates[j].z == 11) { fi += 3; continue; }
 
                             double x = Layout.coordinates[j].x + 2.0 * Layout.coordinates[j].y;
 
-                            int coloridx = (int)((offset + x) / 8.0 * GoodPalette.Length);
-                            if (coloridx < 0) coloridx += GoodPalette.Length;
-                            var color = GoodPalette[coloridx % GoodPalette.Length];
-                            fi = SetFrameDataRGB(fi, color);
+                            if (Piano.Knobs[7] < 0.25)
+                            {
+                                // no interpolation
+                                int coloridx = (int)((offset + x) / width) % colors.Length;
+                                if (coloridx < 0) coloridx += colors.Length;
+                                fi = SetFrameDataRGB(fi, colors[coloridx]);
+                            }
+                            else
+                            {
+                                // linear RGB or HSV interpolation, depending on slider
+                                double px = Waveform.fmodf((offset + x) / width, colors.Length);
+                                int coloridx = (int)(px);
+                                //if (coloridx < 0) coloridx += colors.Length;
+                                var color0 = colors[coloridx % colors.Length];
+                                var color1 = colors[(coloridx + 1) % colors.Length];
+                                // based on slider, mix parameter a [0..1] should be:
+                                // at 0.0: always 0
+                                // at 0.5: [0,0.5) => 0, [0.5,1.0] -> px mod 1 - 0.5
+                                // at 1.0: px mod 1
+                                double a = (px - coloridx >= blendWidth ? 1.0 : (px - coloridx) / blendWidth);
+                                var rgbBlend = ColorMorph.Mix(color0, color1, a);
+                                var hsvBlend = ColorMorph.MixSaturated(color0, color1, a);
+
+                                fi = SetFrameDataRGB(fi, ColorMorph.Mix(rgbBlend, hsvBlend, (Piano.Knobs[7] * 4.0 - 1.0) / 3.0));
+                            }
                         }
 
                     }
