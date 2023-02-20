@@ -127,7 +127,7 @@ namespace TwinklyWPF
             "TestPattern",
             "Palette Test Pattern",
             "Oldschool Quantum",
-            "Ambients",
+            "Conic",
             "Life"
         };
 
@@ -290,8 +290,6 @@ namespace TwinklyWPF
             }
             _layoutBounds = bounds;
 
-            _walkerGroup = new Animation.WalkerGroup(8, _layoutBounds.Left, _layoutBounds.Right, GoodPalette);
-            _sinePlot = new Animation.SinePlot { palette = _currentPalette };
         }
 
 
@@ -442,10 +440,22 @@ namespace TwinklyWPF
 
             Debug.Assert(_frameData.Length == n * 3);
 
+            // get a palette snapshot
+            var colors = _currentPalette
+                .Select((colorMorph) => { return colorMorph.GetColor(); })
+                .ToArray();
+
             switch (_settings.ColorMode)
             {
                 case 1: // trinity: 3-color palette changing sinusoidal
                     {
+                        if (_animationNeedsInit || _sinePlot == null)
+                        {
+                            _sinePlot = new Animation.SinePlot { palette = _currentPalette };
+
+                            _animationNeedsInit = false;
+                        }
+
                         if (_currentPalette.Count != 3)
                         {
                             RandomizePalette(3);
@@ -487,9 +497,7 @@ namespace TwinklyWPF
                                 color[2] *= v;// + Piano.BassBump;
                             }
 
-                            _frameData[fi++] = (byte)(Math.Clamp(255.5 * color[0], 0, 255));
-                            _frameData[fi++] = (byte)(Math.Clamp(255.5 * color[1], 0, 255));
-                            _frameData[fi++] = (byte)(Math.Clamp(255.5 * color[2], 0, 255));
+                            fi = SetFrameDataRGB(fi, color);
                         }
                     }
                     return;
@@ -511,6 +519,16 @@ namespace TwinklyWPF
 
                 case 3: // slow panning ribbons
                     {
+                        if (_animationNeedsInit || colors.Length < 3)
+                        {
+                            RandomizePalette(3);
+                            colors = _currentPalette
+                                .Select((colorMorph) => { return colorMorph.GetColor(); })
+                                .ToArray();
+
+                            _animationNeedsInit = false;
+                        }
+
                         double[] angles = new double[4] { 
                             t * Piano.Knobs[4],//0.1, 
                             t * Piano.Knobs[5],//-0.13, 
@@ -524,11 +542,6 @@ namespace TwinklyWPF
                             coss[k] = Math.Cos(angles[k]);
                             sins[k] = Math.Sin(angles[k]);
                         }
-
-                        var colors = new double[3][];
-                        colors[0] = _currentPalette[0].GetColor();
-                        colors[1] = _currentPalette[1].GetColor();
-                        colors[2] = _currentPalette[2].GetColor();
 
                         for (int j = 0; j < Layout.coordinates.Length; ++j)
                         {
@@ -564,10 +577,15 @@ namespace TwinklyWPF
 
                 case 4: // chroma key ripples
                     {
-                        var colors = new double[3][];
-                        colors[0] = _currentPalette[0].GetColor();
-                        colors[1] = _currentPalette[1].GetColor();
-                        colors[2] = _currentPalette[2].GetColor();
+                        if (_animationNeedsInit || colors.Length < 3)
+                        {
+                            RandomizePalette(3);
+                            colors = _currentPalette
+                                .Select((colorMorph) => { return colorMorph.GetColor(); })
+                                .ToArray();
+
+                            _animationNeedsInit = false;
+                        }
 
                         for (int j = 0; j < Layout.coordinates.Length; ++j)
                         {
@@ -631,6 +649,13 @@ namespace TwinklyWPF
 
                 case 5: // b gradients
                     {
+                        if (_animationNeedsInit || _walkerGroup == null)
+                        {
+                            _walkerGroup = new Animation.WalkerGroup(8, _layoutBounds.Left, _layoutBounds.Right, GoodPalette);
+
+                            _animationNeedsInit = false;
+                        }
+
                         _walkerGroup.Update();
                         for (int j = 0; j < Layout.coordinates.Length; ++j)
                         {
@@ -682,7 +707,7 @@ namespace TwinklyWPF
                     }
                     return;
 
-                case 7: // color calibration pattern
+                case 7: // palette test / color calibration pattern
                     {
                         double offset = (t % 10.0) / 10.0 * 8.0;
                         for (int j = 0; j < Layout.coordinates.Length; ++j)
@@ -694,12 +719,7 @@ namespace TwinklyWPF
                             int coloridx = (int)((offset + x) / 8.0 * GoodPalette.Length);
                             if (coloridx < 0) coloridx += GoodPalette.Length;
                             var color = GoodPalette[coloridx % GoodPalette.Length];
-                            var r = (byte)(Math.Clamp(255.5 * color[0], 0, 255));
-                            var g = (byte)(Math.Clamp(255.5 * color[1], 0, 255));
-                            var b = (byte)(Math.Clamp(255.5 * color[2], 0, 255));
-                            _frameData[fi++] = r;
-                            _frameData[fi++] = g;
-                            _frameData[fi++] = b;
+                            fi = SetFrameDataRGB(fi, color);
                         }
 
                     }
@@ -707,9 +727,12 @@ namespace TwinklyWPF
 
                 case 8: // old-school quantum
                     {
-                        if(_currentPalette.Count != 5)
+                        if (_animationNeedsInit || colors.Length != 5)
                         {
                             RandomizePalette(5);
+                            colors = _currentPalette
+                                .Select((colorMorph) => { return colorMorph.GetColor(); })
+                                .ToArray();
 
                             if (Piano.Knobs[4]==0)
                             {
@@ -717,11 +740,9 @@ namespace TwinklyWPF
                                 Piano.Knobs[5] = 0.5;
                                 Piano.Knobs[6] = 0.1;
                             }
-                        }
 
-                        var colors = _currentPalette
-                            .Select((colorMorph) => { return colorMorph.GetColor(); })
-                            .ToArray();
+                            _animationNeedsInit = false;
+                        }
 
                         double k = 3.0 * Piano.Knobs[4];    // 0.3 colors per meter?
                         double noiseLevel = 2.0 * Piano.Knobs[5];
@@ -743,13 +764,7 @@ namespace TwinklyWPF
                             if (coloridx < 0)
                                 coloridx += colors.Length;
 
-                            var color = colors[coloridx];
-                            var r = (byte)(Math.Clamp(255.5 * color[0], 0, 255));
-                            var g = (byte)(Math.Clamp(255.5 * color[1], 0, 255));
-                            var b = (byte)(Math.Clamp(255.5 * color[2], 0, 255));
-                            _frameData[fi++] = r;
-                            _frameData[fi++] = g;
-                            _frameData[fi++] = b;
+                            fi = SetFrameDataRGB(fi, colors[coloridx]);
                         }
                     }
                     return;
@@ -759,36 +774,40 @@ namespace TwinklyWPF
                         if(_animationNeedsInit)
                         {
                             _randomBlackProbability = 1000;
-                            _animationNeedsInit = false;
-                        }
+                            if (_noise?.Length != Layout.coordinates.Length)
+                            {
+                                _noise = new double[Layout.coordinates.Length];
+                                for (int i = 0; i < _noise.Length; ++i)
+                                    _noise[i] = _random.NextDouble();
+                            }
 
-                        if (_currentPalette.Count != 4)
-                        {
-                            RandomizePalette(4);
+                            if (_currentPalette.Count != 4)
+                            {
+                                RandomizePalette(4);
+                                colors = _currentPalette
+                                    .Select((colorMorph) => { return colorMorph.GetColor(); })
+                                    .ToArray();
+                            }
+
+                            Piano.Knobs[0] = 0.5;   // color balance
+                            Piano.Knobs[1] = 0.5;   // hardness
                             Piano.Knobs[4] = 0.5;
                             Piano.Knobs[5] = 1.0;
                             Piano.Knobs[6] = 0.0;
                             Piano.Knobs[7] = 0.5;
+
+                            _animationNeedsInit = false;
                         }
+
                         if(Piano.IdleTime > _settings.IdleTimeout)
                         {
-                            Piano.Knobs[0] = (0.25 + 0.25 * Math.Cos(t * 2.7)) + 0.21 * 0.21 * Math.Cos(t * 3.9);
+                            Piano.Knobs[0] = (0.25 + 0.25 * Math.Cos(t * 0.9)) + 0.21 * 0.21 * Math.Cos(t * 3.9);
                             Piano.Knobs[1] = 0.5;
                             Piano.Knobs[4] = (0.5 + 0.5 * Math.Cos(t * 0.35));
                             Piano.Knobs[5] = (0.5 + 0.5 * Math.Cos(t * 0.31));
                             Piano.Knobs[6] = (0.5 + 0.5 * Math.Cos(t * 0.32));
                             Piano.Knobs[7] = (0.5 + 0.5 * Math.Cos(t * 0.34));
                         }
-                        if (_noise?.Length != Layout.coordinates.Length)
-                        {
-                            _noise = new double[Layout.coordinates.Length];
-                            for (int i = 0; i < _noise.Length; ++i)
-                                _noise[i] = _random.NextDouble();
-                        }
-
-                        var colors = _currentPalette
-                            .Select((colorMorph) => { return colorMorph.GetColor(); })
-                            .ToArray();
 
                         for (int j = 0; j < Layout.coordinates.Length; ++j)
                         {
@@ -805,18 +824,19 @@ namespace TwinklyWPF
                             double hardness = Piano.Knobs[1] * 10.0 + 0.1;
                             double wash = 0.5 + 0.5 * Math.Tanh(hardness * f);
                             // scale noise range to 0..5, where 0.2 of the colors will be blended
-                            double ab = 5.0 * _noise[j] - 1.0 - 5.0 * Piano.Knobs[0];  // if knob is between .25 and .75, all colors will be blended
+                            double noise = 0.5 + 0.5 * Math.Sin(t * (0.1 + _noise[j]));
+                            double ab = 5.0 * noise - 1.0 - 5.0 * Piano.Knobs[0];  // if knob is between .25 and .75, all colors will be blended
+                            ab = Math.Clamp(ab, 0, 1);
 
-                            double[] colorU = ColorMorph.Mix(colors[0], colors[1], ab);
-                            double[] colorV = ColorMorph.Mix(colors[2], colors[3], ab);
-                            double[] color = ColorMorph.Mix(colorU, colorV, wash);
+                            var hsvColors = colors
+                                .Select((rgb) => { return ColorHelper.RgbToHsv(rgb); })
+                                .ToArray();
 
-                            var r = (byte)(Math.Clamp(255.5 * color[0], 0, 255));
-                            var g = (byte)(Math.Clamp(255.5 * color[1], 0, 255));
-                            var b = (byte)(Math.Clamp(255.5 * color[2], 0, 255));
-                            _frameData[fi++] = r;
-                            _frameData[fi++] = g;
-                            _frameData[fi++] = b;
+                            double[] colorU = ColorMorph.HsvLirp(hsvColors[0], hsvColors[1], ab);
+                            double[] colorV = ColorMorph.HsvLirp(hsvColors[2], hsvColors[3], ab);
+                            double[] color = ColorMorph.HsvLirp(colorU, colorV, wash);
+
+                            fi = SetFrameDataRGB(fi, ColorHelper.HsvToRgb(color));
                         }
                     }
                     return;
