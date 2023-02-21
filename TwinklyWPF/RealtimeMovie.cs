@@ -19,7 +19,7 @@ namespace TwinklyWPF
 {
     public class RealtimeMovieSettings : INotifyPropertyChanged
     {
-        public int ColorMode = 10;
+        public int ColorMode = 1;
 
         // interactivity timeout
         bool _idleTimeoutEnabled = true;
@@ -153,7 +153,7 @@ namespace TwinklyWPF
             private set;
         } = new List<IAnimation> {
                                     new AnimationPlaceholder("Old Chroma"),
-                                    new AnimationPlaceholder("Trinity"),
+                                    new SinePlot(),
                                     new AnimationPlaceholder("Chromatic Aberration"),
                                     new AnimationPlaceholder("Ribbons"),
                                     new AnimationPlaceholder("Chroma key ripples"),
@@ -485,61 +485,6 @@ namespace TwinklyWPF
 
             switch (_settings.ColorMode)
             {
-                case 1: // trinity: 3-color palette changing sinusoidal
-                    {
-                        if (_animationNeedsInit || _sinePlot == null)
-                        {
-                            _sinePlot = new Animation.SinePlot { palette = _currentPalette };
-
-                            _animationNeedsInit = false;
-                        }
-
-                        if (_currentPalette.Count != 3)
-                        {
-                            RandomizePalette(3);
-                        }
-
-                        _sinePlot.Update();
-
-                        for (int j = 0; j < Layout.coordinates.Length; ++j)
-                        {
-                            if (Layout.coordinates[j].z == 3 || Layout.coordinates[j].z == 11) { fi += 3; continue; }
-
-                            double x = Layout.coordinates[j].x;
-                            double y = Layout.coordinates[j].y;
-
-                            double[] color = _sinePlot.GetColorAt(x, y);
-
-                            // if a note has recently been played...
-                            if (/*j < 60 &&*/ Piano.CurrentTime - Piano.LastInteractionTime < _settings.IdleTimeout)
-                            {
-                                const double step = 0.3;
-                                double v = 0;
-                                var chromaPower = Piano.ChromaPower();
-                                const double octavex = 12 * step;
-                                double px = 0.33*step;
-                                foreach (var p in chromaPower)
-                                {
-                                    var w = p * Waveform.SpacedTriangle(x - px, octavex, 5);
-                                    v += w;
-
-                                    px += step;
-                                }
-
-                                v = Math.Min(1.0, v);
-
-                                // shows notes in a more quantum way
-                                //var v = Piano.ChromaPower()[j % 12];
-                                color[0] *= v;// + Piano.BassBump * 5;
-                                color[1] *= v;
-                                color[2] *= v;// + Piano.BassBump;
-                            }
-
-                            fi = SetFrameDataRGB(fi, color);
-                        }
-                    }
-                    return;
-
                 case 2: // simple chromatic abberration
                 {
                     for (int j = 0; j < Layout.coordinates.Length; ++j)

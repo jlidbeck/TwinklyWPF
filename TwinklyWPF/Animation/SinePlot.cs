@@ -1,55 +1,84 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using TwinklyWPF.Utilities;
 
 namespace TwinklyWPF.Animation
 {
-    public class SinePlot
+    public class SinePlot : IAnimation
     {
-        public IList<ColorMorph> palette;
+        RealtimeMovie _context;
 
-        // state
-        Stopwatch _stopwatch;
-        Random _random = new Random();
-
-        // const per frame
-        double t;
-        double xscale, zscale;
+        public string Name => "Neapolitan";
 
         public SinePlot()
         {
-            // ugly default palette
-            palette = new ColorMorph[3] {
-                    new ColorMorph( 1.0, 0.0, 0.0 ),
-                    new ColorMorph( 0.0, 1.0, 0.0 ),
-                    new ColorMorph( 0.0, 0.0, 1.0 ),
-                };
-
-            _stopwatch = new Stopwatch();
-            _stopwatch.Start();
         }
 
-        public void Update()
+        public void Initialize(RealtimeMovie context)
         {
-            t = _stopwatch.ElapsedMilliseconds * 0.001;
-            xscale = 0.5 + 0.4 * Math.Cos(t * 0.2);
-            zscale = 6.0 + 5.0 * Math.Cos(t * 0.11);
+            _context = context;
+
+            if (_context.CurrentPalette.Count != 3)
+            {
+                _context.RandomizePalette(3);
+            }
         }
 
-        public double[] GetColorAt(double x, double y)
+        public void Draw(byte[] _frameData)
         {
-            double u = x * xscale - y * 0.2;
-            double v = x * 0.2 + y * xscale + t * 0.2;
+            double t = _context.CurrentTime;
+            var colors = _context.GetPaletteSnapshot();
 
-            double z = Math.Sin(zscale * (Math.Sin(u) + Math.Sin(v)));
+            double xscale = 0.5 + 0.4 * Math.Cos(t * 0.2);
+            double zscale = 6.0 + 5.0 * Math.Cos(t * 0.11);
 
-            if (z < 0)
-                return ColorMorph.Mix(palette[1].GetColor(), palette[2].GetColor(), -z);
-            return ColorMorph.Mix(palette[1].GetColor(), palette[0].GetColor(), z);
+            int fi = 0;
+            for (int j = 0; j < _context.Layout.coordinates.Length; ++j)
+            {
+                if (_context.Layout.coordinates[j].z == 3 || _context.Layout.coordinates[j].z == 11) { fi += 3; continue; }
+
+                double x = _context.Layout.coordinates[j].x;
+                double y = _context.Layout.coordinates[j].y;
+                double[] color;
+                {
+
+                    double u = x * xscale - y * 0.2;
+                    double v = x * 0.2 + y * xscale + t * 0.2;
+
+                    double z = Math.Sin(zscale * (Math.Sin(u) + Math.Sin(v)));
+
+                    color = (z < 0)
+                                ? ColorMorph.MixSaturated(colors[1], colors[2], -z)
+                                : ColorMorph.MixSaturated(colors[1], colors[0], z);
+                }
+
+                // if a note has recently been played...
+                if (/*j < 60 &&*/ _context.Piano.IdleTime < _context.Settings.IdleTimeout)
+                {
+                    const double step = 0.3;
+                    double z = 0;
+                    var chromaPower = _context.Piano.ChromaPower();
+                    const double octavex = 12 * step;
+                    double px = 0.33 * step;
+                    foreach (var p in chromaPower)
+                    {
+                        var w = p * Waveform.SpacedTriangle(x - px, octavex, 5);
+                        z += w;
+
+                        px += step;
+                    }
+
+                    z = Math.Min(1.0, z);
+
+                    // shows notes in a more quantum way
+                    //var z = Piano.ChromaPower()[j % 12];
+                    color[0] *= z;// + Piano.BassBump * 5;
+                    color[1] *= z;
+                    color[2] *= z;// + Piano.BassBump;
+                }
+
+                fi = _context.SetFrameDataRGB(fi, color);
+            }
         }
-    };
+
+    }
 }
