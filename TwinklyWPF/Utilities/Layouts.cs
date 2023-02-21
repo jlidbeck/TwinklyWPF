@@ -127,19 +127,16 @@ namespace TwinklyWPF.Utilities
             public int x, y;
         }
 
-        public static void Initialize600GridLayoutIndex(out PointI[] coordinates, out int[] indexGrid)
+        //  For a grid layout:
+        //  Sets up indexGrid as a map from row-major ordering to the zigzag, middle-up and middle-down
+        //  ordering used by the physical device
+        public static void Initialize600GridLayoutIndex(out int[] indexGrid)
         {
-            coordinates = new PointI[600];
-
-            // index into coordinates: so 0..23 is top row, 24..47 2nd row, etc.
             indexGrid = new int[600];
 
             int x = 11, y = 12;
             for (int j = 0; j < 300; ++j)
             {
-                coordinates[j] = new PointI { x = x, y = y };
-                coordinates[j + 300] = new PointI { x = 23 - x, y = 24 - y };
-
                 indexGrid[x + 24 * y] = j;
                 indexGrid[23 - x + 24 * (24 - y)] = j + 300;
 
@@ -151,6 +148,15 @@ namespace TwinklyWPF.Utilities
                     --x;                        // 0..10, 35..47 go left
             }
         }
+
+
     }
 
+    public struct GridLayout
+    {
+        public int width, height;
+
+        // array of size {width}*{height} of device LED indices in row-major order
+        public int[] indices;
+    }
 }

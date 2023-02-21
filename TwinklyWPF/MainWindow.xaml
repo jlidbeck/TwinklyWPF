@@ -97,7 +97,7 @@
                             Visibility="{Binding RealtimeMovieRunning, Converter={StaticResource BoolToVis}}"
                             IsEnabled="{Binding RealtimeMovieRunning}" />
                 </Grid>
-                <TextBlock Text="{Binding RTMovie.ColorModeName, Mode=OneWay}" MinWidth="50" />
+                <TextBlock Text="{Binding RTMovie.SelectedAnimation, Mode=OneWay}" MinWidth="50" />
                 <Label Content="FPS:"  />
                 <TextBlock Text="{Binding FPS, Mode=OneWay, StringFormat=N3}" Style="{StaticResource ResourceKey=TextBlockValue}" />
                 <Button Content="Layout" ToolTip="ActiveDevice: led/layout/full"

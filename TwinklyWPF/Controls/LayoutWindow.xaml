@@ -79,8 +79,9 @@
             <TextBlock x:Name="MovieRunningText" Text="NA" Style="{StaticResource ResourceKey=TextBlockValue}" />
             <Button x:Name="PrevColorMode" Content="&lt;&lt;" Click="PrevColorMode_MouseDown" MinWidth="16" Padding="4" BorderThickness="0" />
             <ComboBox Name="MovieColorMode" 
-                      ItemsSource="{Binding RTMovie.ColorModes}" 
-                      SelectedItem="{Binding RTMovie.ColorModeName}"
+                      ItemsSource="{Binding RTMovie.AnimationModes}" 
+                      DisplayMemberPath="Name"
+                      SelectedItem="{Binding RTMovie.SelectedAnimation}"
                       MinWidth="160" />
             <Button x:Name="NextColorMode" Content=">>" Click="NextColorMode_MouseDown" MinWidth="16" Padding="4" BorderThickness="0" />
             <TextBlock x:Name="MoviePalette" Background="Black" Padding="3 5 3 0" >

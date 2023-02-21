@@ -10,6 +10,7 @@ using System.Threading.Tasks;
 using System.Timers;
 using System.Windows;
 using Twinkly_xled.JSONModels;
+using TwinklyWPF.Animation;
 using TwinklyWPF.Utilities;
 using static TwinklyWPF.Piano;
 using static TwinklyWPF.Utilities.Layouts;
@@ -18,7 +19,7 @@ namespace TwinklyWPF
 {
     public class RealtimeMovieSettings : INotifyPropertyChanged
     {
-        public int ColorMode = 7;
+        public int ColorMode = 10;
 
         // interactivity timeout
         bool _idleTimeoutEnabled = true;
@@ -74,6 +75,20 @@ namespace TwinklyWPF
             }
         }
 
+        public GridLayout GetGridLayout()
+        {
+            // TODO: verify at least one device has grid layout
+
+            var layout = new GridLayout
+            {
+                width = 24,
+                height = 25,
+                indices = new int[600]
+            };
+            Layouts.Initialize600GridLayoutIndex(out layout.indices);
+            return layout;
+        }
+
         Rect _layoutBounds;
 
         Random _random = new Random();
@@ -106,52 +121,57 @@ namespace TwinklyWPF
             set { 
                 _settings = value; 
                 OnPropertyChanged();
-                OnPropertyChanged("ColorModes");
-                OnPropertyChanged("ColorModeName");
+                OnPropertyChanged("AnimationModes");
+                OnPropertyChanged("SelectedAnimation");
             }
         }
 
         bool _animationNeedsInit = true;
 
-        public List<string> ColorModes
-        { 
-            get;
-            set;
-        } = new List<string> { 
-            "Old Chroma",
-            "Trinity",
-            "Chromatic Aberration",
-            "Ribbons",
-            "Chroma key ripples",
-            "B gradients",
-            "TestPattern",
-            "Palette Test Pattern",
-            "Oldschool Quantum",
-            "Conic",
-            "Life"
-        };
-
-        public string ColorModeName
+        public IAnimation SelectedAnimation
         {
-            get => ColorModes[_settings.ColorMode];
+            get => AnimationModes[_settings.ColorMode];
             set
             {
-                int idx = ColorModes.IndexOf(value);
-                if(idx>=0)
+                for (int i = 0; i < AnimationModes.Count; i++)
                 {
-                    _settings.ColorMode = idx;
-                    _animationNeedsInit = true;
-                    OnPropertyChanged();
+                    if (AnimationModes[i] == value)
+                    {
+                        _settings.ColorMode = i;
+                        _animationNeedsInit = true;
+                        OnPropertyChanged();
+                        return;
+                    }
                 }
+                throw new ArgumentException("Invalid animation mode");
             }
         }
 
+        public List<IAnimation> AnimationModes
+        {
+            get;
+            private set;
+        } = new List<IAnimation> {
+                                    new AnimationPlaceholder("Old Chroma"),
+                                    new AnimationPlaceholder("Trinity"),
+                                    new AnimationPlaceholder("Chromatic Aberration"),
+                                    new AnimationPlaceholder("Ribbons"),
+                                    new AnimationPlaceholder("Chroma key ripples"),
+                                    new AnimationPlaceholder("B gradients"),
+                                    new AnimationPlaceholder("TestPattern"),
+                                    new AnimationPlaceholder("Palette Test Pattern"),
+                                    new AnimationPlaceholder("Oldschool Quantum"),
+                                    new AnimationPlaceholder("Conic"),
+                                    new Life()
+                                 };
+
+
         public void NextColorMode(int step=1)
         {
-            _settings.ColorMode = (_settings.ColorMode + step + ColorModes.Count) % ColorModes.Count;
+            _settings.ColorMode = (_settings.ColorMode + step + AnimationModes.Count) % AnimationModes.Count;
             _animationNeedsInit = true;
             LastInteractionTime = CurrentTime;
-            OnPropertyChanged("ColorModeName");
+            OnPropertyChanged("SelectedAnimation");
         }
 
         public readonly static double[] Black = new double[3] { 0, 0, 0 };
@@ -183,14 +203,17 @@ namespace TwinklyWPF
 
         public List<ColorMorph> CurrentPalette => _currentPalette;
 
+        public double[][] GetPaletteSnapshot()
+        {
+            return _currentPalette.Select((colorMorph) => { return colorMorph.GetColor(); })
+                                  .ToArray();
+        }
+
         Animation.WalkerGroup _walkerGroup;
 
         Animation.SinePlot _sinePlot;
 
         double[] _noise;
-
-        int[] _life, _life2;
-        int[] _lifeGridIndex;
 
         public RealtimeMovie()
         {
@@ -302,8 +325,8 @@ namespace TwinklyWPF
         SpatialEvent[] _lastNotes = new SpatialEvent[12];
         int _lastNotesIndex = 0;
 
-        private int _nextColorToChange = 0; // should be treated as static in this function
-        int _randomBlackProbability = 0;
+        private int _nextColorToChange = 0;
+        public int _randomBlackProbability = 0;
 
         private void HandlePianoKeyDownEvent(object s, EventArgs evt_)
         {
@@ -434,6 +457,21 @@ namespace TwinklyWPF
 
         protected virtual void DrawFrame()
         {
+            {
+                var animation = SelectedAnimation;
+                if (!(animation is AnimationPlaceholder))
+                {
+                    if (_animationNeedsInit)
+                    {
+                        animation.Initialize(this);
+                        _animationNeedsInit = false;
+                    }
+
+                    animation.Draw(_frameData);
+                    return;
+                }
+            }
+
             double t = _stopwatch.ElapsedMilliseconds * 0.001;
             int fi = 0; // byte offset to start filling _frameData
             int n = Layout.coordinates.Length;
@@ -883,52 +921,6 @@ namespace TwinklyWPF
                     }
                     return;
 
-                case 10:    // life!
-                    {
-                        const int alive = 40;
-                        if (_animationNeedsInit || _life?.Length != 600)
-                        {
-                            _life = new int[600];
-                            _life2 = new int[600];
-                            PointI[] junk;
-                            Layouts.Initialize600GridLayoutIndex(out junk, out _lifeGridIndex);
-                            // this algorithm is hardcoded to run on a 600 grid.
-                            for (int i = 0; i < _life.Length; ++i)
-                                _life[i] = (_random.Next() % (alive*2));
-                            _animationNeedsInit = false;
-                        }
-
-                        var livingColor = _currentPalette[0].GetColor();
-                        var thrivingColor = _currentPalette[1].GetColor();
-                        var dyingColor = _currentPalette[2].GetColor();
-
-                        const int w = 24;
-                        for (int j = 0; j < _life.Length; ++j)
-                        {
-                            int sum = (_life[(j + 600 - w - 1) % 600] >= alive ? 1 : 0)
-                                    + (_life[(j + 600 - w)     % 600] >= alive ? 1 : 0)
-                                    + (_life[(j + 600 - w + 1) % 600] >= alive ? 1 : 0)
-                                    + (_life[(j + 600 - 1)     % 600] >= alive ? 1 : 0)
-                                    + (_life[(j + 600 + 1)     % 600] >= alive ? 1 : 0)
-                                    + (_life[(j + 600 + w - 1) % 600] >= alive ? 1 : 0)
-                                    + (_life[(j + 600 + w)     % 600] >= alive ? 1 : 0)
-                                    + (_life[(j + 600 + w + 1) % 600] >= alive ? 1 : 0);
-                            if (_life[j] >= alive)
-                                _life2[j] = (sum == 2 || sum == 3) ? Math.Min(2*alive, _life[j] + 1) : alive-1;
-                            else
-                                _life2[j] = (sum == 3) ? alive : Math.Max(0, _life[j] - 1);
-
-                            var color = (_life2[j] >= alive)
-                                ? ColorMorph.Mix(livingColor, thrivingColor, (double)(_life2[j] - alive) / alive)
-                                : ColorMorph.Mix(Black, dyingColor, (double)_life2[j] / alive);
-                            SetFrameDataRGB(3 * _lifeGridIndex[j], color);
-                        }
-
-                        CopyFillFrameData(3 * _life.Length);
-
-                        _life2.CopyTo(_life, 0);
-                    }
-                    return;
             }
 
             // reasonable, but singularity gets crazy
@@ -993,7 +985,7 @@ namespace TwinklyWPF
 
         }
 
-        int SetFrameDataRGB(int offset, double[] color)
+        public int SetFrameDataRGB(int offset, double[] color)
         {
             _frameData[offset++] = (byte)(Math.Clamp(255.5 * color[0], 0, 255));
             _frameData[offset++] = (byte)(Math.Clamp(255.5 * color[1], 0, 255));
@@ -1002,7 +994,7 @@ namespace TwinklyWPF
         }
 
         //  Fills the remainder of framedata by copying [0..offset) repeatedly
-        void CopyFillFrameData(int offset)
+        public void CopyFillFrameData(int offset)
         {
             int length = offset;
             while(offset + length <= _frameData.Length)
