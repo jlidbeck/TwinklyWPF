@@ -44,6 +44,8 @@ namespace TwinklyWPF.Animation
         {
             var colors = _context.GetPaletteSnapshot();
 
+            var chromaPower = _context.Piano.ChromaPower();
+
             var livingColor   = colors[0];
             var thrivingColor = colors[1];
             var dyingColor    = colors[2];
@@ -68,7 +70,6 @@ namespace TwinklyWPF.Animation
                 else
                     life2[j] = (sum == 3) ? alive : Math.Max(0, _life[j] - 1);
 
-                var chromaPower = _context.Piano.ChromaPower();
                 if (chromaPower?.Length >= 12 && chromaPower[j % 12] > 0.1)
                     life2[j] = alive * 2 - 1;
 
