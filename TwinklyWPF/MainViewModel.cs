@@ -82,6 +82,17 @@ namespace TwinklyWPF
             }
         }
 
+        bool _overlayIsVisible = true;
+        public bool OverlayIsVisible 
+        {
+            get => _overlayIsVisible;
+            set
+            {
+                _overlayIsVisible = value;
+                OnPropertyChanged();
+            }
+        }
+
         public void AddMessage(string v)
         {
             _messages.Add(v);
@@ -256,7 +267,8 @@ namespace TwinklyWPF
             // make sure we're locked
             Debug.Assert(_apiSemaphore.CurrentCount == 0);
 
-            Message = "Searching for devices...";
+            Message ="Searching for devices...";
+            OverlayIsVisible = true;
 
             ActiveDevice = null;
             Devices.Clear();
@@ -268,7 +280,7 @@ namespace TwinklyWPF
                 return DataAccess.Discover();
             });
 
-            Message = $"Adding {addresses.Count} devices...";
+            //Message = $"Adding {addresses.Count} devices...";
 
             foreach (var ip in addresses)
                 Devices.Add(new Device(IPAddress.Parse(ip)));
@@ -276,7 +288,6 @@ namespace TwinklyWPF
 
             if (TwinklyDetected)
             {
-
                 Message = $"Found {Devices.Count()} devices.";
             }
             //else if (twinklyapi.Status == 0)
@@ -285,9 +296,10 @@ namespace TwinklyWPF
             //}
             else
             {
-                Message = $"Locate failed. Status={DataAccess.LastError}";
+                Message = $"No devices found. Status={DataAccess.LastError?.Message??"OK"}";
             }
 
+            OverlayIsVisible = false;
         }
 
         // TODO
@@ -467,7 +479,7 @@ namespace TwinklyWPF
             if (RealtimeMovieRunning)
                 return;
 
-            Message = $"Setting up {Devices.Count()} devices...";
+            //Message = $"Setting up {Devices.Count()} devices...";
 
             List<Device> devices = new List<Device>();
             foreach (Device device in Devices)
@@ -491,7 +503,6 @@ namespace TwinklyWPF
                 Piano = Piano
             };
 
-            App.Log("Starting RT");
             Message = "Starting RT";
             await RTMovie.Start();
             Message = "RT Animation Started";

@@ -406,12 +406,12 @@ namespace TwinklyWPF
                 await MainViewModel.StartRealtimeTest();
         }
 
-        private void PrevColorMode_MouseDown(object sender, RoutedEventArgs e)
+        private void PrevColorMode_Click(object sender, RoutedEventArgs e)
         {
             MainViewModel.RTMovie?.NextColorMode(-1);
         }
 
-        private void NextColorMode_MouseDown(object sender, RoutedEventArgs e)
+        private void NextColorMode_Click(object sender, RoutedEventArgs e)
         {
             MainViewModel.RTMovie?.NextColorMode();
         }

@@ -10,6 +10,9 @@
 
   <ItemGroup>
     <Content Include="App.ico" />
+    <Content Include="images\spinner.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
   </ItemGroup>
 
   <ItemGroup>

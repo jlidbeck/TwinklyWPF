@@ -45,13 +45,11 @@ namespace TwinklyWPF
                     App.Log($"Reading settings [DEFAULT] from {_DefaultSettingspath}");
                     this.Settings = AppSettings.Read(_DefaultSettingspath);
                 }
-
-                App.Log(this.Settings.ToString());
             }
             catch (Exception ex)
             {
-                Console.WriteLine(ex.Message);
-                Console.WriteLine($"Error occurred reading settings from {_UserSettingsPath}: using defaults");
+                App.Log($"Error: {ex.Message}");
+                App.Log($"Error occurred reading settings from {_UserSettingsPath}: using defaults");
             }
 
             MainWindow = new MainWindow() { DataContext = MainViewModel };
