@@ -121,6 +121,10 @@
                        Background="White"
                        Padding="32 4 32 8"
                        Margin="0 200 0 0" />
+            <ListBox ItemsSource="{Binding DiscoveryLog}"
+                     VerticalAlignment="Bottom"
+                     MinHeight="100"
+                     Margin="50 10" />
             <Image Source="images/spinner.png"
                    Width="100"
                    Height="100"

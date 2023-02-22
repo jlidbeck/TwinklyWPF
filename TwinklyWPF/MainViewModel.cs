@@ -82,6 +82,13 @@ namespace TwinklyWPF
             }
         }
 
+        private ObservableCollection<string> _discoveryLog = new ObservableCollection<string>();
+
+        public ObservableCollection<string> DiscoveryLog
+        {
+            get => _discoveryLog;
+        }
+
         bool _overlayIsVisible = true;
         public bool OverlayIsVisible 
         {
@@ -267,7 +274,9 @@ namespace TwinklyWPF
             // make sure we're locked
             Debug.Assert(_apiSemaphore.CurrentCount == 0);
 
-            Message ="Searching for devices...";
+            Message = "Searching for devices...";
+            DiscoveryLog.Clear();
+            DiscoveryLog.Add("Searching for devices...");
             OverlayIsVisible = true;
 
             ActiveDevice = null;
@@ -275,25 +284,41 @@ namespace TwinklyWPF
             OnPropertyChanged("Devices");
             OnPropertyChanged("TwinklyDetected");
 
-            var addresses = await Task.Run(() =>
+            //  Run the discovery process in a worker thread, as it takes a few seconds.
+            //  Process each reply as it's received, and keep the UI updated
+            await Task.Run(async () =>
             {
-                return DataAccess.Discover();
+                // non-UI worker thread
+
+                var stopwatch = Stopwatch.StartNew();
+
+                IAsyncEnumerable<string> addressesEnumerable = DataAccess.DiscoverAsync();
+
+                await foreach (var ip in addressesEnumerable)
+                {
+                    App.Current.Dispatcher.Invoke(() =>
+                    {
+                        // back to UI thread
+
+                        // don't need to parse the message - we know who responded
+                        DiscoveryLog.Add($"DISCOVER: {stopwatch.ElapsedMilliseconds}ms Reply from {ip}");
+
+                        if (FindDevice(ip) == null)
+                        {
+                            DiscoveryLog.Add($"DISCOVER: Adding {ip}...");
+                            Devices.Add(new Device(IPAddress.Parse(ip)));
+                            DiscoveryLog.Add($"DISCOVER: {Devices.Count} devices found so far...");
+                        }
+                    });
+                }
             });
 
-            //Message = $"Adding {addresses.Count} devices...";
-
-            foreach (var ip in addresses)
-                Devices.Add(new Device(IPAddress.Parse(ip)));
             OnPropertyChanged("TwinklyDetected");
 
             if (TwinklyDetected)
             {
                 Message = $"Found {Devices.Count()} devices.";
             }
-            //else if (twinklyapi.Status == 0)
-            //{
-            //    Message = "Twinkly Not Found !";
-            //}
             else
             {
                 Message = $"No devices found. Status={DataAccess.LastError?.Message??"OK"}";

@@ -58,11 +58,12 @@ namespace Twinkly_xled
             return $"DataAccess: {IPAddress} Token expires: {ExpiresAt}";
         }
 
-        // UDP Scan for the lights. Returns all responding IP addresses 
-        static public ICollection<string> Discover()
+        // Discover devices on network using a UDP request.
+        // Returns all responding IP addresses.
+        // Note: returned IP addresses are not unique--typically each address responds twice.
+        // From observation, first response occurs within 200-400 ms, last response within 800 ms.
+        static public async IAsyncEnumerable<string> DiscoverAsync()
         {
-            var addresses = new SortedSet<string>();
-
             const int PORT_NUMBER = 5555;
 
             LastError = null;
@@ -76,61 +77,28 @@ namespace Twinkly_xled
 
                 try
                 {
-                    // todo: try async
-                    //await udp.SendAsync(sendbuf, sendbuf.Length, new IPEndPoint(IPAddress.Broadcast, PORT_NUMBER));
+                    // broadcast request
+                    await udp.SendAsync(sendbuf, sendbuf.Length, 
+                                        new IPEndPoint(IPAddress.Broadcast, PORT_NUMBER));
 
                     var stopwatch = Stopwatch.StartNew();
 
-                    udp.Send(sendbuf, sendbuf.Length, new IPEndPoint(
-                             IPAddress.Broadcast,
-                             PORT_NUMBER));
-
-                    var task = Task.Run(async () =>
+                    while (true)
                     {
-                        while (true)
-                        {
-                            // receive
-                            var result = await udp.ReceiveAsync();
+                        // wait up to 1s between responses
+                        var task = udp.ReceiveAsync();
+                        if (!task.Wait(3000) || stopwatch.ElapsedMilliseconds > 9000)
+                            yield break;  // stop when no reply received for 1 second
+                        UdpReceiveResult result = task.Result;
 
-                            // don't need to parse the message - we know who responded
-                            // <ip>OK<device_name>
-                            Debug.WriteLine($"{stopwatch.ElapsedMilliseconds}ms Reply: {result.RemoteEndPoint.Address}: {BitConverter.ToString(result.Buffer)}");
-                            addresses.Add(result.RemoteEndPoint.Address.ToString());
-                        }
-                    });
-
-                    // wait 3 seconds to collect responses to broadcast
-                    // each device seems to respond twice.
-                    // I've observed the first response 300-400ms, the last at 600-800ms
-                    task.Wait(3000);
-                }
-                catch (SocketException err)
-                {
-                    // If using synchronous receive, we expect a timeout. (ReceiveAsync does not do this.)
-                    // Any other error is unexpected, so rethrow
-                    if (err.SocketErrorCode != SocketError.TimedOut)
-                    {
-                        // Unexpected error
-                        //Error = true;
-                        LastError = err;
-                        Debug.WriteLine($"Terminating: {err.Message}");
-                        throw;
+                        yield return result.RemoteEndPoint.Address.ToString();
                     }
                 }
                 finally
                 {
                     udp.Close();
                 }
-            }   // using udp
-
-            Debug.WriteLine($"Discover: found {addresses.Count()} devices");
-
-            //if (IPAddress == null && addresses.Count() > 0)
-            //{
-            //    IPAddress = IPAddress.Parse(addresses.FirstOrDefault());
-            //}
-
-            return addresses;
+            }
         }
 
         // UDP port 7777 for realtime 
