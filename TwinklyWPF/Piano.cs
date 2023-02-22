@@ -130,7 +130,17 @@ namespace TwinklyWPF
                 midiIn = null;
             }
 
-            midiIn = new MidiIn(0);
+            try
+            {
+                midiIn = new MidiIn(0);
+            }
+            catch(NAudio.MmException err)
+            {
+                // this type of exception is thrown when another process is using the device
+                App.Log($"Error during MIDI startup: make sure the MIDI device is not in use by another process. {err.Message}");
+                return;
+            }
+
             midiIn.MessageReceived += midiIn_MessageReceived;
             midiIn.ErrorReceived += midiIn_ErrorReceived;
 
