@@ -136,7 +136,7 @@
                         Grid.ColumnSpan="2"
                         Orientation="Horizontal">
                 <TextBlock Style="{StaticResource TechStyle}">
-                    <Run Text="{Binding twinklyapi.data.IPAddressString}" />
+                    <Run Text="{Binding twinklyapi.data.IPAddressString, Mode=OneWay}" />
                     <Run Text="   " />
                     <Run Text="{Binding Gestalt.mac}" />
                     <Run Text="   " />

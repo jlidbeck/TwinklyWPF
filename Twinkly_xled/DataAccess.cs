@@ -24,13 +24,13 @@ namespace Twinkly_xled
         public string IPAddressString
         {
             get => tw_IP.ToString();
-            set { tw_IP = System.Net.IPAddress.Parse(value); }
+            private set { tw_IP = System.Net.IPAddress.Parse(value); }
         }
 
         public System.Net.IPAddress IPAddress
         {
             get { return tw_IP; }
-            set
+            private set
             {
                 tw_IP = value;
                 if (value != null)
@@ -47,11 +47,6 @@ namespace Twinkly_xled
         public DateTime ExpiresAt { get; private set; }
         public TimeSpan ExpiresIn => (ExpiresAt - DateTime.Now);
 
-
-        //public DataAccess()
-        //{
-        //    // now call Discover() or set IPAddress
-        //}
 
         public DataAccess(IPAddress ipAddress)
         {
