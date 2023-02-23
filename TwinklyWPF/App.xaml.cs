@@ -1,6 +1,7 @@
 ﻿using System;
 using System.IO;
 using System.Windows;
+using System.Windows.Threading;
 
 namespace TwinklyWPF
 {
@@ -59,7 +60,9 @@ namespace TwinklyWPF
         public static void Log(string v)
         {
             Console.WriteLine(v);
-            App.Current.MainViewModel.AddMessage(v);
+            App.Current.Dispatcher.Invoke(() => { 
+                App.Current.MainViewModel.AddMessage(v);
+            });
         }
 
         protected override void OnExit(ExitEventArgs e)
