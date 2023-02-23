@@ -988,7 +988,7 @@ namespace TwinklyWPF
             get => _frameTimer != null;
         }
 
-        public async void Stop()
+        public async Task StopAsync()
         {
             if (_stopwatch?.ElapsedMilliseconds > 0)
                 Debug.WriteLine($"FPS: {FPS}   Frames: {FrameCounter} {_stopwatch.ElapsedMilliseconds * 0.001}");

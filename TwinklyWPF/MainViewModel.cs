@@ -462,15 +462,18 @@ namespace TwinklyWPF
 
         public bool RealtimeMovieRunning => (RTMovie?.Running == true);
 
-        public void StopRealtimeTest()
+        public async void StopRealtimeTest()
         {
-            if (RTMovie?.FPS > 0)
+            if (RTMovie == null)
+                return;
+
+            if (RTMovie.FPS > 0)
             {
                 OnPropertyChanged("FPS");
                 Debug.WriteLine($"FPS: {RTMovie.FPS}   Frames: {RTMovie.FrameCounter}");
             }
 
-            RTMovie?.Stop();
+            await RTMovie.StopAsync();
             OnPropertyChanged("RealtimeMovieRunning");
         }
 
