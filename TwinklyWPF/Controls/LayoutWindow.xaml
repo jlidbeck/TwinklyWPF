@@ -36,13 +36,6 @@
             <Run Text=" Bounds:" />
             <Run Text="{Binding ElementName=ThisWindow, Path=LayoutBoundsText, Mode=OneWay}" Foreground="White"/>
         </TextBlock>
-        <ComboBox ItemsSource="{Binding RTMovie.Devices}"
-                  HorizontalAlignment="Right"
-                  DisplayMemberPath="FriendlyName"
-                  SelectedItem="{Binding ActiveDevice}"
-                  ToolTip="Devices running current animation"
-                  Width="200" 
-                  Margin="5 0" />
         <TextBox Grid.Row="1" Text="{Binding ElementName=ThisWindow, Path=LayoutText, Mode=OneWay}" 
                  HorizontalAlignment="Stretch"
                  FontFamily="Consolas"
@@ -61,12 +54,19 @@
             </Canvas>
         </ScrollViewer>
         <StackPanel Orientation="Horizontal" Grid.Row="4" Margin="8 4">
+            <ComboBox ItemsSource="{Binding RTMovie.Devices}"
+                  HorizontalAlignment="Right"
+                  DisplayMemberPath="FriendlyName"
+                  SelectedItem="{Binding ActiveDevice}"
+                  ToolTip="Devices running current animation"
+                  Width="200" 
+                  Margin="5 0" />
             <Label Content="Layout:" />
-            <Button Content="Get" Click="GetButton_Click"  />
-            <Button Content="Set" Click="SetButton_Click"  />
-            <Button Content="Load..." Click="LoadButton_Click"  />
-            <Button Content="Save..." Click="SaveButton_Click"  />
-            <Button Content="Center" Click="CenterButton_Click"  />
+            <Button Content="Get" Click="GetButton_Click"  ToolTip="Get device layout from the Twinkly API"/>
+            <Button Content="Set" Click="SetButton_Click" ToolTip="Send this layout to the device "/>
+            <Button Content="Load..." Click="LoadButton_Click" ToolTip="Read layout from a file to this device" />
+            <Button Content="Save..." Click="SaveButton_Click" ToolTip="Save this device layout to a file" />
+            <Button Content="Save All..." Click="SaveAllButton_Click" ToolTip="Save all device layouts combined to a file" />
             <Button Content="Noise" Click="NoiseButton_Click"  />
         </StackPanel>
         <StackPanel Orientation="Horizontal" Grid.Row="5" Margin="8 4">

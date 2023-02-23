@@ -22,15 +22,6 @@ namespace TwinklyWPF
     {
         public MainViewModel MainViewModel => (MainViewModel)DataContext;
 
-        // if dialog is currently displaying coordinates from GetLayout from a device, the raw response is stored here
-        private GetLayoutResult _layoutResult;
-
-        public GetLayoutResult LayoutResult
-        {
-            get { return _layoutResult; }
-            private set { _layoutResult = value; OnPropertyChanged(); }
-        }
-
         // concatenation of all device coordinates
         private XYZ[] _coordinates;
 
@@ -41,9 +32,6 @@ namespace TwinklyWPF
             {
                 _coordinates = (XYZ[])value?.Clone();
                 OnPropertyChanged();
-                // todo: apply layout changes from dialog to realtime.
-                //if (MainViewModel.RTMovie != null)
-                //    MainViewModel.RTMovie.Layout = value;
             }
         }
 
@@ -150,7 +138,6 @@ namespace TwinklyWPF
                 Coordinates[i].x += dx;
                 Coordinates[i].y += dy;
             }
-            LayoutResult = null;
             Redraw();
         }
 
@@ -163,54 +150,114 @@ namespace TwinklyWPF
                 Coordinates[i].x += dx;
                 Coordinates[i].y += dy;
             }
-            LayoutResult = null;
             Redraw();
         }
 
         private async void GetButton_Click(object sender, RoutedEventArgs e)
         {
-            LayoutResult = await MainViewModel.ActiveDevice?.twinklyapi.GetLayout();
-            Coordinates = (XYZ[])LayoutResult.coordinates.Clone();
-            Redraw();
+            if (MainViewModel.ActiveDevice == null)
+                return;
+
+            var layoutResult = await MainViewModel.ActiveDevice.twinklyapi.GetLayout();
+
+            // apply layout changes from dialog to realtime.
+            if (layoutResult.coordinates?.Length > 0)
+            {
+                MainViewModel.RTMovie.SetDeviceCoordinates(MainViewModel.ActiveDevice, layoutResult.coordinates);
+                Coordinates = MainViewModel.RTMovie.Layout.coordinates;
+
+                Redraw();
+            }
+
         }
 
-        private void SetButton_Click(object sender, RoutedEventArgs e)
+        private async void SetButton_Click(object sender, RoutedEventArgs e)
         {
-            // TODO: send modified layout(s) to devices
-            //var result = await MainViewModel.ActiveDevice?.twinklyapi.SetLayout(Layout);
-            //ResultCode code = (ResultCode)result.code;
-            //if (code == ResultCode.Ok)
-            //    MessageBox.Show($"Success. {result.parsed_coordinates} coordinates parsed.");
-            //else
-            //    MessageBox.Show($"Error {result.code}");
+            if (MainViewModel.ActiveDevice == null)
+                return;
+
+            // send modified layout to active device
+            Layout layout = new Layout();
+            layout.source = "2d";
+            layout.synthesized = false;
+            layout.coordinates = MainViewModel.RTMovie.GetDeviceCoordinates(MainViewModel.ActiveDevice);
+
+            var result = await MainViewModel.ActiveDevice?.twinklyapi.SetLayout(layout);
+            ResultCode code = (ResultCode)result.code;
+            if (code == ResultCode.Ok)
+                MessageBox.Show($"Success. {result.parsed_coordinates} coordinates parsed.");
+            else
+                MessageBox.Show($"Error {result.code}");
         }
 
         private async void LoadButton_Click(object sender, RoutedEventArgs e)
         {
+            if (MainViewModel.ActiveDevice == null)
+                return;
+
             var dialog = new OpenFileDialog { DefaultExt = "json", Filter = "json|*.json" };
             if (dialog.ShowDialog() == true)
             {
+                XYZ[] coordinates = null;
+
                 _filename = dialog.FileName;
                 var stream = dialog.OpenFile();
                 using (var sr = new StreamReader(stream))
                 {
                     var str = await sr.ReadToEndAsync();
-                    var layout = JsonSerializer.Deserialize<Layout>(str);
-                    if (layout?.IsValid != true)
+                    try
                     {
-                        MessageBox.Show("JSON deserialize failed:\n\n" + str);
-                        return;
+                        var layout = JsonSerializer.Deserialize<Layout>(str);
+                        if (layout?.IsValid != true)
+                        {
+                            MessageBox.Show("JSON deserialize failed:\n\n" + str);
+                            return;
+                        }
+
+                        coordinates = (XYZ[])layout.coordinates;
+                    }
+                    catch(Exception err)
+                    {
+                        // file wasn't a complete JSON response..
                     }
 
-                    LayoutResult = null;
-                    Coordinates = (XYZ[])layout.coordinates.Clone();
+                    if (coordinates == null)
+                    {
+                        // attempt to read the file as just an array of coordinates
+                        coordinates = JsonSerializer.Deserialize<XYZ[]>(str);
+                    }
+
+                    MainViewModel.RTMovie.SetDeviceCoordinates(MainViewModel.ActiveDevice, (XYZ[])coordinates);
+                    Coordinates = MainViewModel.RTMovie.Layout.coordinates;
+
+                    Redraw();
                 }
             }
         }
 
+        //  Writes just the selected device's coordinates to a file
         private async void SaveButton_Click(object sender, RoutedEventArgs e)
         {
-            var dialog = new SaveFileDialog { DefaultExt="json", AddExtension=true, Filter= "json|*.json", FileName= _filename };
+            if (MainViewModel.ActiveDevice == null)
+                return;
+
+            var coordinates = MainViewModel.RTMovie.GetDeviceCoordinates(MainViewModel.ActiveDevice);
+
+            var dialog = new SaveFileDialog { DefaultExt = "json", AddExtension = true, Filter = "json|*.json", FileName = _filename };
+            if (dialog.ShowDialog() == true)
+            {
+                var stream = dialog.OpenFile();
+                //using (var sw = new Utf8JsonWriter(stream, new JsonWriterOptions { Indented = true }))
+                {
+                    await JsonSerializer.SerializeAsync(stream, coordinates, new JsonSerializerOptions { WriteIndented = true });
+                }
+            }
+        }
+
+        //  Writes all devices' coordinates to a file
+        private async void SaveAllButton_Click(object sender, RoutedEventArgs e)
+        {
+            var dialog = new SaveFileDialog { DefaultExt = "json", AddExtension = true, Filter = "json|*.json", FileName = _filename };
             if (dialog.ShowDialog() == true)
             {
                 var stream = dialog.OpenFile();

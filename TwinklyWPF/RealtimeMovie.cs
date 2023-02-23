@@ -52,6 +52,17 @@ namespace TwinklyWPF
         #endregion
     }
 
+    public class CombinedLayout
+    {
+        public Dictionary<string, int> deviceOffsets = new Dictionary<string, int>();
+        public XYZ[] coordinates { get; set; }
+
+        public override string ToString()
+        {
+            return $"CombinedLayout: {coordinates.Length} coordinates";
+        }
+    }
+
     public class RealtimeMovie: INotifyPropertyChanged
     {
         private System.Timers.Timer _frameTimer;
@@ -63,11 +74,11 @@ namespace TwinklyWPF
         public byte[] FrameData => _frameData;
         protected byte[] _frameData;
 
-        Layout _layout;
-        public Layout Layout
+        CombinedLayout _layout;
+        public CombinedLayout Layout
         {
             get { return _layout; }
-            set
+            private set
             {
                 _layout = value;
                 OnPropertyChanged();
@@ -263,9 +274,7 @@ namespace TwinklyWPF
 
             _frameData = new byte[frameSize];
 
-            //_random.NextBytes(_frameData);
-
-            Layout layout = new Layout { aspectXY=0, aspectXZ=0, source="2d", synthesized=true };
+            CombinedLayout layout = new CombinedLayout();
             layout.coordinates = new XYZ[n];
 
             int offset = 0;
@@ -298,11 +307,38 @@ namespace TwinklyWPF
                         break;
                 }
 
+                layout.deviceOffsets[device.UniqueName] = offset;
                 offset += device.Gestalt.number_of_led;
             }
 
             this.Layout = layout;
         }
+
+        //  Get only a range of layout coordinates
+        internal XYZ[] GetDeviceCoordinates(Device device)
+        {
+            int offset = Layout.deviceOffsets[device.UniqueName];
+
+            var coordinates = new XYZ[device.Gestalt.number_of_led];
+            Array.Copy(Layout.coordinates, offset, coordinates, 0, device.Gestalt.number_of_led);
+            return coordinates;
+        }
+
+        //  Change only a range of layout coordinates
+        internal void SetDeviceCoordinates(Device device, XYZ[] coordinates)
+        {
+            if(!Layout.deviceOffsets.ContainsKey(device.UniqueName))
+                throw new ArgumentException($"Device not found: {device.UniqueName}");
+
+            int offset = Layout.deviceOffsets[device.UniqueName];
+
+            // validate range length
+            if (coordinates.Length != device.Gestalt.number_of_led)
+                throw new ArgumentException($"Invalid coordinate length: {device.Gestalt.number_of_led} expected");
+
+            coordinates.CopyTo(Layout.coordinates, offset);
+        }
+
 
         private void OnLayoutChanged()
         {
