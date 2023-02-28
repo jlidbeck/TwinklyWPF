@@ -7,7 +7,7 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:Controls="clr-namespace:TwinklyWPF.Controls"
     x:Class="TwinklyWPF.MainWindow"
-    Title="Twinkly WPF"
+    Title="Chromatic Aberration"
     MinWidth="620"
     MinHeight="500"
     mc:Ignorable="d"
@@ -23,64 +23,52 @@
             <RowDefinition Height="auto" />
             <RowDefinition Height="auto" />
             <RowDefinition Height="auto" />
-            <RowDefinition Height="auto" />
             <RowDefinition Height="*" />
             <RowDefinition Height="auto" />
         </Grid.RowDefinitions>
-        <TextBlock
-            Grid.Row="0"
-            HorizontalAlignment="Center"
-            FontSize="25"
-            Foreground="Fuchsia"
-            Text="Chromatic Aberrations" />
         <ComboBox
-            Grid.Row="5"
-            Margin="2,0,2,2"
+            Grid.Row="4"
             FontSize="15"
             ItemsSource="{Binding Messages}"
             SelectedItem="{Binding Message, Mode=OneWay}"
             IsReadOnly="True"
-            ToolTip="Message" />
+            ToolTip="Message log" />
         <StackPanel Orientation="Horizontal"
-                    Grid.Row="1" Grid.Column="1"
-                    Margin="5 0"
+                    Grid.Row="0"
+                    Margin="5 5"
                     HorizontalAlignment="Left">
-            <Button x:Name="Rescan"
-                    Content="Rescan"
-                    MinWidth="50"
-                    ToolTip="Scan all Twinkly and MIDI devices"
-                    Click="Rescan_Click" />
+            <Label>Devices:</Label>
             <ComboBox ItemsSource="{Binding Devices}"
                       DisplayMemberPath="FriendlyName"
                       SelectedItem="{Binding ActiveDevice}"
-                      Width="200" 
-                      Margin="5 0"/>
+                      Width="200" />
+            <Button x:Name="Rescan"
+                    Content="Rescan"
+                    ToolTip="Scan all Twinkly and MIDI devices"
+                    Click="Rescan_Click" />
             <Button x:Name="AddIpAddress" 
                     Content="Add..." 
-                    Click="AddIpAddress_Click"
-                    MinWidth="50"/>
+                    Click="AddIpAddress_Click" />
         </StackPanel>
 
         <Controls:DeviceDetailsWindow 
             x:Name="DeviceDetailsWindow"
             DataContext="{Binding ActiveDevice}"
-            Grid.Row="2"
+            Grid.Row="1"
             BorderBrush="Fuchsia"
             BorderThickness="5"
             MinWidth="400"
             MinHeight="400" />
 
         <!--  Global controls  -->
-        <Grid
-            Grid.Row="3"
-            TextBlock.FontSize="16"
-            Visibility="{Binding TwinklyDetected, Converter={StaticResource BoolToVis}}">
+        <Grid Grid.Row="2"
+              Visibility="{Binding TwinklyDetected, Converter={StaticResource BoolToVis}}">
             <Grid.RowDefinitions>
                 <RowDefinition Height="auto" />
                 <RowDefinition Height="auto" />
             </Grid.RowDefinitions>
 
-            <StackPanel Orientation="Horizontal" Grid.Row="0" Grid.ColumnSpan="2">
+            <StackPanel Orientation="Horizontal" Grid.Row="0" Margin="5">
                 <Grid>
                     <Button x:Name="StartButton" 
                             Content="► Start"
@@ -91,7 +79,7 @@
                             Visibility="{Binding RealtimeMovieRunning, Converter={StaticResource BoolToVis}}"
                             IsEnabled="{Binding RealtimeMovieRunning}" />
                 </Grid>
-                <Label Content="FPS:"  />
+                <Label Content="FPS:" />
                 <TextBlock Text="{Binding FPS, Mode=OneWay, StringFormat=N3}" Style="{StaticResource ResourceKey=TextBlockValue}" />
                 <Button Content="Layout" ToolTip="ActiveDevice: led/layout/full"
                         Click="Layout_Click" />
@@ -99,7 +87,7 @@
                         Click="MovieConfig_Click" />
             </StackPanel>
 
-            <StackPanel Orientation="Horizontal" Grid.Row="1" Grid.ColumnSpan="2">
+            <StackPanel Orientation="Horizontal" Grid.Row="1" Margin="5">
                 <ToggleButton x:Name="MIDIEnabled" 
                               Content="MIDI" 
                               IsChecked="{Binding RTMovie.Piano.IsMonitoring, Mode=OneWay}" 
@@ -110,7 +98,7 @@
         <Grid Name="Overlay"
               Visibility="{Binding OverlayIsVisible, Converter={StaticResource BoolToVis}}"
               Grid.Row="0" 
-              Grid.RowSpan="5" 
+              Grid.RowSpan="4" 
               Background="#999999"
               Opacity="0.75">
             <TextBlock Text="Searching..."
