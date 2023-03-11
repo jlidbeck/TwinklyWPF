@@ -30,18 +30,10 @@ namespace Twinkly_xled
 
         public bool Authenticated => (data?.ExpiresAt > DateTime.Now);
 
-        public IPAddress IPAddress
+        public XLedAPI(IPAddress ipAddress)
         {
-            get => data?.IPAddress;
-            set
-            {
-                Debug.Assert(value != null);
-                data = new DataAccess(value);
-            }
-        }
-
-        public XLedAPI()
-        {
+            Debug.Assert(ipAddress != null);
+            data = new DataAccess(ipAddress);
         }
 
 

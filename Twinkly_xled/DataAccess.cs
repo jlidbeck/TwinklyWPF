@@ -20,29 +20,7 @@ namespace Twinkly_xled
 
         static public Exception LastError { get; private set; }
 
-        private IPAddress tw_IP { get; set; }
-        public string IPAddressString
-        {
-            get => tw_IP.ToString();
-            private set { tw_IP = System.Net.IPAddress.Parse(value); }
-        }
-
-        public System.Net.IPAddress IPAddress
-        {
-            get { return tw_IP; }
-            private set
-            {
-                tw_IP = value;
-                if (value != null)
-                    HttpClient = new HttpClient() { BaseAddress = new Uri($"http://{tw_IP}/xled/v1/") };
-                else
-                    HttpClient = null;
-                Error = false;
-                //HttpResponseMessage = null;
-                HttpStatus = HttpStatusCode.OK;
-                ExpiresAt = new DateTime();
-            }
-        }
+        public IPAddress IPAddress { get; private set; }
 
         public DateTime ExpiresAt { get; private set; }
         public TimeSpan ExpiresIn => (ExpiresAt - DateTime.Now);
@@ -51,6 +29,10 @@ namespace Twinkly_xled
         public DataAccess(IPAddress ipAddress)
         {
             IPAddress = ipAddress;
+            HttpClient = new HttpClient() { BaseAddress = new Uri($"http://{IPAddress}/xled/v1/") };
+            Error = false;
+            HttpStatus = HttpStatusCode.OK;
+            ExpiresAt = DateTime.Now;
         }
 
         public override string ToString()

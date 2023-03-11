@@ -252,7 +252,7 @@ namespace TwinklyWPF
                 var metadata = App.Current.Settings.GetDeviceMetadata(device.UniqueName);
 
                 metadata["Name"]          = device.FriendlyName;
-                metadata["IPAddress"]     = device.twinklyapi.data.IPAddressString;
+                metadata["IPAddress"]     = device.IPAddress.ToString();
                 metadata["device_name"]   = device.Gestalt?.device_name;
                 metadata["led_profile"]   = device.Gestalt?.led_profile;
                 metadata["led_type"]      = device.Gestalt?.led_type.ToString();
@@ -296,7 +296,7 @@ namespace TwinklyWPF
 
                 await foreach (var ip in addressesEnumerable)
                 {
-                    App.Current.Dispatcher.Invoke(() =>
+                    await App.Current.Dispatcher.Invoke(async () =>
                     {
                         // back to UI thread
 
@@ -306,7 +306,7 @@ namespace TwinklyWPF
                         if (FindDevice(ip) == null)
                         {
                             DiscoveryLog.Add($"DISCOVER: Adding {ip}...");
-                            Devices.Add(new Device(IPAddress.Parse(ip)));
+                            Devices.Add(await Device.CreateDevice(IPAddress.Parse(ip)));
                             DiscoveryLog.Add($"DISCOVER: {Devices.Count} devices found so far...");
                         }
                     });
@@ -364,18 +364,18 @@ namespace TwinklyWPF
 
         private Device FindDevice(IPAddress ipAddress)
         {
-            return Devices.FirstOrDefault((device) => device.twinklyapi.data.IPAddress.Equals(ipAddress));
+            return Devices.FirstOrDefault((device) => device.IPAddress.Equals(ipAddress));
         }
 
         private Device FindDevice(string uniqueName)
         {
             return Devices.FirstOrDefault(
                 (device) => uniqueName == device.UniqueName
-                         || uniqueName == device.twinklyapi.data.IPAddress.ToString()
+                         || uniqueName == device.IPAddress.ToString()
                          || uniqueName == device.Gestalt?.device_name);
         }
 
-        //todo
+        //  Search for and add a device with a specific IP address
         public async Task<Device> AddDevice(IPAddress ipAddress)
         {
             // make sure not duplicate
@@ -386,28 +386,16 @@ namespace TwinklyWPF
 
             try
             {
-                var device = new Device(ipAddress);
+                var device = await Device.CreateDevice(ipAddress);
                 Devices.Add(device);
 
                 Message = $"Loading {ipAddress}...";
 
-                //twinklyapi.data.IPAddress = ipAddress;
-                //OnPropertyChanged("twinklyapi");
-
-                //twinklyapi.Devices.Add(ipAddress);
-                // this is a cheat
-                //TwinklyDetected = true;
                 OnPropertyChanged("TwinklyDetected");
 
                 // always set ActiveDevice, even if keeping same value.. need to update the API
                 if (ActiveDevice == null)
                     ActiveDevice = device;
-
-                //await Load();
-
-                //// notify that twinklyapi.Devices has changed
-                //OnPropertyChanged();
-                //OnPropertyChanged("twinklyapi");
 
                 Message = $"Added {ipAddress}.";
 
@@ -445,7 +433,7 @@ namespace TwinklyWPF
 
             try
             {
-                if (ActiveDevice?.twinklyapi.data?.IPAddress == null)
+                if (ActiveDevice?.IPAddress == null)
                     return;
 
                 // get the device gestalt and firware data only if it hasn't been done yet

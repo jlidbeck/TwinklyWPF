@@ -12,13 +12,22 @@ namespace TwinklyWPF
 {
     public class Device : INotifyPropertyChanged, IDataErrorInfo
     {
-        public XLedAPI twinklyapi { get; private set; } = new XLedAPI();
+        public XLedAPI twinklyapi { get; private set; }
 
         public event PropertyChangedEventHandler PropertyChanged;
 
-        public Device(IPAddress ipAddress)
+        public static async Task<Device> CreateDevice(IPAddress ipAddress)
         {
-            twinklyapi.IPAddress = ipAddress;
+            return await Task.Run(() =>
+            {
+                var device = new Device(ipAddress);
+                return device;
+            });
+        }
+
+        private Device(IPAddress ipAddress)
+        {
+            twinklyapi = new XLedAPI(ipAddress);
         }
 
         #region Gestalt shortcuts
@@ -28,7 +37,7 @@ namespace TwinklyWPF
             get
             {
                 if (Gestalt == null)
-                    return twinklyapi.data.IPAddress.ToString();
+                    return IPAddress.ToString();
                 return $"{Gestalt.device_name} [{Gestalt.number_of_led}x{Gestalt.led_profile}]";
             }
         }
@@ -40,10 +49,12 @@ namespace TwinklyWPF
             get
             {
                 if (Gestalt == null)
-                    return twinklyapi.data.IPAddress.ToString();
+                    return IPAddress.ToString();
                 return Gestalt.device_name;
             }
         }
+
+        public IPAddress IPAddress => twinklyapi.data.IPAddress;
 
         public TimeSpan Uptime
         {
@@ -66,12 +77,12 @@ namespace TwinklyWPF
 
         public override bool Equals(object obj)
         {
-            return twinklyapi.data.IPAddress.Equals((obj as Device)?.twinklyapi.data.IPAddress);
+            return IPAddress.Equals((obj as Device)?.IPAddress);
         }
 
         public override int GetHashCode()
         {
-            return twinklyapi.data.IPAddress.GetHashCode();
+            return IPAddress.GetHashCode();
         }
 
         #endregion
